@@ -1,0 +1,4195 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "River Markets API",
+    "description": "# Getting Started\n\n\nRiver Markets provides users with a unified prime brokerage interface for prediction markets, including\n- Liquidity aggregation\n- Order routing\n- Market and data search\n\nThis API guide will help you get up and running quickly.\n\n## Concepts\n\n### River IDs\n\nEvery market across all exchanges is assigned a unique **River ID** - a unified identifier that works across our entire platform. This allows you to:\n\n- Reference the same market consistently regardless of which exchange it trades on\n- Place orders using a single identifier format\n- Track positions and fills across exchanges with one ID\n\nWhen searching for markets, the API returns both the exchange-native identifier (e.g., Kalshi ticker, Polymarket slug) and the River ID. Use the River ID when placing orders.\n\n### Subaccounts\n\n**Subaccounts** let you organize your trading activity into separate containers. Each subaccount:\n\n- Has its own set of exchange credentials\n- Maintains separate positions and order history\n- Can represent different strategies, clients, or portfolios\n\nThis is useful for:\n- **Fund managers**: Segregate client portfolios\n- **Traders**: Separate strategies (e.g., momentum vs. mean reversion)\n- **Teams**: Give team members isolated trading environments\n\n## 1. Create an Account\n\nSign up at [app.riverfi.com](https://app.riverfi.com) to create your account.\n\n## 2. Generate an API Key\n\n1. Log in to your dashboard\n2. Navigate to **Settings \u2192 API Keys**\n3. Click **Create API Key**\n4. Copy and securely store your key - it will only be shown once\n\n## 3. Install required packages\n\n```python\npip install requests\n```\n\n## 4. Make Your First Request\n\nTest your API key by searching for markets. \n\nWe support ticker (kalshi ticker, polymarket condition_id/slug, river_id) and fuzzy search ('bitcoin', 'fed rates').\n\n```python\nimport requests\n\nAPI_KEY = \"your_api_key\"\nBASE_URL = \"https://api.riverfi.com/v1\"\n\nheaders = {\"x-api-key\": API_KEY}\n\n# Search for shutdown related markets, on Polymarket\nresponse = requests.get(\n    f\"{BASE_URL}/markets/search\", headers=headers, params={\"q\": \"shutdown\", \"exchange\": \"POLYMARKET\"}\n)\nfor market in response.json()[\"results\"]:\n    print(f\"River ID: {market['river_id']}, Ticker: {market['slug']}\")\n```\n\n## 5. Set Up a Subaccount\n\nRiver allows users to setup subaccounts - which allow them to manage different trading strategies or client portfolios.\n\nThese can be added through the UI by going to Settings -> Subaccounts\nor programatically.\n\n### Video Walkthrough\n\nWatch this tutorial to see how to create a subaccount, add a Polymarket account, and place your first trade:\n\n<div style=\"position: relative; padding-bottom: 54.37499999999999%; height: 0;\"><iframe src=\"https://www.loom.com/embed/9b49e269c09e436d98b72f3cb55d7691\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n\n### Programmatic Setup \n\n```python\n# Create a subaccount\nresponse = requests.post(\n    f\"{BASE_URL}/subaccounts\",\n    headers=headers,\n    json={\"name\": \"My Trading Account\"}\n)\nsubaccount = response.json()\nsubaccount_id = subaccount[\"id\"]\n```\n\n## 6. Add Exchange Credentials\n\nExchange credentials can also be added via UI under Settings -> Subaccounts,\nor programatically as shown below.\n\nFor best results, we recommend\n- Polymarket : create an account using email (not a wallet) and get your wallet and PK directly from Polymarket under [Settings -> Export Private Key](https://polymarket.com/settings)\n- Kalshi : create a secret/key pair with Read/Write access under [Settings -> Account & security -> API keys](https://kalshi.com/account/profile)\n\n```python\n# Add Polymarket credentials\nresponse = requests.post(\n    f\"{BASE_URL}/credentials\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"exchange\": \"polymarket\",\n        \"wallet_address\": \"your_polymarket_wallet_address\",\n        \"private_key\": \"your_polymarket_private_key\"\n    }\n)\n# Add Kalshi credentials\nresponse = requests.post(\n    f\"{BASE_URL}/credentials\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"exchange\": \"kalshi\",\n        \"api_key\": \"your_kalshi_api_key\",\n        \"api_secret\": \"your_kalshi_secret\"\n    }\n)\n```\n\nWe use asymmetric encryption so your credentials are not transferred between services or stored in plain text.\nWe delete your credentials when you delete a subaccount. \n\n## 7. Place Your First Order\n\nUse the River ID from your market search to place an order.\n\n```python\n# Place a limit order (buy 10 contracts at $0.50)\nresponse = requests.post(\n    f\"{BASE_URL}/orders\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"river_id\": 4552150,       # From market search\n        \"order_type\": \"LIMIT\",      # LIMIT or MARKET\n        \"time_in_force\": \"GTC\",     # FOK, GTC, GTD, or IOC\n        \"buy_flag\": True,           # True=buy, False=sell\n        \"price\": 0.50,              # Limit price (0-1)\n        \"qty\": 10,                  # Number of contracts\n    }\n)\norder = response.json()\nprint(f\"Order placed: {order['river_order_id']}\")\n```\n\n## 8. Check Order Status\n\nMonitor your order's progress by fetching its current state.\n\n```python\n# Get order status\norder_id = order['river_order_id']\nresponse = requests.get(\n    f\"{BASE_URL}/orders/{order_id}\",\n    headers=headers\n)\norder_status = response.json()\nprint(f\"Status: {order_status['status']}, Filled: {order_status['traded_qty']}/{order_status['qty']}\")\n```\n\nPossible order statuses:\n- `pending_submission` - Order received, awaiting processing\n- `submitted` - Order sent to exchange\n- `partially_filled` - Order partially executed\n- `filled` - Order fully executed\n- `cancelled` - Order cancelled\n- `rejected` - Order rejected (see `reject_reason`)\n\n## 9. Cancel an Order\n\nCancel a resting order before it's fully filled.\n\n```python\n# Cancel an order\norder_id = order['river_order_id']\nresponse = requests.delete(\n    f\"{BASE_URL}/orders/{order_id}\",\n    headers=headers\n)\nif response.status_code == 200:\n    print(\"Order cancelled successfully\")\n```\n\nNote: Only orders with status `submitted` or `partially_filled` can be cancelled.\n\n## Supported Exchanges\n\n| Exchange | Markets | Status |\n|----------|---------|--------|\n| Kalshi | US regulated prediction markets | Available |\n| Polymarket | Crypto prediction markets | Available |\n| Polymarket US | US regulated prediction markets | Coming soon |\n| ForecastEx | US regulated prediction markets | Coming soon |\n| MIAXdx | US regulated markets | Coming soon |\n\n## Rate Limits\n\n- **Standard**: 100 requests/minute\n- **Premium**: Contact support for higher limits\n\n\n\n## Authentication\n\nAll endpoints require authentication via one of:\n- **Bearer Token**: `Authorization: Bearer <jwt_token>` (for web clients)\n- **API Key**: `x-api-key: <your_api_key>` (for programmatic access)\n\n\n---\n\n\n\n# Order Types Documentation\n\nComplete guide to all order types available in the River Markets trading platform.\n\n---\n\n## Basic Order Types\n\n### Market Order\nExecutes immediately at the best available price.\n- **Use case**: When you need immediate execution and price is less important\n- **Example**: Market buy 100 contracts \u2192 fills at current best ask price\n\n### Limit Order\nRests on the order book at a specified price.\n- **Use case**: When you want price control and can wait for execution\n- **Example**: Limit buy 100 @ $0.65 \u2192 only fills at $0.65 or better\n\n---\n\n## Conditional Order Types\n\nConditional orders are **not placed immediately**. They activate (\"trigger\") when specific conditions are met.\n\n### 1. Stop Orders (STOP)\n\n**Stop orders trigger when price moves AGAINST your desired direction.** Used primarily for **stop losses** (exit protection) or **breakout entries**.\n\n#### Stop Market\n- **Triggers**: When market trades at or through your stop price\n- **Executes**: As a market order (immediate fill at best available price)\n- **Example**:\n  ```\n  You're LONG at $0.70, want to exit if price falls to $0.60\n  \u2192 Stop Market SELL @ $0.60\n  \u2192 Triggers when price \u2264 $0.60\n  \u2192 Sends market sell order \u2192 fills immediately\n  ```\n\n#### Stop Limit\n- **Triggers**: When market trades at or through your stop price\n- **Executes**: As a limit order at your specified limit price\n- **Example**:\n  ```\n  You're LONG at $0.70, want to exit around $0.60 but not worse than $0.59\n  \u2192 Stop Limit SELL @ $0.60, Limit $0.59\n  \u2192 Triggers when price \u2264 $0.60\n  \u2192 Sends limit sell order @ $0.59 \u2192 waits for fill at $0.59 or better\n  ```\n- **Risk**: May not fill if price moves too fast through your limit\n\n**Directional Logic:**\n- **BUY stop**: Triggers at or **above** stop price (breakout entry or short exit)\n- **SELL stop**: Triggers at or **below** stop price (stop loss or long exit)\n\n---\n\n### 2. Reverse Stop Orders (REVERSE_STOP)\n\n**Reverse stop orders trigger when price moves IN your desired direction.** Used exclusively for **take profit** scenarios.\n\n**Key Concept**: A \"reverse stop\" is called \"reverse\" because it triggers in the OPPOSITE direction of a normal stop order.\n\n#### Reverse Stop Market (TP Market)\n- **Triggers**: When market trades at or through your target price (OPPOSITE direction from normal stop)\n- **Executes**: As a market order\n- **Example**:\n  ```\n  You're LONG at $0.60, want to take profit if price rises to $0.80\n  \u2192 TP Market (Reverse Stop Market) SELL @ $0.80\n  \u2192 Normal stop would trigger BELOW, but reverse stop triggers ABOVE\n  \u2192 Triggers when price \u2265 $0.80\n  \u2192 Sends market sell order \u2192 fills immediately\n  ```\n\n**Directional Logic (REVERSED from normal stop):**\n- **BUY reverse stop**: Triggers at or **below** target (opposite of normal buy stop)\n- **SELL reverse stop**: Triggers at or **above** target (opposite of normal sell stop)\n\n**Why \"reverse\"?**\n- Normal **SELL stop** @ $0.60 triggers when price \u2264 $0.60 (price falling)\n- **SELL reverse stop** @ $0.80 triggers when price \u2265 $0.80 (price rising)\n- The trigger direction is reversed!\n\n#### Reverse Stop Limit (TP Limit)\n- **Triggers**: When market trades at or through your target price\n- **Executes**: As a limit order at your specified limit price\n- **Example**:\n  ```\n  You're LONG at $0.60, want to take profit around $0.80 but not worse than $0.79\n  \u2192 TP Limit (Reverse Stop Limit) SELL @ $0.80, Limit $0.79\n  \u2192 Triggers when price \u2265 $0.80\n  \u2192 Sends limit sell order @ $0.79 \u2192 waits for fill at $0.79 or better\n  ```\n\n---\n\n### 3. Take Profit Orders (TP)\n\n**Parent-child orders**: Automatically triggers a child order when a parent order **fills**.\n\n#### TP Market\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Immediately places the child order (can be another TP/SL or direct order)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH TP Market @ $0.80\n  \u2192 When buy fills \u2192 immediately activates TP Market SELL @ $0.80\n  \u2192 That TP Market is a reverse stop that triggers when price \u2265 $0.80\n  ```\n\n#### TP Limit\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Activates TP Limit order (reverse stop limit)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH TP Limit @ $0.80 (limit $0.79)\n  \u2192 When buy fills \u2192 activates TP Limit SELL\n  \u2192 Triggers when price \u2265 $0.80 \u2192 sends limit sell @ $0.79\n  ```\n\n---\n\n### 4. Stop Loss Orders (SL)\n\n**Parent-child orders**: Automatically triggers a child order when a parent order **fills**.\n\n#### SL Market\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Immediately places the child order (can be another SL/TP or direct order)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH SL Market @ $0.55\n  \u2192 When buy fills \u2192 immediately activates SL Market SELL @ $0.55\n  \u2192 That SL Market is a stop order that triggers when price \u2264 $0.55\n  ```\n\n#### SL Limit\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Activates SL Limit order (stop limit)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH SL Limit @ $0.55 (limit $0.54)\n  \u2192 When buy fills \u2192 activates SL Limit SELL\n  \u2192 Triggers when price \u2264 $0.55 \u2192 sends limit sell @ $0.54\n  ```\n\n---\n\n## Order Type Comparison\n\n| Type | Trigger Condition | Execution | Primary Use Case |\n|------|------------------|-----------|------------------|\n| **Market** | None (immediate) | Immediate at best price | Need immediate fill |\n| **Limit** | None (rests) | At limit price or better | Want price control |\n| **Stop Market** | Price moves AGAINST you | Market order (immediate) | Stop loss, breakout entry |\n| **Stop Limit** | Price moves AGAINST you | Limit order (may not fill) | Stop loss with price protection |\n| **TP Market** | Parent fills + price moves FOR you | Market order via reverse stop | Take profit with immediate exit |\n| **TP Limit** | Parent fills + price moves FOR you | Limit order via reverse stop | Take profit with price control |\n| **SL Market** | Parent fills + price moves AGAINST you | Market order via stop | Stop loss from entry |\n| **SL Limit** | Parent fills + price moves AGAINST you | Limit order via stop | Stop loss with price floor |\n\n---\n\n## Key Concepts\n\n### Stop vs Reverse Stop\n- **Stop**: Triggers when price moves AGAINST you (exit losses, enter breakouts)\n- **Reverse Stop**: Triggers when price moves FOR you (take profits)\n\n### Parent-Child Orders\n- **TP/SL orders** are \"meta-orders\" that activate child orders when a parent fills\n- The child order itself is usually a stop or reverse stop order\n- This creates a two-step process: Parent fill \u2192 Child activation \u2192 Price trigger \u2192 Execution\n\n### Trigger Direction Summary\n| Order Side | Stop (Loss/Breakout) | Reverse Stop (Profit) |\n|------------|---------------------|----------------------|\n| **BUY** | Triggers \u2265 stop price | Triggers \u2264 target price |\n| **SELL** | Triggers \u2264 stop price | Triggers \u2265 target price |\n\n---\n\n## Examples\n\n### Complete Trading Scenario\n```\n1. Place limit BUY 100 @ $0.60\n   WITH TP Market @ $0.80 (reverse stop)\n   AND SL Market @ $0.55 (normal stop)\n\n2. Buy fills at $0.60\n   \u2192 TP Market SELL @ $0.80 activated (reverse stop)\n   \u2192 SL Market SELL @ $0.55 activated (normal stop)\n\n3a. If price rises to $0.80:\n    \u2192 TP triggers (price \u2265 $0.80) \u2192 market sell executes\n    \u2192 SL cancelled automatically\n\n3b. If price falls to $0.55:\n    \u2192 SL triggers (price \u2264 $0.55) \u2192 market sell executes\n    \u2192 TP cancelled automatically\n```\n\n### Breakout Entry with Protection\n```\nPrice is at $0.70, resistance at $0.75, support at $0.65\n\n1. Place Stop Market BUY @ $0.76 (breakout entry)\n   \u2192 Triggers when price \u2265 $0.76 (breaks resistance)\n   \u2192 Market buy executes\n\n2. Add SL Market @ $0.74 to the stop order\n   \u2192 When breakout buy fills \u2192 SL activates\n   \u2192 Protects if breakout fails\n```\n",
+    "contact": {
+      "name": "River Markets",
+      "url": "https://riverfi.com/"
+    },
+    "license": {
+      "name": "Proprietary"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.riverfi.com"
+    }
+  ],
+  "paths": {
+    "/v1/complex-orders": {
+      "get": {
+        "tags": [
+          "complex-orders"
+        ],
+        "summary": "List Complex Orders",
+        "description": "List all complex orders with optional filters.\n\nReturns a paginated list of complex orders (conditional, TWAP, etc.) across all\naccessible subaccounts, ordered by `created_at` descending.\n\n**Filters:**\nAll filters are optional and can be combined. Use `complex_order_type` to narrow\nto a specific type. If no `subaccount_id` is specified, returns orders from all\nsubaccounts the user has access to.",
+        "operationId": "list_complex_orders_v1_complex_orders_get",
+        "parameters": [
+          {
+            "name": "complex_order_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Complex Order Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "PENDING",
+                    "ACTIVE",
+                    "TRIGGERED",
+                    "CANCELLED"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "river_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "River Id"
+            }
+          },
+          {
+            "name": "custom_asset_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Custom Asset Id"
+            }
+          },
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subaccount Id"
+            }
+          },
+          {
+            "name": "parent_river_order_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parent River Order Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplexOrderListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "complex-orders"
+        ],
+        "summary": "Create Complex Order",
+        "description": "Create a new complex order.\n\nCurrently supports conditional orders (TP, SL, STOP). The order is persisted\nimmediately with `PENDING` status and queued for activation.\n\n**Conditional Order Types:**\n- `TP`: Take-profit attached to a parent order. Requires\n  `parent_river_order_id` or `parent_complex_order_id`.\n- `SL`: Stop-loss attached to a parent order. Requires\n  `parent_river_order_id` or `parent_complex_order_id`.\n- `STOP`: Standalone stop order triggered by market price.\n\n**Response:**\nReturns `202 Accepted` with the complex order in `PENDING` status.",
+        "operationId": "create_complex_order_v1_complex_orders_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplexOrderCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplexOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/complex-orders/cancel-all": {
+      "post": {
+        "tags": [
+          "complex-orders"
+        ],
+        "summary": "Cancel All Complex Orders",
+        "description": "Cancel all complex orders for a subaccount.\n\nReturns count of orders being cancelled. Cancellation is processed asynchronously.",
+        "operationId": "cancel_all_complex_orders_v1_complex_orders_cancel_all_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAllComplexOrdersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelComplexOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/complex-orders/{complex_order_id}": {
+      "get": {
+        "tags": [
+          "complex-orders"
+        ],
+        "summary": "Get Complex Order",
+        "description": "Get a single complex order by ID.\n\nReturns complete complex order details including trigger configuration\nand current status.",
+        "operationId": "get_complex_order_v1_complex_orders__complex_order_id__get",
+        "parameters": [
+          {
+            "name": "complex_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Complex Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplexOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "complex-orders"
+        ],
+        "summary": "Cancel Complex Order",
+        "description": "Cancel a complex order.\n\nRequest cancellation of a complex order.\nReturns 202 Accepted with the current complex order state \u2014\ncancellation is processed asynchronously.",
+        "operationId": "cancel_complex_order_v1_complex_orders__complex_order_id__delete",
+        "parameters": [
+          {
+            "name": "complex_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Complex Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelComplexOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/custom-assets": {
+      "get": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "List Custom Assets",
+        "description": "List all custom assets for the authenticated user.",
+        "operationId": "list_custom_assets_v1_custom_assets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomAssetResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Custom Assets V1 Custom Assets Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "Create Custom Asset",
+        "description": "Create a new custom asset.",
+        "operationId": "create_custom_asset_v1_custom_assets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomAssetCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomAssetDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/custom-assets/{custom_asset_id}": {
+      "get": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "Get Custom Asset",
+        "description": "Get a custom asset with its river_ids.",
+        "operationId": "get_custom_asset_v1_custom_assets__custom_asset_id__get",
+        "parameters": [
+          {
+            "name": "custom_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Custom Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomAssetDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "Update Custom Asset",
+        "description": "Update a custom asset's name or description.",
+        "operationId": "update_custom_asset_v1_custom_assets__custom_asset_id__patch",
+        "parameters": [
+          {
+            "name": "custom_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Custom Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomAssetUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomAssetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "Delete Custom Asset",
+        "description": "Delete a custom asset (cascades to members).",
+        "operationId": "delete_custom_asset_v1_custom_assets__custom_asset_id__delete",
+        "parameters": [
+          {
+            "name": "custom_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Custom Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/custom-assets/{custom_asset_id}/members": {
+      "post": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "Add Custom Asset Members",
+        "description": "Add river_ids to a custom asset.",
+        "operationId": "add_custom_asset_members_v1_custom_assets__custom_asset_id__members_post",
+        "parameters": [
+          {
+            "name": "custom_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Custom Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomAssetMemberAdd"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomAssetDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "custom-assets"
+        ],
+        "summary": "Remove Custom Asset Members",
+        "description": "Remove river_ids from a custom asset.",
+        "operationId": "remove_custom_asset_members_v1_custom_assets__custom_asset_id__members_delete",
+        "parameters": [
+          {
+            "name": "custom_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Custom Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomAssetMemberRemove"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomAssetDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/fills": {
+      "get": {
+        "tags": [
+          "fills"
+        ],
+        "summary": "Get Fills",
+        "description": "Fetch fills/trades for the user's subaccounts.\n\nReturns fills grouped by subaccount, filterable by instrument and time range.",
+        "operationId": "get_fills_v1_fills_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subaccount Id"
+            }
+          },
+          {
+            "name": "river_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "River Id"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Time"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserFillListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/search": {
+      "get": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Search Markets",
+        "description": "Search markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Results ranked by relevance",
+        "operationId": "search_markets_v1_markets_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Search query",
+              "title": "Q"
+            },
+            "description": "Search query"
+          },
+          {
+            "name": "exchange",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exchange name (KALSHI, POLYMARKET)",
+              "title": "Exchange"
+            },
+            "description": "Filter by exchange name (KALSHI, POLYMARKET)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status (active, closed, inactive)",
+              "title": "Status"
+            },
+            "description": "Filter by status (active, closed, inactive)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Offset for pagination",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Offset for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orderbooks/{river_id}": {
+      "get": {
+        "tags": [
+          "orderbooks"
+        ],
+        "summary": "Get Orderbook",
+        "description": "Get orderbook for a river_id.\n\nThis endpoint:\n1. Touches the river_id to indicate interest (refreshes TTL if already touched)\n2. Returns cached orderbook if available\n3. Returns pending status if orderbook is not yet available\n\nThe touch mechanism ensures the Real-Time Data Service subscribes to this symbol.\nSubsequent requests will return the cached orderbook data.",
+        "operationId": "get_orderbook_v1_orderbooks__river_id__get",
+        "parameters": [
+          {
+            "name": "river_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "River Id"
+            }
+          },
+          {
+            "name": "levels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Number of price levels to return",
+              "default": 10,
+              "title": "Levels"
+            },
+            "description": "Number of price levels to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderbookResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders": {
+      "post": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Create Order",
+        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\n**Order Types** (`order_type`):\n- `LIMIT`: Execute at specified price or better. Requires `price` parameter.\n- `MARKET`: Execute immediately at best available price.\n\n**Time in Force** (`time_in_force`):\n- `FOK` (Fill or Kill): Execute entire order immediately or cancel.\n- `GTC` (Good Til Cancelled): Remain active until filled or manually cancelled.\n- `GTD` (Good Til Date): Remain active until `expiry_ts_utc`. Requires `expiry_ts_utc` parameter.\n- `IOC` (Immediate or Cancel): Execute immediately; cancel any unfilled portion.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).\n\n**Response:**\nReturns `202 Accepted` with the order in `PENDING_SUBMISSION` status.\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
+        "operationId": "create_order_v1_orders_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "List Orders",
+        "description": "List orders with optional filters.\n\nReturns a paginated list of orders across all accessible subaccounts, ordered by `created_at` descending.\n\n**Filters:**\nAll filters are optional and can be combined. If no `subaccount_id` is specified,\nreturns orders from all subaccounts the user has access to.",
+        "operationId": "list_orders_v1_orders_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "PENDING_SUBMISSION",
+                    "RESTING",
+                    "EXECUTED",
+                    "CANCELLED",
+                    "REJECTED",
+                    "EXPIRED",
+                    "PARTIALLY_FILLED",
+                    "PROCESSING"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by order status",
+              "title": "Status"
+            },
+            "description": "Filter by order status"
+          },
+          {
+            "name": "river_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by instrument ID",
+              "title": "River Id"
+            },
+            "description": "Filter by instrument ID"
+          },
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to a specific subaccount",
+              "title": "Subaccount Id"
+            },
+            "description": "Filter to a specific subaccount"
+          },
+          {
+            "name": "buy_flag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by direction: true=buys, false=sells",
+              "title": "Buy Flag"
+            },
+            "description": "Filter by direction: true=buys, false=sells"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Results per page (max 1000)",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Results per page (max 1000)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/{order_id}": {
+      "get": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Get Order",
+        "description": "Get a single order by ID with its fills.\n\nReturns complete order details including execution history.\n\n**Fill Information:**\nEach fill represents a partial or complete execution and includes:\n- `price`: Execution price\n- `qty`: Filled quantity\n- `fee`: Fee charged for this fill\n- `is_maker`: Whether this fill was a maker (provided liquidity)\n- `exchange_timestamp`: When the exchange executed the fill\n\n**Use Cases:**\n- Track order progress and execution quality\n- Reconcile fills for accounting\n- Debug rejected or partially filled orders",
+        "operationId": "get_order_v1_orders__order_id__get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Cancel Order",
+        "description": "Cancel an existing order.\n\nRequest cancellation of an order.\nReturns 202 Accepted with order state - cancellation is processed asynchronously.",
+        "operationId": "cancel_order_v1_orders__order_id__delete",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/cancel-all": {
+      "post": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Cancel All Orders",
+        "description": "Cancel all open orders for a subaccount.\n\nReturns count of orders being cancelled. Cancellation is processed asynchronously.",
+        "operationId": "cancel_all_orders_v1_orders_cancel_all_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAllRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/positions": {
+      "get": {
+        "tags": [
+          "positions"
+        ],
+        "summary": "Get Positions",
+        "description": "Fetch positions for user's subaccounts.\n\nReturns positions grouped by subaccount. Optionally filter to a specific subaccount.\nBy default, only positions in open markets are returned.",
+        "operationId": "get_positions_v1_positions_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by specific subaccount",
+              "title": "Subaccount Id"
+            },
+            "description": "Filter by specific subaccount"
+          },
+          {
+            "name": "include_closed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include positions in closed markets",
+              "default": false,
+              "title": "Include Closed"
+            },
+            "description": "Include positions in closed markets"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPositionListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices/{river_id}": {
+      "get": {
+        "tags": [
+          "prices"
+        ],
+        "summary": "Get Prices",
+        "description": "Get price data for a market.\n\nReturns either candlestick OHLC data or simple price history based on the `type` parameter.\nThe endpoint automatically determines the exchange and fetches data accordingly.\n\n- **Kalshi**: Returns real OHLC candlestick data with volume\n- **Polymarket**: Returns price history (candlesticks will have synthetic OHLC where all values equal the price)\n\nAll prices are normalized to 0-1 range.",
+        "operationId": "get_prices_v1_prices__river_id__get",
+        "parameters": [
+          {
+            "name": "river_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "River market ID",
+              "title": "River Id"
+            },
+            "description": "River market ID"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "candlesticks",
+                "history"
+              ],
+              "type": "string",
+              "description": "Response type",
+              "default": "candlesticks",
+              "title": "Type"
+            },
+            "description": "Response type"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "1d",
+                "1w",
+                "1m",
+                "max"
+              ],
+              "type": "string",
+              "description": "Time range",
+              "default": "1d",
+              "title": "Interval"
+            },
+            "description": "Time range"
+          },
+          {
+            "name": "fidelity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "description": "Minutes per data point (for Polymarket history)",
+              "default": 60,
+              "title": "Fidelity"
+            },
+            "description": "Minutes per data point (for Polymarket history)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/subaccounts": {
+      "get": {
+        "tags": [
+          "subaccounts"
+        ],
+        "summary": "List Subaccounts",
+        "description": "Enumerate all trading subaccounts accessible to the user.\n\nReturns list of accounts with identifiers and metadata.",
+        "operationId": "list_subaccounts_v1_subaccounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubaccountResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Subaccounts V1 Subaccounts Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "subaccounts"
+        ],
+        "summary": "Create Subaccount",
+        "description": "Create a new trading subaccount for the authenticated user.",
+        "operationId": "create_subaccount_v1_subaccounts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubaccountCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubaccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/subaccounts/{subaccount_id}": {
+      "get": {
+        "tags": [
+          "subaccounts"
+        ],
+        "summary": "Get Subaccount",
+        "description": "Fetch configuration and metadata for a specific subaccount.\n\nReturns account configuration, limits, and descriptive metadata.",
+        "operationId": "get_subaccount_v1_subaccounts__subaccount_id__get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subaccount Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubaccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "subaccounts"
+        ],
+        "summary": "Update Subaccount",
+        "description": "Update an existing subaccount.",
+        "operationId": "update_subaccount_v1_subaccounts__subaccount_id__patch",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subaccount Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubaccountUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubaccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "subaccounts"
+        ],
+        "summary": "Delete Subaccount",
+        "description": "Delete a subaccount.",
+        "operationId": "delete_subaccount_v1_subaccounts__subaccount_id__delete",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subaccount Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/subaccounts/{subaccount_id}/positions": {
+      "get": {
+        "tags": [
+          "subaccounts"
+        ],
+        "summary": "Get Subaccount Positions",
+        "description": "Fetch positions for a specific subaccount.\n\nReturns positions for a specific subaccount.",
+        "operationId": "get_subaccount_positions_v1_subaccounts__subaccount_id__positions_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subaccount Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/lookup": {
+      "get": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Lookup Markets",
+        "description": "Batch lookup markets by river_ids.",
+        "operationId": "lookup_markets_v1_markets_lookup_get",
+        "parameters": [
+          {
+            "name": "river_ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of river IDs",
+              "title": "River Ids"
+            },
+            "description": "Comma-separated list of river IDs"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/match": {
+      "get": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Match Market",
+        "description": "Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one parameter.",
+        "operationId": "match_market_v1_markets_match_get",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact Kalshi ticker (e.g., KXNBA-26-DET)",
+              "title": "Ticker"
+            },
+            "description": "Exact Kalshi ticker (e.g., KXNBA-26-DET)"
+          },
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact Polymarket slug (e.g., will-the-denver-nuggets-win-the-2026-nba-finals)",
+              "title": "Slug"
+            },
+            "description": "Exact Polymarket slug (e.g., will-the-denver-nuggets-win-the-2026-nba-finals)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - provide exactly one of: ticker, slug"
+          },
+          "404": {
+            "description": "Market not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiKeyCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_ \\-]*$",
+            "title": "Name"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope",
+            "description": "Scope for the API key",
+            "default": "default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ApiKeyCreate",
+        "description": "Schema for creating a new API key."
+      },
+      "ApiKeyCreateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Full API key - shown only once, save it now!"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "created_at"
+        ],
+        "title": "ApiKeyCreateResponse",
+        "description": "Response when creating an API key.\n\nIMPORTANT: The `key` field contains the full API key and is only\nreturned ONCE at creation time. It cannot be retrieved again.\nThe user must save it immediately."
+      },
+      "ApiKeyResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "Key prefix for identification"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "is_revoked": {
+            "type": "boolean",
+            "title": "Is Revoked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "last_used_at",
+          "expires_at",
+          "is_revoked"
+        ],
+        "title": "ApiKeyResponse",
+        "description": "Schema for API key metadata (does not include the actual key).\n\nUsed for listing keys - the actual key is never shown after creation."
+      },
+      "ApiKeyRotateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "New API key - shown only once, save it now!"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "created_at"
+        ],
+        "title": "ApiKeyRotateResponse",
+        "description": "Response when rotating an API key.\n\nThe old key is revoked and a new key is generated.\nIMPORTANT: The `key` field is only shown once."
+      },
+      "CancelAllComplexOrdersRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount to cancel all complex orders for"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id"
+        ],
+        "title": "CancelAllComplexOrdersRequest",
+        "description": "Request body for cancelling all complex orders for a subaccount."
+      },
+      "CancelAllRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id"
+        ],
+        "title": "CancelAllRequest",
+        "description": "Request body for cancelling all orders for a subaccount."
+      },
+      "CancelComplexOrderResponse": {
+        "properties": {
+          "cancelled_complex_order_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Cancelled Complex Order Ids",
+            "description": "List of cancelled complex order identifiers"
+          },
+          "failed_cancelled_complex_order_ids": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "type": "object",
+            "title": "Failed Cancelled Complex Order Ids",
+            "description": "Dictionary of failed to cancel complex order identifiers and reasons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cancelled_complex_order_ids",
+          "failed_cancelled_complex_order_ids"
+        ],
+        "title": "CancelComplexOrderResponse",
+        "description": "Schema for cancel order response What is returned when user cancels an order/ orders."
+      },
+      "CancelOrderResponse": {
+        "properties": {
+          "cancelled_river_order_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Cancelled River Order Ids",
+            "description": "List of cancelled river order identifiers"
+          },
+          "failed_cancelled_reasons": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "type": "object",
+            "title": "Failed Cancelled Reasons",
+            "description": "Dictionary of failed to cancel river order identifiers and reasons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cancelled_river_order_ids",
+          "failed_cancelled_reasons"
+        ],
+        "title": "CancelOrderResponse",
+        "description": "Schema for cancel order response What is returned when user cancels an order/ orders."
+      },
+      "ComplexOrderCreateRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount to create the order under"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "Instrument ID. Mutually exclusive with custom_asset_id."
+          },
+          "custom_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Asset Id",
+            "description": "Custom asset basket ID. Mutually exclusive with river_id."
+          },
+          "conditional_order_params": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConditionalOrderCreate"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Conditional order parameters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id"
+        ],
+        "title": "ComplexOrderCreateRequest",
+        "description": "Request body for creating a complex order (conditional order)."
+      },
+      "ComplexOrderListResponse": {
+        "properties": {
+          "complex_orders": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ComplexOrderResponse"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Complex Orders",
+            "description": "List of complex orders matching the query"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Total count of matching complex orders (for pagination)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "complex_orders",
+          "count"
+        ],
+        "title": "ComplexOrderListResponse",
+        "description": "Schema for list of complex orders (all types)."
+      },
+      "ComplexOrderResponse": {
+        "properties": {
+          "complex_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Complex Order Id",
+            "description": "Unique complex order identifier"
+          },
+          "complex_order_type": {
+            "type": "string",
+            "title": "Complex Order Type",
+            "description": "Complex order type: CONDITIONAL, TWAP, etc."
+          },
+          "complex_order_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complex Order Subtype",
+            "description": "Complex order subtype: TP, SL, STOP, etc."
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount the order belongs to"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "Instrument ID"
+          },
+          "custom_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Asset Id",
+            "description": "Custom asset basket ID"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Order status (interpretation depends on complex_order_type)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (UTC)"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (UTC)"
+          },
+          "conditional_order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConditionalOrderResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Conditional order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "complex_order_id",
+          "complex_order_type",
+          "subaccount_id",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ComplexOrderResponse",
+        "description": "Schema for a complex order response (unified across all complex order types)."
+      },
+      "ConditionalOrderCreate": {
+        "properties": {
+          "conditional_order_type": {
+            "type": "string",
+            "enum": [
+              "TP",
+              "SL",
+              "STOP"
+            ],
+            "description": "Type of conditional order: TP, SL, or STOP"
+          },
+          "stop_order_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Order Price",
+            "description": "Stop price if this is a stop order."
+          },
+          "trigger_order": {
+            "$ref": "#/components/schemas/TriggerOrder",
+            "description": "Trigger order"
+          },
+          "parent_river_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent River Order Id",
+            "description": "Parent order ID (required for TP and SL)"
+          },
+          "parent_complex_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Complex Order Id",
+            "description": "Parent complex order ID (for chaining)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "conditional_order_type",
+          "trigger_order"
+        ],
+        "title": "ConditionalOrderCreate",
+        "description": "Schema for a conditional order (take profit or stop loss) attached to a parent order."
+      },
+      "ConditionalOrderResponse": {
+        "properties": {
+          "parent_river_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent River Order Id",
+            "description": "Parent order ID"
+          },
+          "parent_complex_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Complex Order Id",
+            "description": "Parent complex order ID"
+          },
+          "conditional_order_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditional Order Type",
+            "description": "TP, SL, or STOP"
+          },
+          "stop_order_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Order Price",
+            "description": "Trigger price"
+          },
+          "trigger_stop_order_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Stop Order Price",
+            "description": "Trigger price for stop triggered orders"
+          },
+          "trigger_order_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Order Type",
+            "description": "LIMIT or MARKET"
+          },
+          "trigger_order_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Order Qty",
+            "description": "Trigger quantity"
+          },
+          "trigger_order_limit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Order Limit Price",
+            "description": "Trigger limit price"
+          },
+          "trigger_order_buy_flag": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Order Buy Flag",
+            "description": "Trigger direction"
+          },
+          "trigger_river_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger River Order Id",
+            "description": "Triggered order ID"
+          },
+          "trigger_complex_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Complex Order Id",
+            "description": "Triggered complex order ID"
+          }
+        },
+        "type": "object",
+        "title": "ConditionalOrderResponse"
+      },
+      "CredentialResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "exchange_id": {
+            "type": "integer",
+            "title": "Exchange Id"
+          },
+          "inserted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inserted At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "subaccount_id",
+          "exchange_id",
+          "inserted_at",
+          "updated_at"
+        ],
+        "title": "CredentialResponse",
+        "description": "Response for credential (secrets are never exposed)."
+      },
+      "CustomAssetCreate": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "river_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "name"
+        ],
+        "title": "CustomAssetCreate",
+        "description": "Request schema for creating a new custom asset."
+      },
+      "CustomAssetDetailResponse": {
+        "properties": {
+          "custom_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Custom Asset Id"
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "inserted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inserted At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "custom_asset_id",
+          "subaccount_id",
+          "name",
+          "members",
+          "inserted_at",
+          "updated_at"
+        ],
+        "title": "CustomAssetDetailResponse",
+        "description": "Response schema for a custom asset with its members (detail view)."
+      },
+      "CustomAssetMemberAdd": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "CustomAssetMemberAdd",
+        "description": "Request schema for adding members to a custom asset."
+      },
+      "CustomAssetMemberRemove": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "CustomAssetMemberRemove",
+        "description": "Request schema for removing members from a custom asset."
+      },
+      "CustomAssetResponse": {
+        "properties": {
+          "custom_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Custom Asset Id"
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "inserted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inserted At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "custom_asset_id",
+          "subaccount_id",
+          "name",
+          "inserted_at",
+          "updated_at"
+        ],
+        "title": "CustomAssetResponse",
+        "description": "Response schema for a custom asset (list view)."
+      },
+      "CustomAssetUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "CustomAssetUpdate",
+        "description": "Request schema for updating a custom asset."
+      },
+      "EncryptedCredentialCreate": {
+        "properties": {
+          "exchange_id": {
+            "type": "integer",
+            "title": "Exchange Id"
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "encrypted_data": {
+            "type": "string",
+            "title": "Encrypted Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exchange_id",
+          "subaccount_id",
+          "encrypted_data"
+        ],
+        "title": "EncryptedCredentialCreate",
+        "description": "Request to create credentials with client-side encrypted payload.\n\nThe frontend encrypts sensitive credential data using libsodium sealed box\n(X25519 + XSalsa20-Poly1305). The `encrypted_data` contains an ephemeral\npublic key and the encrypted JSON credentials in a single blob.\n\nAfter decryption, the JSON contains exchange-specific fields:\n- Kalshi (exchange_id=1): {\"key_id\": \"...\", \"private_key\": \"...\"}\n- Polymarket (exchange_id=2): {\"proxy_wallet\": \"...\", \"private_key\": \"...\"}"
+      },
+      "FillResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "client_order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Order Id"
+          },
+          "exchange_order_id": {
+            "type": "string",
+            "title": "Exchange Order Id"
+          },
+          "exchange_trade_id": {
+            "type": "string",
+            "title": "Exchange Trade Id"
+          },
+          "exchange_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Exchange Timestamp"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty"
+          },
+          "fee": {
+            "type": "number",
+            "title": "Fee"
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag"
+          },
+          "is_maker": {
+            "type": "boolean",
+            "title": "Is Maker"
+          },
+          "counterparty_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterparty Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "client_order_id",
+          "exchange_order_id",
+          "exchange_trade_id",
+          "exchange_timestamp",
+          "price",
+          "qty",
+          "fee",
+          "buy_flag",
+          "is_maker",
+          "counterparty_address"
+        ],
+        "title": "FillResponse",
+        "description": "Schema for fill response."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InviteRedeemRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Code"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "email"
+        ],
+        "title": "InviteRedeemRequest",
+        "description": "Request to redeem an invite code during signup."
+      },
+      "InviteRedeemResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "InviteRedeemResponse",
+        "description": "Response after attempting to redeem an invite code."
+      },
+      "MarketSearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "results",
+          "total"
+        ],
+        "title": "MarketSearchResponse",
+        "description": "Schema for market search response."
+      },
+      "MarketSearchResult": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "exchange_value": {
+            "type": "integer",
+            "title": "Exchange Value"
+          },
+          "exchange_name": {
+            "type": "string",
+            "title": "Exchange Name"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticker"
+          },
+          "token_id_yes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Id Yes"
+          },
+          "token_id_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Id No"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "tick_size_price": {
+            "type": "number",
+            "title": "Tick Size Price"
+          },
+          "tick_size_qty": {
+            "type": "number",
+            "title": "Tick Size Qty"
+          },
+          "expiration_datetime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration Datetime"
+          },
+          "neg_risk": {
+            "type": "boolean",
+            "title": "Neg Risk"
+          },
+          "neg_risk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Neg Risk Id"
+          },
+          "generic_asset_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generic Asset Id"
+          },
+          "condition_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "exchange_value",
+          "exchange_name",
+          "ticker",
+          "token_id_yes",
+          "token_id_no",
+          "slug",
+          "tick_size_price",
+          "tick_size_qty",
+          "expiration_datetime",
+          "neg_risk",
+          "neg_risk_id",
+          "generic_asset_id",
+          "condition_id",
+          "name",
+          "description",
+          "status"
+        ],
+        "title": "MarketSearchResult",
+        "description": "Schema for a single market search result."
+      },
+      "OrderCreate": {
+        "properties": {
+          "order_type": {
+            "type": "string",
+            "enum": [
+              "LIMIT",
+              "MARKET"
+            ],
+            "description": "Order type: 'LIMIT' or 'MARKET'"
+          },
+          "time_in_force": {
+            "type": "string",
+            "enum": [
+              "FOK",
+              "GTC",
+              "GTD",
+              "IOC"
+            ],
+            "description": "Time in force: 'FOK', 'GTC', 'GTD', or 'IOC'"
+          },
+          "qty": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Qty",
+            "description": "Order quantity (number of contracts)"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "Limit price between 0 and 1. Required for LIMIT orders."
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "Order direction: true=buy, false=sell"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "Instrument ID. Mutually exclusive with custom_asset_id."
+          },
+          "custom_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Asset Id",
+            "description": "Custom asset basket ID. Mutually exclusive with river_id."
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount to place the order under"
+          },
+          "expiry_ts_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Ts Utc",
+            "description": "Expiry timestamp (ISO 8601). Required for GTD orders."
+          },
+          "conditional_orders_params": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ConditionalOrderCreate"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditional Orders Params",
+            "description": "Optional list of conditional orders (TP/SL) to attach to this order."
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_type",
+          "time_in_force",
+          "qty",
+          "buy_flag",
+          "subaccount_id"
+        ],
+        "title": "OrderCreate",
+        "description": "Schema for creating a new order."
+      },
+      "OrderCreateResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id",
+            "description": "Unique order identifier"
+          },
+          "complex_orders": {
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Complex Orders",
+            "description": "List of complex river orders id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id",
+          "complex_orders"
+        ],
+        "title": "OrderCreateResponse",
+        "description": "Schema for order create response."
+      },
+      "OrderDetailResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id",
+            "description": "Unique order identifier"
+          },
+          "order_type": {
+            "type": "string",
+            "title": "Order Type",
+            "description": "Order type: LIMIT or MARKET"
+          },
+          "time_in_force": {
+            "type": "string",
+            "title": "Time In Force",
+            "description": "Time in force: FOK, GTC, GTD, or IOC"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty",
+            "description": "Original order quantity"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "Limit price (null for market orders)"
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "Order direction: true=buy, false=sell"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Order status: PENDING_SUBMISSION, PROCESSING, RESTING, PARTIALLY_FILLED, EXECUTED, CANCELLED, REJECTED, or EXPIRED"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "Instrument ID"
+          },
+          "custom_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Asset Id",
+            "description": "Custom asset basket ID"
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount the order belongs to"
+          },
+          "expiry_ts_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Ts Utc",
+            "description": "Expiry timestamp for GTD orders"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Order creation timestamp (UTC)"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (UTC)"
+          },
+          "traded_qty": {
+            "type": "number",
+            "title": "Traded Qty",
+            "description": "Total quantity filled",
+            "default": 0.0
+          },
+          "average_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Price",
+            "description": "Volume-weighted average fill price"
+          },
+          "fees_paid": {
+            "type": "number",
+            "title": "Fees Paid",
+            "description": "Total fees paid across all fills",
+            "default": 0.0
+          },
+          "complex_order_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Complex Order Ids",
+            "description": "List of complex order identifiers",
+            "default": []
+          },
+          "reject_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reject Reason",
+            "description": "Reason for rejection (if status is REJECTED)"
+          },
+          "fills": {
+            "items": {
+              "$ref": "#/components/schemas/OrderFillResponse"
+            },
+            "type": "array",
+            "title": "Fills",
+            "description": "List of executions (fills) for this order",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id",
+          "order_type",
+          "time_in_force",
+          "qty",
+          "buy_flag",
+          "status",
+          "subaccount_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OrderDetailResponse",
+        "description": "Schema for order detail response including fills."
+      },
+      "OrderFillResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id",
+            "description": "Instrument ID"
+          },
+          "exchange_order_id": {
+            "type": "string",
+            "title": "Exchange Order Id",
+            "description": "Exchange-assigned order ID"
+          },
+          "exchange_trade_id": {
+            "type": "string",
+            "title": "Exchange Trade Id",
+            "description": "Exchange-assigned trade/fill ID"
+          },
+          "exchange_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Exchange Timestamp",
+            "description": "Execution timestamp from exchange"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Execution price"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty",
+            "description": "Filled quantity"
+          },
+          "fee": {
+            "type": "number",
+            "title": "Fee",
+            "description": "Fee charged for this fill"
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "Fill direction: true=buy, false=sell"
+          },
+          "is_maker": {
+            "type": "boolean",
+            "title": "Is Maker",
+            "description": "Whether this fill provided liquidity (maker) or took it (taker)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "exchange_order_id",
+          "exchange_trade_id",
+          "exchange_timestamp",
+          "price",
+          "qty",
+          "fee",
+          "buy_flag",
+          "is_maker"
+        ],
+        "title": "OrderFillResponse",
+        "description": "Schema for a single fill on an order."
+      },
+      "OrderListResponse": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/OrderResponse"
+            },
+            "type": "array",
+            "title": "Orders",
+            "description": "List of orders matching the query"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Total count of matching orders (for pagination)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders",
+          "count"
+        ],
+        "title": "OrderListResponse",
+        "description": "Schema for list of orders."
+      },
+      "OrderResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id",
+            "description": "Unique order identifier"
+          },
+          "order_type": {
+            "type": "string",
+            "title": "Order Type",
+            "description": "Order type: LIMIT or MARKET"
+          },
+          "time_in_force": {
+            "type": "string",
+            "title": "Time In Force",
+            "description": "Time in force: FOK, GTC, GTD, or IOC"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty",
+            "description": "Original order quantity"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "Limit price (null for market orders)"
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "Order direction: true=buy, false=sell"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Order status: PENDING_SUBMISSION, PROCESSING, RESTING, PARTIALLY_FILLED, EXECUTED, CANCELLED, REJECTED, or EXPIRED"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "Instrument ID"
+          },
+          "custom_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Asset Id",
+            "description": "Custom asset basket ID"
+          },
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount the order belongs to"
+          },
+          "expiry_ts_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Ts Utc",
+            "description": "Expiry timestamp for GTD orders"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Order creation timestamp (UTC)"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (UTC)"
+          },
+          "traded_qty": {
+            "type": "number",
+            "title": "Traded Qty",
+            "description": "Total quantity filled",
+            "default": 0.0
+          },
+          "average_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Price",
+            "description": "Volume-weighted average fill price"
+          },
+          "fees_paid": {
+            "type": "number",
+            "title": "Fees Paid",
+            "description": "Total fees paid across all fills",
+            "default": 0.0
+          },
+          "complex_order_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Complex Order Ids",
+            "description": "List of complex order identifiers",
+            "default": []
+          },
+          "reject_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reject Reason",
+            "description": "Reason for rejection (if status is REJECTED)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id",
+          "order_type",
+          "time_in_force",
+          "qty",
+          "buy_flag",
+          "status",
+          "subaccount_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OrderResponse",
+        "description": "Schema for order response, when user request information about an order."
+      },
+      "OrderbookData": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "bids": {
+            "items": {
+              "$ref": "#/components/schemas/PriceLevelResponse"
+            },
+            "type": "array",
+            "title": "Bids"
+          },
+          "asks": {
+            "items": {
+              "$ref": "#/components/schemas/PriceLevelResponse"
+            },
+            "type": "array",
+            "title": "Asks"
+          },
+          "best_bid_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Bid Price"
+          },
+          "best_ask_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Ask Price"
+          },
+          "exchange_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange Timestamp"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "bids",
+          "asks",
+          "best_bid_price",
+          "best_ask_price",
+          "exchange_timestamp",
+          "is_valid"
+        ],
+        "title": "OrderbookData"
+      },
+      "OrderbookResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/OrderbookStatus"
+          },
+          "orderbook": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderbookData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "OrderbookResponse"
+      },
+      "OrderbookStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "pending",
+          "not_found"
+        ],
+        "title": "OrderbookStatus"
+      },
+      "PositionListResponse": {
+        "properties": {
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/PositionResponse"
+            },
+            "type": "array",
+            "title": "Positions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "positions"
+        ],
+        "title": "PositionListResponse",
+        "description": "Schema for list of positions."
+      },
+      "PositionResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "position": {
+            "type": "number",
+            "title": "Position"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "exchange_name": {
+            "type": "string",
+            "title": "Exchange Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "position",
+          "exchange",
+          "exchange_name"
+        ],
+        "title": "PositionResponse",
+        "description": "Schema for position response."
+      },
+      "PriceCandlestick": {
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp"
+          },
+          "open": {
+            "type": "number",
+            "title": "Open"
+          },
+          "high": {
+            "type": "number",
+            "title": "High"
+          },
+          "low": {
+            "type": "number",
+            "title": "Low"
+          },
+          "close": {
+            "type": "number",
+            "title": "Close"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp",
+          "open",
+          "high",
+          "low",
+          "close"
+        ],
+        "title": "PriceCandlestick",
+        "description": "Candlestick format for all exchanges."
+      },
+      "PriceLevelResponse": {
+        "properties": {
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "price",
+          "qty"
+        ],
+        "title": "PriceLevelResponse"
+      },
+      "PricePoint": {
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp",
+          "price"
+        ],
+        "title": "PricePoint",
+        "description": "Simple price point for history type."
+      },
+      "PriceResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "candlesticks",
+              "history"
+            ],
+            "title": "Type"
+          },
+          "candlesticks": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PriceCandlestick"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candlesticks"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PricePoint"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "exchange",
+          "type"
+        ],
+        "title": "PriceResponse",
+        "description": "Response for price queries."
+      },
+      "SubaccountCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SubaccountCreate",
+        "description": "Schema for creating a new subaccount."
+      },
+      "SubaccountResponse": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "inserted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inserted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "name",
+          "is_active",
+          "inserted_at"
+        ],
+        "title": "SubaccountResponse",
+        "description": "Schema for subaccount response."
+      },
+      "SubaccountUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "SubaccountUpdate",
+        "description": "Schema for updating a subaccount."
+      },
+      "TriggerOrder": {
+        "properties": {
+          "order_type": {
+            "type": "string",
+            "enum": [
+              "LIMIT",
+              "MARKET"
+            ],
+            "description": "Order type: 'LIMIT' or 'MARKET'"
+          },
+          "qty": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Qty",
+            "description": "Order quantity (number of contracts)"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "Limit price between 0 and 1. Required for LIMIT orders."
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "Order direction: true=buy, false=sell"
+          },
+          "stop_order_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Order Price",
+            "description": "Stop price if this is a stop order."
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_type",
+          "qty",
+          "buy_flag"
+        ],
+        "title": "TriggerOrder"
+      },
+      "UserFillListResponse": {
+        "properties": {
+          "subaccount_to_fills": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "$ref": "#/components/schemas/FillResponse"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Subaccount To Fills"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_to_fills"
+        ],
+        "title": "UserFillListResponse",
+        "description": "Schema for list of fills for a user."
+      },
+      "UserPositionListResponse": {
+        "properties": {
+          "subaccount_to_positions": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "$ref": "#/components/schemas/PositionResponse"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Subaccount To Positions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_to_positions"
+        ],
+        "title": "UserPositionListResponse",
+        "description": "Schema for list of positions for a user."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "MarketLookupResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "MarketLookupResponse",
+        "description": "Schema for market lookup response."
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key for programmatic access. Generate one at app.riverfi.com under Settings → API Keys."
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "JWT bearer token for web client authentication."
+      }
+    }
+  },
+  "security": [
+    { "ApiKeyAuth": [] },
+    { "BearerAuth": [] }
+  ],
+  "tags": [
+    {
+      "name": "markets",
+      "description": "Search and discover prediction markets across Kalshi and Polymarket."
+    },
+    {
+      "name": "subaccounts",
+      "description": "Manage trading subaccounts. Each subaccount can have its own exchange credentials and positions."
+    },
+    {
+      "name": "positions",
+      "description": "View current portfolio positions across all connected exchanges."
+    },
+    {
+      "name": "fills",
+      "description": "Retrieve trade execution history and fill details."
+    },
+    {
+      "name": "prices",
+      "description": "Get historical price data and candlesticks from exchanges."
+    },
+    {
+      "name": "orders",
+      "description": "Place and manage orders on prediction market exchanges."
+    },
+    {
+      "name": "complex-orders",
+      "description": "Manage complex orders: conditional orders (take-profit and stop-loss), TWAP, and other advanced order types."
+    }
+  ]
+}
