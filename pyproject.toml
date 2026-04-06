@@ -28,6 +28,7 @@ dependencies = [
 Homepage = "https://rivermarkets.com"
 Documentation = "https://docs.rivermarkets.com"
 Repository = "https://github.com/rivermarkets/rivermarkets-python"
+Issues = "https://github.com/rivermarkets/rivermarkets-python/issues"
 
 [tool.setuptools.packages.find]
 include = ["rivermarkets*"]
