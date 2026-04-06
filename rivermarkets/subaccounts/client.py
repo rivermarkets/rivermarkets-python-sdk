@@ -10,7 +10,6 @@ from ..core.api_error import ApiError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from ..core.jsonable_encoder import jsonable_encoder
-from ..types.position_list_response import PositionListResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -307,69 +306,6 @@ class SubaccountsClient:
                     SubaccountResponse,
                     parse_obj_as(
                         type_=SubaccountResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def get_subaccount_positions(
-        self,
-        subaccount_id: str,
-        *,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> PositionListResponse:
-        """
-        Fetch positions for a specific subaccount.
-
-        Returns positions for a specific subaccount.
-
-        Parameters
-        ----------
-        subaccount_id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        PositionListResponse
-            Successful Response
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets(
-            api_key="YOUR_API_KEY",
-        )
-        client.subaccounts.get_subaccount_positions(
-            subaccount_id="subaccount_id",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/positions",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    PositionListResponse,
-                    parse_obj_as(
-                        type_=PositionListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -719,77 +655,6 @@ class AsyncSubaccountsClient:
                     SubaccountResponse,
                     parse_obj_as(
                         type_=SubaccountResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def get_subaccount_positions(
-        self,
-        subaccount_id: str,
-        *,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> PositionListResponse:
-        """
-        Fetch positions for a specific subaccount.
-
-        Returns positions for a specific subaccount.
-
-        Parameters
-        ----------
-        subaccount_id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        PositionListResponse
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
-        )
-
-
-        async def main() -> None:
-            await client.subaccounts.get_subaccount_positions(
-                subaccount_id="subaccount_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/positions",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    PositionListResponse,
-                    parse_obj_as(
-                        type_=PositionListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

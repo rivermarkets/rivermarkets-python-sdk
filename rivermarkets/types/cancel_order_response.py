@@ -7,7 +7,7 @@ import pydantic
 
 class CancelOrderResponse(UniversalBaseModel):
     """
-    Schema for cancel order response What is returned when user cancels an order/ orders.
+    Schema for cancel order response
     """
 
     cancelled_river_order_ids: typing.List[str] = pydantic.Field()

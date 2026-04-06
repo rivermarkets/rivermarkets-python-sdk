@@ -4,6 +4,7 @@ from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import datetime as dt
 import pydantic
+from .instrument_status import InstrumentStatus
 
 
 class MarketSearchResult(UniversalBaseModel):
@@ -17,17 +18,22 @@ class MarketSearchResult(UniversalBaseModel):
     ticker: typing.Optional[str] = None
     token_id_yes: typing.Optional[str] = None
     token_id_no: typing.Optional[str] = None
-    slug: str
+    slug: typing.Optional[str] = None
     tick_size_price: float
     tick_size_qty: float
-    expiration_datetime: typing.Optional[dt.datetime] = None
+    minimum_order_size: float
+    expiration_datetime: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    Market expiration datetime (UTC)
+    """
+
     neg_risk: bool
     neg_risk_id: typing.Optional[str] = None
-    generic_asset_id: typing.Optional[int] = None
     condition_id: typing.Optional[str] = None
     name: str
     description: typing.Optional[str] = None
-    status: str
+    status: InstrumentStatus
+    category: typing.Optional[str] = None
     rank: typing.Optional[float] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

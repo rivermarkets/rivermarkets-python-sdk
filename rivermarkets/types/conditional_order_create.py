@@ -18,17 +18,17 @@ class ConditionalOrderCreate(UniversalBaseModel):
         pydantic.Field()
     )
     """
-    Type of conditional order: TP, SL, or STOP
+    Type of conditional order: TP (take profit), SL (stop loss), or STOP
     """
 
     stop_order_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Stop price if this is a stop order.
+    Activation price for STOP conditional orders. This is the price at which the conditional order triggers and places the trigger_order.
     """
 
     trigger_order: TriggerOrder = pydantic.Field()
     """
-    Trigger order
+    The order that gets placed when the conditional order activates. For TP/SL this happens after the parent order fills; for STOP this happens when stop_order_price is reached.
     """
 
     parent_river_order_id: typing.Optional[str] = pydantic.Field(default=None)

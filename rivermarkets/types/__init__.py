@@ -6,6 +6,7 @@ from .api_key_response import ApiKeyResponse
 from .api_key_rotate_response import ApiKeyRotateResponse
 from .cancel_complex_order_response import CancelComplexOrderResponse
 from .cancel_order_response import CancelOrderResponse
+from .complex_order_create_response import ComplexOrderCreateResponse
 from .complex_order_list_response import ComplexOrderListResponse
 from .complex_order_response import ComplexOrderResponse
 from .conditional_order_create import ConditionalOrderCreate
@@ -13,12 +14,15 @@ from .conditional_order_create_conditional_order_type import (
     ConditionalOrderCreateConditionalOrderType,
 )
 from .conditional_order_response import ConditionalOrderResponse
+from .conditional_order_status import ConditionalOrderStatus
+from .conditional_order_type import ConditionalOrderType
 from .credential_response import CredentialResponse
 from .custom_asset_detail_response import CustomAssetDetailResponse
 from .custom_asset_response import CustomAssetResponse
 from .encrypted_credential_create import EncryptedCredentialCreate
 from .fill_response import FillResponse
 from .http_validation_error import HttpValidationError
+from .instrument_status import InstrumentStatus
 from .invite_redeem_request import InviteRedeemRequest
 from .invite_redeem_response import InviteRedeemResponse
 from .market_lookup_response import MarketLookupResponse
@@ -29,10 +33,12 @@ from .order_detail_response import OrderDetailResponse
 from .order_fill_response import OrderFillResponse
 from .order_list_response import OrderListResponse
 from .order_response import OrderResponse
+from .order_status import OrderStatus
+from .order_time_in_force import OrderTimeInForce
+from .order_type import OrderType
 from .orderbook_data import OrderbookData
 from .orderbook_response import OrderbookResponse
 from .orderbook_status import OrderbookStatus
-from .position_list_response import PositionListResponse
 from .position_response import PositionResponse
 from .price_candlestick import PriceCandlestick
 from .price_level_response import PriceLevelResponse
@@ -40,6 +46,9 @@ from .price_point import PricePoint
 from .price_response import PriceResponse
 from .price_response_type import PriceResponseType
 from .subaccount_response import SubaccountResponse
+from .suggestion_asset_response import SuggestionAssetResponse
+from .suggestion_group_response import SuggestionGroupResponse
+from .suggestion_list_response import SuggestionListResponse
 from .trigger_order import TriggerOrder
 from .trigger_order_order_type import TriggerOrderOrderType
 from .user_fill_list_response import UserFillListResponse
@@ -60,17 +69,21 @@ __all__ = [
     "ApiKeyRotateResponse",
     "CancelComplexOrderResponse",
     "CancelOrderResponse",
+    "ComplexOrderCreateResponse",
     "ComplexOrderListResponse",
     "ComplexOrderResponse",
     "ConditionalOrderCreate",
     "ConditionalOrderCreateConditionalOrderType",
     "ConditionalOrderResponse",
+    "ConditionalOrderStatus",
+    "ConditionalOrderType",
     "CredentialResponse",
     "CustomAssetDetailResponse",
     "CustomAssetResponse",
     "EncryptedCredentialCreate",
     "FillResponse",
     "HttpValidationError",
+    "InstrumentStatus",
     "InviteRedeemRequest",
     "InviteRedeemResponse",
     "MarketLookupResponse",
@@ -81,10 +94,12 @@ __all__ = [
     "OrderFillResponse",
     "OrderListResponse",
     "OrderResponse",
+    "OrderStatus",
+    "OrderTimeInForce",
+    "OrderType",
     "OrderbookData",
     "OrderbookResponse",
     "OrderbookStatus",
-    "PositionListResponse",
     "PositionResponse",
     "PriceCandlestick",
     "PriceLevelResponse",
@@ -92,6 +107,9 @@ __all__ = [
     "PriceResponse",
     "PriceResponseType",
     "SubaccountResponse",
+    "SuggestionAssetResponse",
+    "SuggestionGroupResponse",
+    "SuggestionListResponse",
     "TriggerOrder",
     "TriggerOrderOrderType",
     "UserFillListResponse",

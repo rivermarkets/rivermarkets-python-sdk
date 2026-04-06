@@ -3,5 +3,5 @@
 import typing
 
 ConditionalOrderCreateConditionalOrderType = typing.Union[
-    typing.Literal["TP", "SL", "STOP"], typing.Any
+    typing.Literal["TP", "SL", "STOP", "REVERSE_STOP"], typing.Any
 ]

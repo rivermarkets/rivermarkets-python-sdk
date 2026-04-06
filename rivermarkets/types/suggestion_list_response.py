@@ -2,16 +2,16 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-from .position_response import PositionResponse
+from .suggestion_group_response import SuggestionGroupResponse
 import pydantic
 
 
-class PositionListResponse(UniversalBaseModel):
+class SuggestionListResponse(UniversalBaseModel):
     """
-    Schema for list of positions.
+    Schema for the list of suggestion groups.
     """
 
-    positions: typing.List[PositionResponse]
+    groups: typing.List[SuggestionGroupResponse]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

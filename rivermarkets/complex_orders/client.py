@@ -13,9 +13,10 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.conditional_order_create import ConditionalOrderCreate
-from ..types.complex_order_response import ComplexOrderResponse
+from ..types.complex_order_create_response import ComplexOrderCreateResponse
 from ..core.serialization import convert_and_respect_annotation_metadata
 from ..types.cancel_complex_order_response import CancelComplexOrderResponse
+from ..types.complex_order_response import ComplexOrderResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.client_wrapper import AsyncClientWrapper
 
@@ -135,7 +136,7 @@ class ComplexOrdersClient:
         custom_asset_id: typing.Optional[str] = OMIT,
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ComplexOrderResponse:
+    ) -> ComplexOrderCreateResponse:
         """
         Create a new complex order.
 
@@ -171,7 +172,7 @@ class ComplexOrdersClient:
 
         Returns
         -------
-        ComplexOrderResponse
+        ComplexOrderCreateResponse
             Successful Response
 
         Examples
@@ -204,9 +205,9 @@ class ComplexOrdersClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ComplexOrderResponse,
+                    ComplexOrderCreateResponse,
                     parse_obj_as(
-                        type_=ComplexOrderResponse,  # type: ignore
+                        type_=ComplexOrderCreateResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -543,7 +544,7 @@ class AsyncComplexOrdersClient:
         custom_asset_id: typing.Optional[str] = OMIT,
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ComplexOrderResponse:
+    ) -> ComplexOrderCreateResponse:
         """
         Create a new complex order.
 
@@ -579,7 +580,7 @@ class AsyncComplexOrdersClient:
 
         Returns
         -------
-        ComplexOrderResponse
+        ComplexOrderCreateResponse
             Successful Response
 
         Examples
@@ -620,9 +621,9 @@ class AsyncComplexOrdersClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ComplexOrderResponse,
+                    ComplexOrderCreateResponse,
                     parse_obj_as(
-                        type_=ComplexOrderResponse,  # type: ignore
+                        type_=ComplexOrderCreateResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

@@ -2,8 +2,8 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import datetime as dt
-import typing
 import pydantic
+import typing
 
 
 class CredentialResponse(UniversalBaseModel):
@@ -14,8 +14,15 @@ class CredentialResponse(UniversalBaseModel):
     id: int
     subaccount_id: str
     exchange_id: int
-    inserted_at: dt.datetime
-    updated_at: dt.datetime
+    inserted_at: dt.datetime = pydantic.Field()
+    """
+    Credential creation timestamp (UTC)
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    Last update timestamp (UTC)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

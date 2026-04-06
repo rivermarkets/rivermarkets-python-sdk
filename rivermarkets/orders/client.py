@@ -36,6 +36,7 @@ class OrdersClient:
         *,
         status: typing.Optional[ListOrdersV1OrdersGetRequestStatus] = None,
         river_id: typing.Optional[int] = None,
+        custom_asset_id: typing.Optional[str] = None,
         subaccount_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
@@ -51,6 +52,19 @@ class OrdersClient:
         All filters are optional and can be combined. If no `subaccount_id` is specified,
         returns orders from all subaccounts the user has access to.
 
+        **Order Statuses:**
+        - `PENDING_SUBMISSION`: Order received, awaiting exchange submission.
+        - `PROCESSING`: Being processed by the order consumer.
+        - `RESTING`: Live on the exchange order book.
+        - `PARTIALLY_FILLED`: Some quantity executed, remainder resting.
+        - `EXECUTED`: Fully filled.
+        - `CANCELLED`: Cancelled by user or system.
+        - `REJECTED`: Rejected by exchange (see order details for reason).
+        - `EXPIRED`: GTD order past expiry time.
+
+        **Aggregated Fields:**
+        Each order includes `traded_qty`, `average_price`, and `fees_paid` computed from fills.
+
         Parameters
         ----------
         status : typing.Optional[ListOrdersV1OrdersGetRequestStatus]
@@ -58,6 +72,9 @@ class OrdersClient:
 
         river_id : typing.Optional[int]
             Filter by instrument ID
+
+        custom_asset_id : typing.Optional[str]
+            Filter by custom asset ID
 
         subaccount_id : typing.Optional[str]
             Filter to a specific subaccount
@@ -94,6 +111,7 @@ class OrdersClient:
             params={
                 "status": status,
                 "river_id": river_id,
+                "custom_asset_id": custom_asset_id,
                 "subaccount_id": subaccount_id,
                 "buy_flag": buy_flag,
                 "limit": limit,
@@ -148,21 +166,15 @@ class OrdersClient:
         Submits an order for asynchronous processing. The order is persisted immediately
         and queued for execution on the target exchange.
 
-        **Order Types** (`order_type`):
-        - `LIMIT`: Execute at specified price or better. Requires `price` parameter.
-        - `MARKET`: Execute immediately at best available price.
-
-        **Time in Force** (`time_in_force`):
-        - `FOK` (Fill or Kill): Execute entire order immediately or cancel.
-        - `GTC` (Good Til Cancelled): Remain active until filled or manually cancelled.
-        - `GTD` (Good Til Date): Remain active until `expiry_ts_utc`. Requires `expiry_ts_utc` parameter.
-        - `IOC` (Immediate or Cancel): Execute immediately; cancel any unfilled portion.
+        See  [Orders](https://docs.riverfi.com/concepts/orders) and [Order Types](https://docs.riverfi.com/concepts/order-types) for more information.
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).
+        Custom asset orders only support `MARKET` order type — the system automatically routes
+        IOC limit orders to each underlying instrument at optimal prices.
 
         **Response:**
-        Returns `202 Accepted` with the order in `PENDING_SUBMISSION` status.
+        Returns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).
         Poll `GET /v1/orders/{order_id}` or use webhooks to track execution.
 
         Parameters
@@ -189,10 +201,10 @@ class OrdersClient:
             Instrument ID. Mutually exclusive with custom_asset_id.
 
         custom_asset_id : typing.Optional[str]
-            Custom asset basket ID. Mutually exclusive with river_id.
+            Custom asset basket UUID. Mutually exclusive with river_id.
 
         expiry_ts_utc : typing.Optional[dt.datetime]
-            Expiry timestamp (ISO 8601). Required for GTD orders.
+            Expiry timestamp in UTC(ISO 8601). Required for GTD orders. i.e '2023-11-07T05:31:56Z'
 
         conditional_orders_params : typing.Optional[typing.Sequence[ConditionalOrderCreate]]
             Optional list of conditional orders (TP/SL) to attach to this order.
@@ -273,14 +285,6 @@ class OrdersClient:
         Get a single order by ID with its fills.
 
         Returns complete order details including execution history.
-
-        **Fill Information:**
-        Each fill represents a partial or complete execution and includes:
-        - `price`: Execution price
-        - `qty`: Filled quantity
-        - `fee`: Fee charged for this fill
-        - `is_maker`: Whether this fill was a maker (provided liquidity)
-        - `exchange_timestamp`: When the exchange executed the fill
 
         **Use Cases:**
         - Track order progress and execution quality
@@ -477,6 +481,7 @@ class AsyncOrdersClient:
         *,
         status: typing.Optional[ListOrdersV1OrdersGetRequestStatus] = None,
         river_id: typing.Optional[int] = None,
+        custom_asset_id: typing.Optional[str] = None,
         subaccount_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
@@ -492,6 +497,19 @@ class AsyncOrdersClient:
         All filters are optional and can be combined. If no `subaccount_id` is specified,
         returns orders from all subaccounts the user has access to.
 
+        **Order Statuses:**
+        - `PENDING_SUBMISSION`: Order received, awaiting exchange submission.
+        - `PROCESSING`: Being processed by the order consumer.
+        - `RESTING`: Live on the exchange order book.
+        - `PARTIALLY_FILLED`: Some quantity executed, remainder resting.
+        - `EXECUTED`: Fully filled.
+        - `CANCELLED`: Cancelled by user or system.
+        - `REJECTED`: Rejected by exchange (see order details for reason).
+        - `EXPIRED`: GTD order past expiry time.
+
+        **Aggregated Fields:**
+        Each order includes `traded_qty`, `average_price`, and `fees_paid` computed from fills.
+
         Parameters
         ----------
         status : typing.Optional[ListOrdersV1OrdersGetRequestStatus]
@@ -499,6 +517,9 @@ class AsyncOrdersClient:
 
         river_id : typing.Optional[int]
             Filter by instrument ID
+
+        custom_asset_id : typing.Optional[str]
+            Filter by custom asset ID
 
         subaccount_id : typing.Optional[str]
             Filter to a specific subaccount
@@ -543,6 +564,7 @@ class AsyncOrdersClient:
             params={
                 "status": status,
                 "river_id": river_id,
+                "custom_asset_id": custom_asset_id,
                 "subaccount_id": subaccount_id,
                 "buy_flag": buy_flag,
                 "limit": limit,
@@ -597,21 +619,15 @@ class AsyncOrdersClient:
         Submits an order for asynchronous processing. The order is persisted immediately
         and queued for execution on the target exchange.
 
-        **Order Types** (`order_type`):
-        - `LIMIT`: Execute at specified price or better. Requires `price` parameter.
-        - `MARKET`: Execute immediately at best available price.
-
-        **Time in Force** (`time_in_force`):
-        - `FOK` (Fill or Kill): Execute entire order immediately or cancel.
-        - `GTC` (Good Til Cancelled): Remain active until filled or manually cancelled.
-        - `GTD` (Good Til Date): Remain active until `expiry_ts_utc`. Requires `expiry_ts_utc` parameter.
-        - `IOC` (Immediate or Cancel): Execute immediately; cancel any unfilled portion.
+        See  [Orders](https://docs.riverfi.com/concepts/orders) and [Order Types](https://docs.riverfi.com/concepts/order-types) for more information.
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).
+        Custom asset orders only support `MARKET` order type — the system automatically routes
+        IOC limit orders to each underlying instrument at optimal prices.
 
         **Response:**
-        Returns `202 Accepted` with the order in `PENDING_SUBMISSION` status.
+        Returns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).
         Poll `GET /v1/orders/{order_id}` or use webhooks to track execution.
 
         Parameters
@@ -638,10 +654,10 @@ class AsyncOrdersClient:
             Instrument ID. Mutually exclusive with custom_asset_id.
 
         custom_asset_id : typing.Optional[str]
-            Custom asset basket ID. Mutually exclusive with river_id.
+            Custom asset basket UUID. Mutually exclusive with river_id.
 
         expiry_ts_utc : typing.Optional[dt.datetime]
-            Expiry timestamp (ISO 8601). Required for GTD orders.
+            Expiry timestamp in UTC(ISO 8601). Required for GTD orders. i.e '2023-11-07T05:31:56Z'
 
         conditional_orders_params : typing.Optional[typing.Sequence[ConditionalOrderCreate]]
             Optional list of conditional orders (TP/SL) to attach to this order.
@@ -730,14 +746,6 @@ class AsyncOrdersClient:
         Get a single order by ID with its fills.
 
         Returns complete order details including execution history.
-
-        **Fill Information:**
-        Each fill represents a partial or complete execution and includes:
-        - `price`: Execution price
-        - `qty`: Filled quantity
-        - `fee`: Fee charged for this fill
-        - `is_maker`: Whether this fill was a maker (provided liquidity)
-        - `exchange_timestamp`: When the exchange executed the fill
 
         **Use Cases:**
         - Track order progress and execution quality

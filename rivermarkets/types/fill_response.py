@@ -15,7 +15,11 @@ class FillResponse(UniversalBaseModel):
     client_order_id: typing.Optional[str] = None
     exchange_order_id: str
     exchange_trade_id: str
-    exchange_timestamp: dt.datetime
+    exchange_timestamp: dt.datetime = pydantic.Field()
+    """
+    Execution timestamp from exchange (UTC)
+    """
+
     price: float
     qty: float
     fee: float
