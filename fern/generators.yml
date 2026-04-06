@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://schema.buildwithfern.dev/generators-yml.json
+api:
+  specs:
+    - openapi: openapi.json
+default-group: local
+groups:
+  local:
+    generators:
+      - name: fernapi/fern-python-sdk
+        output:
+          location: local-file-system
+          path: ../rivermarkets
+        version: 4.3.5
+        config:
+          client:
+            class_name: RiverMarkets
+            exported_filename: client.py
+          pydantic_config:
+            version: v2
