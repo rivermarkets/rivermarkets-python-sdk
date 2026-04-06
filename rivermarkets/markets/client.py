@@ -2,8 +2,11 @@
 
 from ..core.client_wrapper import SyncClientWrapper
 import typing
+from ..types.instrument_status import InstrumentStatus
+import datetime as dt
 from ..core.request_options import RequestOptions
 from ..types.market_search_response import MarketSearchResponse
+from ..core.datetime_utils import serialize_datetime
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
@@ -11,8 +14,6 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.market_lookup_response import MarketLookupResponse
 from ..types.market_search_result import MarketSearchResult
-from ..errors.bad_request_error import BadRequestError
-from ..errors.not_found_error import NotFoundError
 from ..core.client_wrapper import AsyncClientWrapper
 
 
@@ -23,31 +24,46 @@ class MarketsClient:
     def search_markets(
         self,
         *,
-        q: str,
-        exchange: typing.Optional[str] = None,
-        status: typing.Optional[str] = None,
+        q: typing.Optional[str] = None,
+        exchange_name: typing.Optional[str] = None,
+        category: typing.Optional[str] = None,
+        status: typing.Optional[InstrumentStatus] = None,
+        expiration_date_start: typing.Optional[dt.datetime] = None,
+        expiration_date_end: typing.Optional[dt.datetime] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
-        Search markets across all exchanges.
+        Search and browse markets across all exchanges.
 
         Supports:
         - Exact match on ticker, condition_id, slug, river_id
         - Full-text search on name, description, tags
+        - Browse by filters (no query required)
         - Results ranked by relevance
+
+        We default to active markets in the view so things are faster
 
         Parameters
         ----------
-        q : str
+        q : typing.Optional[str]
             Search query
 
-        exchange : typing.Optional[str]
+        exchange_name : typing.Optional[str]
             Filter by exchange name (KALSHI, POLYMARKET)
 
-        status : typing.Optional[str]
-            Filter by status (active, closed, inactive)
+        category : typing.Optional[str]
+            Filter by canonical category (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other)
+
+        status : typing.Optional[InstrumentStatus]
+            Filter by instrument status
+
+        expiration_date_start : typing.Optional[dt.datetime]
+            Start of expiration date range (inclusive, ISO 8601)
+
+        expiration_date_end : typing.Optional[dt.datetime]
+            End of expiration date range (exclusive, ISO 8601)
 
         limit : typing.Optional[int]
             Maximum number of results
@@ -70,17 +86,22 @@ class MarketsClient:
         client = RiverMarkets(
             api_key="YOUR_API_KEY",
         )
-        client.markets.search_markets(
-            q="q",
-        )
+        client.markets.search_markets()
         """
         _response = self._client_wrapper.httpx_client.request(
             "v1/markets/search",
             method="GET",
             params={
                 "q": q,
-                "exchange": exchange,
+                "exchange_name": exchange_name,
+                "category": category,
                 "status": status,
+                "expiration_date_start": serialize_datetime(expiration_date_start)
+                if expiration_date_start is not None
+                else None,
+                "expiration_date_end": serialize_datetime(expiration_date_end)
+                if expiration_date_end is not None
+                else None,
                 "limit": limit,
                 "offset": offset,
             },
@@ -180,15 +201,15 @@ class MarketsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResult:
         """
-        Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one parameter.
+        Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one.
 
         Parameters
         ----------
         ticker : typing.Optional[str]
-            Exact Kalshi ticker (e.g., KXNBA-26-DET)
+            Exact Kalshi ticker (e.g. KXNBA-26-DET)
 
         slug : typing.Optional[str]
-            Exact Polymarket slug (e.g., will-the-denver-nuggets-win-the-2026-nba-finals)
+            Exact Polymarket slug (e.g. will-the-denver-nuggets-win-the-2026-nba-finals)
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -225,26 +246,6 @@ class MarketsClient:
                         object_=_response.json(),
                     ),
                 )
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
@@ -268,31 +269,46 @@ class AsyncMarketsClient:
     async def search_markets(
         self,
         *,
-        q: str,
-        exchange: typing.Optional[str] = None,
-        status: typing.Optional[str] = None,
+        q: typing.Optional[str] = None,
+        exchange_name: typing.Optional[str] = None,
+        category: typing.Optional[str] = None,
+        status: typing.Optional[InstrumentStatus] = None,
+        expiration_date_start: typing.Optional[dt.datetime] = None,
+        expiration_date_end: typing.Optional[dt.datetime] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
-        Search markets across all exchanges.
+        Search and browse markets across all exchanges.
 
         Supports:
         - Exact match on ticker, condition_id, slug, river_id
         - Full-text search on name, description, tags
+        - Browse by filters (no query required)
         - Results ranked by relevance
+
+        We default to active markets in the view so things are faster
 
         Parameters
         ----------
-        q : str
+        q : typing.Optional[str]
             Search query
 
-        exchange : typing.Optional[str]
+        exchange_name : typing.Optional[str]
             Filter by exchange name (KALSHI, POLYMARKET)
 
-        status : typing.Optional[str]
-            Filter by status (active, closed, inactive)
+        category : typing.Optional[str]
+            Filter by canonical category (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other)
+
+        status : typing.Optional[InstrumentStatus]
+            Filter by instrument status
+
+        expiration_date_start : typing.Optional[dt.datetime]
+            Start of expiration date range (inclusive, ISO 8601)
+
+        expiration_date_end : typing.Optional[dt.datetime]
+            End of expiration date range (exclusive, ISO 8601)
 
         limit : typing.Optional[int]
             Maximum number of results
@@ -320,9 +336,7 @@ class AsyncMarketsClient:
 
 
         async def main() -> None:
-            await client.markets.search_markets(
-                q="q",
-            )
+            await client.markets.search_markets()
 
 
         asyncio.run(main())
@@ -332,8 +346,15 @@ class AsyncMarketsClient:
             method="GET",
             params={
                 "q": q,
-                "exchange": exchange,
+                "exchange_name": exchange_name,
+                "category": category,
                 "status": status,
+                "expiration_date_start": serialize_datetime(expiration_date_start)
+                if expiration_date_start is not None
+                else None,
+                "expiration_date_end": serialize_datetime(expiration_date_end)
+                if expiration_date_end is not None
+                else None,
                 "limit": limit,
                 "offset": offset,
             },
@@ -441,15 +462,15 @@ class AsyncMarketsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResult:
         """
-        Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one parameter.
+        Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one.
 
         Parameters
         ----------
         ticker : typing.Optional[str]
-            Exact Kalshi ticker (e.g., KXNBA-26-DET)
+            Exact Kalshi ticker (e.g. KXNBA-26-DET)
 
         slug : typing.Optional[str]
-            Exact Polymarket slug (e.g., will-the-denver-nuggets-win-the-2026-nba-finals)
+            Exact Polymarket slug (e.g. will-the-denver-nuggets-win-the-2026-nba-finals)
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -493,26 +514,6 @@ class AsyncMarketsClient:
                         type_=MarketSearchResult,  # type: ignore
                         object_=_response.json(),
                     ),
-                )
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
                 )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(

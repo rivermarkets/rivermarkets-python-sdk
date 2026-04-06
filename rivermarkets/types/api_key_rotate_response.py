@@ -21,7 +21,10 @@ class ApiKeyRotateResponse(UniversalBaseModel):
     """
 
     name: str
-    created_at: dt.datetime
+    created_at: dt.datetime = pydantic.Field()
+    """
+    API key creation timestamp (UTC)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

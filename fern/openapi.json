@@ -2,21 +2,16 @@
   "openapi": "3.1.0",
   "info": {
     "title": "River Markets API",
-    "description": "# Getting Started\n\n\nRiver Markets provides users with a unified prime brokerage interface for prediction markets, including\n- Liquidity aggregation\n- Order routing\n- Market and data search\n\nThis API guide will help you get up and running quickly.\n\n## Concepts\n\n### River IDs\n\nEvery market across all exchanges is assigned a unique **River ID** - a unified identifier that works across our entire platform. This allows you to:\n\n- Reference the same market consistently regardless of which exchange it trades on\n- Place orders using a single identifier format\n- Track positions and fills across exchanges with one ID\n\nWhen searching for markets, the API returns both the exchange-native identifier (e.g., Kalshi ticker, Polymarket slug) and the River ID. Use the River ID when placing orders.\n\n### Subaccounts\n\n**Subaccounts** let you organize your trading activity into separate containers. Each subaccount:\n\n- Has its own set of exchange credentials\n- Maintains separate positions and order history\n- Can represent different strategies, clients, or portfolios\n\nThis is useful for:\n- **Fund managers**: Segregate client portfolios\n- **Traders**: Separate strategies (e.g., momentum vs. mean reversion)\n- **Teams**: Give team members isolated trading environments\n\n## 1. Create an Account\n\nSign up at [app.riverfi.com](https://app.riverfi.com) to create your account.\n\n## 2. Generate an API Key\n\n1. Log in to your dashboard\n2. Navigate to **Settings \u2192 API Keys**\n3. Click **Create API Key**\n4. Copy and securely store your key - it will only be shown once\n\n## 3. Install required packages\n\n```python\npip install requests\n```\n\n## 4. Make Your First Request\n\nTest your API key by searching for markets. \n\nWe support ticker (kalshi ticker, polymarket condition_id/slug, river_id) and fuzzy search ('bitcoin', 'fed rates').\n\n```python\nimport requests\n\nAPI_KEY = \"your_api_key\"\nBASE_URL = \"https://api.riverfi.com/v1\"\n\nheaders = {\"x-api-key\": API_KEY}\n\n# Search for shutdown related markets, on Polymarket\nresponse = requests.get(\n    f\"{BASE_URL}/markets/search\", headers=headers, params={\"q\": \"shutdown\", \"exchange\": \"POLYMARKET\"}\n)\nfor market in response.json()[\"results\"]:\n    print(f\"River ID: {market['river_id']}, Ticker: {market['slug']}\")\n```\n\n## 5. Set Up a Subaccount\n\nRiver allows users to setup subaccounts - which allow them to manage different trading strategies or client portfolios.\n\nThese can be added through the UI by going to Settings -> Subaccounts\nor programatically.\n\n### Video Walkthrough\n\nWatch this tutorial to see how to create a subaccount, add a Polymarket account, and place your first trade:\n\n<div style=\"position: relative; padding-bottom: 54.37499999999999%; height: 0;\"><iframe src=\"https://www.loom.com/embed/9b49e269c09e436d98b72f3cb55d7691\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n\n### Programmatic Setup \n\n```python\n# Create a subaccount\nresponse = requests.post(\n    f\"{BASE_URL}/subaccounts\",\n    headers=headers,\n    json={\"name\": \"My Trading Account\"}\n)\nsubaccount = response.json()\nsubaccount_id = subaccount[\"id\"]\n```\n\n## 6. Add Exchange Credentials\n\nExchange credentials can also be added via UI under Settings -> Subaccounts,\nor programatically as shown below.\n\nFor best results, we recommend\n- Polymarket : create an account using email (not a wallet) and get your wallet and PK directly from Polymarket under [Settings -> Export Private Key](https://polymarket.com/settings)\n- Kalshi : create a secret/key pair with Read/Write access under [Settings -> Account & security -> API keys](https://kalshi.com/account/profile)\n\n```python\n# Add Polymarket credentials\nresponse = requests.post(\n    f\"{BASE_URL}/credentials\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"exchange\": \"polymarket\",\n        \"wallet_address\": \"your_polymarket_wallet_address\",\n        \"private_key\": \"your_polymarket_private_key\"\n    }\n)\n# Add Kalshi credentials\nresponse = requests.post(\n    f\"{BASE_URL}/credentials\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"exchange\": \"kalshi\",\n        \"api_key\": \"your_kalshi_api_key\",\n        \"api_secret\": \"your_kalshi_secret\"\n    }\n)\n```\n\nWe use asymmetric encryption so your credentials are not transferred between services or stored in plain text.\nWe delete your credentials when you delete a subaccount. \n\n## 7. Place Your First Order\n\nUse the River ID from your market search to place an order.\n\n```python\n# Place a limit order (buy 10 contracts at $0.50)\nresponse = requests.post(\n    f\"{BASE_URL}/orders\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"river_id\": 4552150,       # From market search\n        \"order_type\": \"LIMIT\",      # LIMIT or MARKET\n        \"time_in_force\": \"GTC\",     # FOK, GTC, GTD, or IOC\n        \"buy_flag\": True,           # True=buy, False=sell\n        \"price\": 0.50,              # Limit price (0-1)\n        \"qty\": 10,                  # Number of contracts\n    }\n)\norder = response.json()\nprint(f\"Order placed: {order['river_order_id']}\")\n```\n\n## 8. Check Order Status\n\nMonitor your order's progress by fetching its current state.\n\n```python\n# Get order status\norder_id = order['river_order_id']\nresponse = requests.get(\n    f\"{BASE_URL}/orders/{order_id}\",\n    headers=headers\n)\norder_status = response.json()\nprint(f\"Status: {order_status['status']}, Filled: {order_status['traded_qty']}/{order_status['qty']}\")\n```\n\nPossible order statuses:\n- `pending_submission` - Order received, awaiting processing\n- `submitted` - Order sent to exchange\n- `partially_filled` - Order partially executed\n- `filled` - Order fully executed\n- `cancelled` - Order cancelled\n- `rejected` - Order rejected (see `reject_reason`)\n\n## 9. Cancel an Order\n\nCancel a resting order before it's fully filled.\n\n```python\n# Cancel an order\norder_id = order['river_order_id']\nresponse = requests.delete(\n    f\"{BASE_URL}/orders/{order_id}\",\n    headers=headers\n)\nif response.status_code == 200:\n    print(\"Order cancelled successfully\")\n```\n\nNote: Only orders with status `submitted` or `partially_filled` can be cancelled.\n\n## Supported Exchanges\n\n| Exchange | Markets | Status |\n|----------|---------|--------|\n| Kalshi | US regulated prediction markets | Available |\n| Polymarket | Crypto prediction markets | Available |\n| Polymarket US | US regulated prediction markets | Coming soon |\n| ForecastEx | US regulated prediction markets | Coming soon |\n| MIAXdx | US regulated markets | Coming soon |\n\n## Rate Limits\n\n- **Standard**: 100 requests/minute\n- **Premium**: Contact support for higher limits\n\n\n\n## Authentication\n\nAll endpoints require authentication via one of:\n- **Bearer Token**: `Authorization: Bearer <jwt_token>` (for web clients)\n- **API Key**: `x-api-key: <your_api_key>` (for programmatic access)\n\n\n---\n\n\n\n# Order Types Documentation\n\nComplete guide to all order types available in the River Markets trading platform.\n\n---\n\n## Basic Order Types\n\n### Market Order\nExecutes immediately at the best available price.\n- **Use case**: When you need immediate execution and price is less important\n- **Example**: Market buy 100 contracts \u2192 fills at current best ask price\n\n### Limit Order\nRests on the order book at a specified price.\n- **Use case**: When you want price control and can wait for execution\n- **Example**: Limit buy 100 @ $0.65 \u2192 only fills at $0.65 or better\n\n---\n\n## Conditional Order Types\n\nConditional orders are **not placed immediately**. They activate (\"trigger\") when specific conditions are met.\n\n### 1. Stop Orders (STOP)\n\n**Stop orders trigger when price moves AGAINST your desired direction.** Used primarily for **stop losses** (exit protection) or **breakout entries**.\n\n#### Stop Market\n- **Triggers**: When market trades at or through your stop price\n- **Executes**: As a market order (immediate fill at best available price)\n- **Example**:\n  ```\n  You're LONG at $0.70, want to exit if price falls to $0.60\n  \u2192 Stop Market SELL @ $0.60\n  \u2192 Triggers when price \u2264 $0.60\n  \u2192 Sends market sell order \u2192 fills immediately\n  ```\n\n#### Stop Limit\n- **Triggers**: When market trades at or through your stop price\n- **Executes**: As a limit order at your specified limit price\n- **Example**:\n  ```\n  You're LONG at $0.70, want to exit around $0.60 but not worse than $0.59\n  \u2192 Stop Limit SELL @ $0.60, Limit $0.59\n  \u2192 Triggers when price \u2264 $0.60\n  \u2192 Sends limit sell order @ $0.59 \u2192 waits for fill at $0.59 or better\n  ```\n- **Risk**: May not fill if price moves too fast through your limit\n\n**Directional Logic:**\n- **BUY stop**: Triggers at or **above** stop price (breakout entry or short exit)\n- **SELL stop**: Triggers at or **below** stop price (stop loss or long exit)\n\n---\n\n### 2. Reverse Stop Orders (REVERSE_STOP)\n\n**Reverse stop orders trigger when price moves IN your desired direction.** Used exclusively for **take profit** scenarios.\n\n**Key Concept**: A \"reverse stop\" is called \"reverse\" because it triggers in the OPPOSITE direction of a normal stop order.\n\n#### Reverse Stop Market (TP Market)\n- **Triggers**: When market trades at or through your target price (OPPOSITE direction from normal stop)\n- **Executes**: As a market order\n- **Example**:\n  ```\n  You're LONG at $0.60, want to take profit if price rises to $0.80\n  \u2192 TP Market (Reverse Stop Market) SELL @ $0.80\n  \u2192 Normal stop would trigger BELOW, but reverse stop triggers ABOVE\n  \u2192 Triggers when price \u2265 $0.80\n  \u2192 Sends market sell order \u2192 fills immediately\n  ```\n\n**Directional Logic (REVERSED from normal stop):**\n- **BUY reverse stop**: Triggers at or **below** target (opposite of normal buy stop)\n- **SELL reverse stop**: Triggers at or **above** target (opposite of normal sell stop)\n\n**Why \"reverse\"?**\n- Normal **SELL stop** @ $0.60 triggers when price \u2264 $0.60 (price falling)\n- **SELL reverse stop** @ $0.80 triggers when price \u2265 $0.80 (price rising)\n- The trigger direction is reversed!\n\n#### Reverse Stop Limit (TP Limit)\n- **Triggers**: When market trades at or through your target price\n- **Executes**: As a limit order at your specified limit price\n- **Example**:\n  ```\n  You're LONG at $0.60, want to take profit around $0.80 but not worse than $0.79\n  \u2192 TP Limit (Reverse Stop Limit) SELL @ $0.80, Limit $0.79\n  \u2192 Triggers when price \u2265 $0.80\n  \u2192 Sends limit sell order @ $0.79 \u2192 waits for fill at $0.79 or better\n  ```\n\n---\n\n### 3. Take Profit Orders (TP)\n\n**Parent-child orders**: Automatically triggers a child order when a parent order **fills**.\n\n#### TP Market\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Immediately places the child order (can be another TP/SL or direct order)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH TP Market @ $0.80\n  \u2192 When buy fills \u2192 immediately activates TP Market SELL @ $0.80\n  \u2192 That TP Market is a reverse stop that triggers when price \u2265 $0.80\n  ```\n\n#### TP Limit\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Activates TP Limit order (reverse stop limit)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH TP Limit @ $0.80 (limit $0.79)\n  \u2192 When buy fills \u2192 activates TP Limit SELL\n  \u2192 Triggers when price \u2265 $0.80 \u2192 sends limit sell @ $0.79\n  ```\n\n---\n\n### 4. Stop Loss Orders (SL)\n\n**Parent-child orders**: Automatically triggers a child order when a parent order **fills**.\n\n#### SL Market\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Immediately places the child order (can be another SL/TP or direct order)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH SL Market @ $0.55\n  \u2192 When buy fills \u2192 immediately activates SL Market SELL @ $0.55\n  \u2192 That SL Market is a stop order that triggers when price \u2264 $0.55\n  ```\n\n#### SL Limit\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Activates SL Limit order (stop limit)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH SL Limit @ $0.55 (limit $0.54)\n  \u2192 When buy fills \u2192 activates SL Limit SELL\n  \u2192 Triggers when price \u2264 $0.55 \u2192 sends limit sell @ $0.54\n  ```\n\n---\n\n## Order Type Comparison\n\n| Type | Trigger Condition | Execution | Primary Use Case |\n|------|------------------|-----------|------------------|\n| **Market** | None (immediate) | Immediate at best price | Need immediate fill |\n| **Limit** | None (rests) | At limit price or better | Want price control |\n| **Stop Market** | Price moves AGAINST you | Market order (immediate) | Stop loss, breakout entry |\n| **Stop Limit** | Price moves AGAINST you | Limit order (may not fill) | Stop loss with price protection |\n| **TP Market** | Parent fills + price moves FOR you | Market order via reverse stop | Take profit with immediate exit |\n| **TP Limit** | Parent fills + price moves FOR you | Limit order via reverse stop | Take profit with price control |\n| **SL Market** | Parent fills + price moves AGAINST you | Market order via stop | Stop loss from entry |\n| **SL Limit** | Parent fills + price moves AGAINST you | Limit order via stop | Stop loss with price floor |\n\n---\n\n## Key Concepts\n\n### Stop vs Reverse Stop\n- **Stop**: Triggers when price moves AGAINST you (exit losses, enter breakouts)\n- **Reverse Stop**: Triggers when price moves FOR you (take profits)\n\n### Parent-Child Orders\n- **TP/SL orders** are \"meta-orders\" that activate child orders when a parent fills\n- The child order itself is usually a stop or reverse stop order\n- This creates a two-step process: Parent fill \u2192 Child activation \u2192 Price trigger \u2192 Execution\n\n### Trigger Direction Summary\n| Order Side | Stop (Loss/Breakout) | Reverse Stop (Profit) |\n|------------|---------------------|----------------------|\n| **BUY** | Triggers \u2265 stop price | Triggers \u2264 target price |\n| **SELL** | Triggers \u2264 stop price | Triggers \u2265 target price |\n\n---\n\n## Examples\n\n### Complete Trading Scenario\n```\n1. Place limit BUY 100 @ $0.60\n   WITH TP Market @ $0.80 (reverse stop)\n   AND SL Market @ $0.55 (normal stop)\n\n2. Buy fills at $0.60\n   \u2192 TP Market SELL @ $0.80 activated (reverse stop)\n   \u2192 SL Market SELL @ $0.55 activated (normal stop)\n\n3a. If price rises to $0.80:\n    \u2192 TP triggers (price \u2265 $0.80) \u2192 market sell executes\n    \u2192 SL cancelled automatically\n\n3b. If price falls to $0.55:\n    \u2192 SL triggers (price \u2264 $0.55) \u2192 market sell executes\n    \u2192 TP cancelled automatically\n```\n\n### Breakout Entry with Protection\n```\nPrice is at $0.70, resistance at $0.75, support at $0.65\n\n1. Place Stop Market BUY @ $0.76 (breakout entry)\n   \u2192 Triggers when price \u2265 $0.76 (breaks resistance)\n   \u2192 Market buy executes\n\n2. Add SL Market @ $0.74 to the stop order\n   \u2192 When breakout buy fills \u2192 SL activates\n   \u2192 Protects if breakout fails\n```\n",
+    "description": "# Getting Started\n\n\nRiver Markets provides users with a unified prime brokerage interface for prediction markets, including\n- Liquidity aggregation\n- Order routing\n- Market and data search\n\nThis API guide will help you get up and running quickly.\n\n## Concepts\n\n### River IDs\n\nEvery market across all exchanges is assigned a unique **River ID** - a unified identifier that works across our entire platform. This allows you to:\n\n- Reference the same market consistently regardless of which exchange it trades on\n- Place orders using a single identifier format\n- Track positions and fills across exchanges with one ID\n\nWhen searching for markets, the API returns both the exchange-native identifier (e.g., Kalshi ticker, Polymarket slug) and the River ID. Use the River ID when placing orders.\n\n### Subaccounts\n\n**Subaccounts** let you organize your trading activity into separate containers. Each subaccount:\n\n- Has its own set of exchange credentials\n- Maintains separate positions and order history\n- Can represent different strategies, clients, or portfolios\n\nThis is useful for:\n- **Fund managers**: Segregate client portfolios\n- **Traders**: Separate strategies (e.g., momentum vs. mean reversion)\n- **Teams**: Give team members isolated trading environments\n\n## 1. Create an Account\n\nSign up at [app.riverfi.com](https://app.riverfi.com) to create your account.\n\n## 2. Generate an API Key\n\n1. Log in to your dashboard\n2. Navigate to **Settings \u2192 API Keys**\n3. Click **Create API Key**\n4. Copy and securely store your key - it will only be shown once\n\n## 3. Install required packages\n\n```python\npip install requests\n```\n\n## 4. Make Your First Request\n\nTest your API key by searching for markets. \n\nWe support ticker (kalshi ticker, polymarket condition_id/slug, river_id) and fuzzy search ('bitcoin', 'fed rates').\n\n```python\nimport requests\n\nAPI_KEY = \"your_api_key\"\nBASE_URL = \"https://api.riverfi.com/v1\"\n\nheaders = {\"x-api-key\": API_KEY}\n\n# Search for shutdown related markets, on Polymarket\nresponse = requests.get(\n    f\"{BASE_URL}/markets/search\", headers=headers, params={\"q\": \"shutdown\", \"exchange\": \"POLYMARKET\"}\n)\nfor market in response.json()[\"results\"]:\n    print(f\"River ID: {market['river_id']}, Ticker: {market['slug']}\")\n```\n\n## 5. Set Up a Subaccount\n\nRiver allows users to setup subaccounts - which allow them to manage different trading strategies or client portfolios.\n\nThese can be added through the UI by going to Settings -> Subaccounts\nor programatically.\n\n### Video Walkthrough\n\nWatch this tutorial to see how to create a subaccount, add a Polymarket account, and place your first trade:\n\n<div style=\"position: relative; padding-bottom: 54.37499999999999%; height: 0;\"><iframe src=\"https://www.loom.com/embed/9b49e269c09e436d98b72f3cb55d7691\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen style=\"position: absolute; top: 0; left: 0; width: 100%; height: 100%;\"></iframe></div>\n\n### Programmatic Setup \n\n```python\n# Create a subaccount\nresponse = requests.post(\n    f\"{BASE_URL}/subaccounts\",\n    headers=headers,\n    json={\"name\": \"My Trading Account\"}\n)\nsubaccount = response.json()\nsubaccount_id = subaccount[\"id\"]\n```\n\n## 6. Add Exchange Credentials\n\nExchange credentials can also be added via UI under Settings -> Subaccounts,\nor programatically as shown below.\n\nFor best results, we recommend\n- Polymarket : create an account using email (not a wallet) and get your wallet and PK directly from Polymarket under [Settings -> Export Private Key](https://polymarket.com/settings)\n- Kalshi : create a secret/key pair with Read/Write access under [Settings -> Account & security -> API keys](https://kalshi.com/account/profile)\n\n```python\n# Add Polymarket credentials\nresponse = requests.post(\n    f\"{BASE_URL}/credentials\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"exchange\": \"polymarket\",\n        \"wallet_address\": \"your_polymarket_wallet_address\",\n        \"private_key\": \"your_polymarket_private_key\"\n    }\n)\n# Add Kalshi credentials\nresponse = requests.post(\n    f\"{BASE_URL}/credentials\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"exchange\": \"kalshi\",\n        \"api_key\": \"your_kalshi_api_key\",\n        \"api_secret\": \"your_kalshi_secret\"\n    }\n)\n```\n\nWe use asymmetric encryption so your credentials are not transferred between services or stored in plain text.\nWe delete your credentials when you delete a subaccount. \n\n## 7. Place Your First Order\n\nUse the River ID from your market search to place an order.\n\n```python\n# Place a limit order (buy 10 contracts at $0.50)\nresponse = requests.post(\n    f\"{BASE_URL}/orders\",\n    headers=headers,\n    json={\n        \"subaccount_id\": subaccount_id,\n        \"river_id\": 4552150,       # From market search\n        \"order_type\": \"LIMIT\",      # LIMIT or MARKET\n        \"time_in_force\": \"GTC\",     # FOK, GTC, GTD, or IOC\n        \"buy_flag\": True,           # True=buy, False=sell\n        \"price\": 0.50,              # Limit price (0-1)\n        \"qty\": 10,                  # Number of contracts\n    }\n)\norder = response.json()\nprint(f\"Order placed: {order['river_order_id']}\")\n```\n\n## 8. Check Order Status\n\nMonitor your order's progress by fetching its current state.\n\n```python\n# Get order status\norder_id = order['river_order_id']\nresponse = requests.get(\n    f\"{BASE_URL}/orders/{order_id}\",\n    headers=headers\n)\norder_status = response.json()\nprint(f\"Status: {order_status['status']}, Filled: {order_status['traded_qty']}/{order_status['qty']}\")\n```\n\nPossible order statuses:\n- `pending_submission` - Order received, awaiting processing\n- `submitted` - Order sent to exchange\n- `partially_filled` - Order partially executed\n- `filled` - Order fully executed\n- `cancelled` - Order cancelled\n- `rejected` - Order rejected (see `reject_reason`)\n\n## 9. Cancel an Order\n\nCancel a resting order before it's fully filled.\n\n```python\n# Cancel an order\norder_id = order['river_order_id']\nresponse = requests.delete(\n    f\"{BASE_URL}/orders/{order_id}\",\n    headers=headers\n)\nif response.status_code == 200:\n    print(\"Order cancelled successfully\")\n```\n\nNote: Only orders with status `submitted` or `partially_filled` can be cancelled.\n\n## Supported Exchanges\n\n| Exchange | Markets | Status |\n|----------|---------|--------|\n| Kalshi | US regulated prediction markets | Available |\n| Polymarket | Crypto prediction markets | Available |\n| Polymarket US | US regulated prediction markets | Coming soon |\n| ForecastEx | US regulated prediction markets | Coming soon |\n| MIAXdx | US regulated markets | Coming soon |\n\n## Rate Limits\n\n- **Standard**: 100 requests/minute\n- **Premium**: Contact support for higher limits\n\n\n\n## Authentication\n\nAll endpoints require authentication via one of:\n- **Bearer Token**: `Authorization: Bearer <jwt_token>` (for web clients)\n- **API Key**: `x-api-key: <your_api_key>` (for programmatic access)\n\n\n---\n\n\n\n# Order Types Documentation\n\nComplete guide to all order types available in the River Markets trading platform.\n\n---\n\n## Basic Order Types\n\n### Market Order\nExecutes immediately at the best available price.\n- **Use case**: When you need immediate execution and price is less important\n- **Example**: Market buy 100 contracts \u2192 fills at current best ask price\n\n### Limit Order\nRests on the order book at a specified price.\n- **Use case**: When you want price control and can wait for execution\n- **Example**: Limit buy 100 @ $0.65 \u2192 only fills at $0.65 or better\n\n---\n\n## Conditional Order Types\n\nConditional orders are **not placed immediately**. They activate (\"trigger\") when specific conditions are met.\n\n### 1. Stop Orders (STOP)\n\n**Stop orders trigger when price moves AGAINST your desired direction.** Used primarily for **stop losses** (exit protection) or **breakout entries**.\n\n#### Stop Market\n- **Triggers**: When market trades at or through your stop price\n- **Executes**: As a market order (immediate fill at best available price)\n- **Example**:\n  ```\n  You're LONG at $0.70, want to exit if price falls to $0.60\n  \u2192 Stop Market SELL @ $0.60\n  \u2192 Triggers when price \u2264 $0.60\n  \u2192 Sends market sell order \u2192 fills immediately\n  ```\n\n#### Stop Limit\n- **Triggers**: When market trades at or through your stop price\n- **Executes**: As a limit order at your specified limit price\n- **Example**:\n  ```\n  You're LONG at $0.70, want to exit around $0.60 but not worse than $0.59\n  \u2192 Stop Limit SELL @ $0.60, Limit $0.59\n  \u2192 Triggers when price \u2264 $0.60\n  \u2192 Sends limit sell order @ $0.59 \u2192 waits for fill at $0.59 or better\n  ```\n- **Risk**: May not fill if price moves too fast through your limit\n\n**Directional Logic:**\n- **BUY stop**: Triggers at or **above** stop price (breakout entry or short exit)\n- **SELL stop**: Triggers at or **below** stop price (stop loss or long exit)\n\n---\n\n### 2. Reverse Stop Orders (REVERSE_STOP)\n\n**Reverse stop orders trigger when price moves IN your desired direction.** Used exclusively for **take profit** scenarios.\n\n**Key Concept**: A \"reverse stop\" is called \"reverse\" because it triggers in the OPPOSITE direction of a normal stop order.\n\n#### Reverse Stop Market (TP Market)\n- **Triggers**: When market trades at or through your target price (OPPOSITE direction from normal stop)\n- **Executes**: As a market order\n- **Example**:\n  ```\n  You're LONG at $0.60, want to take profit if price rises to $0.80\n  \u2192 TP Market (Reverse Stop Market) SELL @ $0.80\n  \u2192 Normal stop would trigger BELOW, but reverse stop triggers ABOVE\n  \u2192 Triggers when price \u2265 $0.80\n  \u2192 Sends market sell order \u2192 fills immediately\n  ```\n\n**Directional Logic (REVERSED from normal stop):**\n- **BUY reverse stop**: Triggers at or **below** target (opposite of normal buy stop)\n- **SELL reverse stop**: Triggers at or **above** target (opposite of normal sell stop)\n\n**Why \"reverse\"?**\n- Normal **SELL stop** @ $0.60 triggers when price \u2264 $0.60 (price falling)\n- **SELL reverse stop** @ $0.80 triggers when price \u2265 $0.80 (price rising)\n- The trigger direction is reversed!\n\n#### Reverse Stop Limit (TP Limit)\n- **Triggers**: When market trades at or through your target price\n- **Executes**: As a limit order at your specified limit price\n- **Example**:\n  ```\n  You're LONG at $0.60, want to take profit around $0.80 but not worse than $0.79\n  \u2192 TP Limit (Reverse Stop Limit) SELL @ $0.80, Limit $0.79\n  \u2192 Triggers when price \u2265 $0.80\n  \u2192 Sends limit sell order @ $0.79 \u2192 waits for fill at $0.79 or better\n  ```\n\n---\n\n### 3. Take Profit Orders (TP)\n\n**Parent-child orders**: Automatically triggers a child order when a parent order **fills**.\n\n#### TP Market\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Immediately places the child order (can be another TP/SL or direct order)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH TP Market @ $0.80\n  \u2192 When buy fills \u2192 immediately activates TP Market SELL @ $0.80\n  \u2192 That TP Market is a reverse stop that triggers when price \u2265 $0.80\n  ```\n\n#### TP Limit\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Activates TP Limit order (reverse stop limit)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH TP Limit @ $0.80 (limit $0.79)\n  \u2192 When buy fills \u2192 activates TP Limit SELL\n  \u2192 Triggers when price \u2265 $0.80 \u2192 sends limit sell @ $0.79\n  ```\n\n---\n\n### 4. Stop Loss Orders (SL)\n\n**Parent-child orders**: Automatically triggers a child order when a parent order **fills**.\n\n#### SL Market\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Immediately places the child order (can be another SL/TP or direct order)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH SL Market @ $0.55\n  \u2192 When buy fills \u2192 immediately activates SL Market SELL @ $0.55\n  \u2192 That SL Market is a stop order that triggers when price \u2264 $0.55\n  ```\n\n#### SL Limit\n- **Triggers**: When parent order is **fully filled**\n- **Executes**: Activates SL Limit order (stop limit)\n- **Example**:\n  ```\n  Place limit buy 100 @ $0.60 WITH SL Limit @ $0.55 (limit $0.54)\n  \u2192 When buy fills \u2192 activates SL Limit SELL\n  \u2192 Triggers when price \u2264 $0.55 \u2192 sends limit sell @ $0.54\n  ```\n\n---\n\n## Order Type Comparison\n\n| Type | Trigger Condition | Execution | Primary Use Case |\n|------|------------------|-----------|------------------|\n| **Market** | None (immediate) | Immediate at best price | Need immediate fill |\n| **Limit** | None (rests) | At limit price or better | Want price control |\n| **Stop Market** | Price moves AGAINST you | Market order (immediate) | Stop loss, breakout entry |\n| **Stop Limit** | Price moves AGAINST you | Limit order (may not fill) | Stop loss with price protection |\n| **TP Market** | Parent fills + price moves FOR you | Market order via reverse stop | Take profit with immediate exit |\n| **TP Limit** | Parent fills + price moves FOR you | Limit order via reverse stop | Take profit with price control |\n| **SL Market** | Parent fills + price moves AGAINST you | Market order via stop | Stop loss from entry |\n| **SL Limit** | Parent fills + price moves AGAINST you | Limit order via stop | Stop loss with price floor |\n\n---\n\n## Key Concepts\n\n### Stop vs Reverse Stop\n- **Stop**: Triggers when price moves AGAINST you (exit losses, enter breakouts)\n- **Reverse Stop**: Triggers when price moves FOR you (take profits)\n\n### Parent-Child Orders\n- **TP/SL orders** are \"meta-orders\" that activate child orders when a parent fills\n- The child order itself is usually a stop or reverse stop order\n- This creates a two-step process: Parent fill \u2192 Child activation \u2192 Price trigger \u2192 Execution\n\n### Trigger Direction Summary\n| Order Side | Stop (Loss/Breakout) | Reverse Stop (Profit) |\n|------------|---------------------|----------------------|\n| **BUY** | Triggers \u2265 stop price | Triggers \u2264 target price |\n| **SELL** | Triggers \u2264 stop price | Triggers \u2265 target price |\n\n---\n\n## Examples\n\n### Complete Trading Scenario\n```\n1. Place limit BUY 100 @ $0.60\n   WITH TP Market @ $0.80 (reverse stop)\n   AND SL Market @ $0.55 (normal stop)\n\n2. Buy fills at $0.60\n   \u2192 TP Market SELL @ $0.80 activated (reverse stop)\n   \u2192 SL Market SELL @ $0.55 activated (normal stop)\n\n3a. If price rises to $0.80:\n    \u2192 TP triggers (price \u2265 $0.80) \u2192 market sell executes\n    \u2192 SL cancelled automatically\n\n3b. If price falls to $0.55:\n    \u2192 SL triggers (price \u2264 $0.55) \u2192 market sell executes\n    \u2192 TP cancelled automatically\n```\n\n### Breakout Entry with Protection\n```\nPrice is at $0.70, resistance at $0.75, support at $0.65\n\n1. Place Stop Market BUY @ $0.76 (breakout entry)\n   \u2192 Triggers when price \u2265 $0.76 (breaks resistance)\n   \u2192 Market buy executes\n\n2. Add SL Market @ $0.74 to the stop order\n   \u2192 When breakout buy fills \u2192 SL activates\n   \u2192 Protects if breakout fails\n```\n\n",
     "contact": {
       "name": "River Markets",
-      "url": "https://riverfi.com/"
+      "url": "https://rivermarkets.com/"
     },
     "license": {
       "name": "Proprietary"
     },
     "version": "1.0.0"
   },
-  "servers": [
-    {
-      "url": "https://api.riverfi.com"
-    }
-  ],
   "paths": {
     "/v1/complex-orders": {
       "get": {
@@ -202,7 +197,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ComplexOrderResponse"
+                  "$ref": "#/components/schemas/ComplexOrderCreateResponse"
                 }
               }
             }
@@ -576,15 +571,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomAssetDetailResponse"
-                }
-              }
-            }
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -628,15 +616,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomAssetDetailResponse"
-                }
-              }
-            }
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -780,23 +761,30 @@
           "markets"
         ],
         "summary": "Search Markets",
-        "description": "Search markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Results ranked by relevance",
+        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n\nWe default to active markets in the view so things are faster",
         "operationId": "search_markets_v1_markets_search_get",
         "parameters": [
           {
             "name": "q",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
-              "minLength": 1,
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Search query",
               "title": "Q"
             },
             "description": "Search query"
           },
           {
-            "name": "exchange",
+            "name": "exchange_name",
             "in": "query",
             "required": false,
             "schema": {
@@ -809,12 +797,12 @@
                 }
               ],
               "description": "Filter by exchange name (KALSHI, POLYMARKET)",
-              "title": "Exchange"
+              "title": "Exchange Name"
             },
             "description": "Filter by exchange name (KALSHI, POLYMARKET)"
           },
           {
-            "name": "status",
+            "name": "category",
             "in": "query",
             "required": false,
             "schema": {
@@ -826,10 +814,66 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by status (active, closed, inactive)",
+              "description": "Filter by canonical category (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other)",
+              "title": "Category"
+            },
+            "description": "Filter by canonical category (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/InstrumentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by instrument status",
               "title": "Status"
             },
-            "description": "Filter by status (active, closed, inactive)"
+            "description": "Filter by instrument status"
+          },
+          {
+            "name": "expiration_date_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start of expiration date range (inclusive, ISO 8601)",
+              "title": "Expiration Date Start"
+            },
+            "description": "Start of expiration date range (inclusive, ISO 8601)"
+          },
+          {
+            "name": "expiration_date_end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End of expiration date range (exclusive, ISO 8601)",
+              "title": "Expiration Date End"
+            },
+            "description": "End of expiration date range (exclusive, ISO 8601)"
           },
           {
             "name": "limit",
@@ -837,7 +881,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 1000,
               "minimum": 1,
               "description": "Maximum number of results",
               "default": 20,
@@ -883,13 +927,186 @@
         }
       }
     },
+    "/v1/markets/lookup": {
+      "get": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Lookup Markets",
+        "description": "Batch lookup markets by river_ids.",
+        "operationId": "lookup_markets_v1_markets_lookup_get",
+        "parameters": [
+          {
+            "name": "river_ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of river IDs",
+              "title": "River Ids"
+            },
+            "description": "Comma-separated list of river IDs"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/match": {
+      "get": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Match Market",
+        "description": "Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one.",
+        "operationId": "match_market_v1_markets_match_get",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact Kalshi ticker (e.g. KXNBA-26-DET)",
+              "title": "Ticker"
+            },
+            "description": "Exact Kalshi ticker (e.g. KXNBA-26-DET)"
+          },
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact Polymarket slug (e.g. will-the-denver-nuggets-win-the-2026-nba-finals)",
+              "title": "Slug"
+            },
+            "description": "Exact Polymarket slug (e.g. will-the-denver-nuggets-win-the-2026-nba-finals)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSearchResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orderbooks/custom-asset/{custom_asset_id}": {
+      "get": {
+        "tags": [
+          "orderbooks"
+        ],
+        "summary": "Get Custom Asset Orderbook",
+        "description": "Get merged orderbook for a custom asset (basket).\n\nFetches orderbooks for all member instruments and merges them by summing\nquantity at each price level. Touch mechanism ensures subscriptions are active.",
+        "operationId": "get_custom_asset_orderbook_v1_orderbooks_custom_asset__custom_asset_id__get",
+        "parameters": [
+          {
+            "name": "custom_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Custom Asset Id"
+            }
+          },
+          {
+            "name": "levels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10,
+              "minimum": 1,
+              "description": "Number of price levels to return",
+              "default": 10,
+              "title": "Levels"
+            },
+            "description": "Number of price levels to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderbookResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/orderbooks/{river_id}": {
       "get": {
         "tags": [
           "orderbooks"
         ],
         "summary": "Get Orderbook",
-        "description": "Get orderbook for a river_id.\n\nThis endpoint:\n1. Touches the river_id to indicate interest (refreshes TTL if already touched)\n2. Returns cached orderbook if available\n3. Returns pending status if orderbook is not yet available\n\nThe touch mechanism ensures the Real-Time Data Service subscribes to this symbol.\nSubsequent requests will return the cached orderbook data.",
+        "description": "Get orderbook for a river_id.",
         "operationId": "get_orderbook_v1_orderbooks__river_id__get",
         "parameters": [
           {
@@ -907,7 +1124,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 50,
+              "maximum": 10,
               "minimum": 1,
               "description": "Number of price levels to return",
               "default": 10,
@@ -946,7 +1163,7 @@
           "orders"
         ],
         "summary": "Create Order",
-        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\n**Order Types** (`order_type`):\n- `LIMIT`: Execute at specified price or better. Requires `price` parameter.\n- `MARKET`: Execute immediately at best available price.\n\n**Time in Force** (`time_in_force`):\n- `FOK` (Fill or Kill): Execute entire order immediately or cancel.\n- `GTC` (Good Til Cancelled): Remain active until filled or manually cancelled.\n- `GTD` (Good Til Date): Remain active until `expiry_ts_utc`. Requires `expiry_ts_utc` parameter.\n- `IOC` (Immediate or Cancel): Execute immediately; cancel any unfilled portion.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).\n\n**Response:**\nReturns `202 Accepted` with the order in `PENDING_SUBMISSION` status.\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
+        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\nSee  [Orders](https://docs.riverfi.com/concepts/orders) and [Order Types](https://docs.riverfi.com/concepts/order-types) for more information.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).\nCustom asset orders only support `MARKET` order type \u2014 the system automatically routes\nIOC limit orders to each underlying instrument at optimal prices.\n\n**Response:**\nReturns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
         "operationId": "create_order_v1_orders_post",
         "requestBody": {
           "required": true,
@@ -986,7 +1203,7 @@
           "orders"
         ],
         "summary": "List Orders",
-        "description": "List orders with optional filters.\n\nReturns a paginated list of orders across all accessible subaccounts, ordered by `created_at` descending.\n\n**Filters:**\nAll filters are optional and can be combined. If no `subaccount_id` is specified,\nreturns orders from all subaccounts the user has access to.",
+        "description": "List orders with optional filters.\n\nReturns a paginated list of orders across all accessible subaccounts, ordered by `created_at` descending.\n\n**Filters:**\nAll filters are optional and can be combined. If no `subaccount_id` is specified,\nreturns orders from all subaccounts the user has access to.\n\n**Order Statuses:**\n- `PENDING_SUBMISSION`: Order received, awaiting exchange submission.\n- `PROCESSING`: Being processed by the order consumer.\n- `RESTING`: Live on the exchange order book.\n- `PARTIALLY_FILLED`: Some quantity executed, remainder resting.\n- `EXECUTED`: Fully filled.\n- `CANCELLED`: Cancelled by user or system.\n- `REJECTED`: Rejected by exchange (see order details for reason).\n- `EXPIRED`: GTD order past expiry time.\n\n**Aggregated Fields:**\nEach order includes `traded_qty`, `average_price`, and `fees_paid` computed from fills.",
         "operationId": "list_orders_v1_orders_get",
         "parameters": [
           {
@@ -1034,6 +1251,25 @@
               "title": "River Id"
             },
             "description": "Filter by instrument ID"
+          },
+          {
+            "name": "custom_asset_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by custom asset ID",
+              "title": "Custom Asset Id"
+            },
+            "description": "Filter by custom asset ID"
           },
           {
             "name": "subaccount_id",
@@ -1130,7 +1366,7 @@
           "orders"
         ],
         "summary": "Get Order",
-        "description": "Get a single order by ID with its fills.\n\nReturns complete order details including execution history.\n\n**Fill Information:**\nEach fill represents a partial or complete execution and includes:\n- `price`: Execution price\n- `qty`: Filled quantity\n- `fee`: Fee charged for this fill\n- `is_maker`: Whether this fill was a maker (provided liquidity)\n- `exchange_timestamp`: When the exchange executed the fill\n\n**Use Cases:**\n- Track order progress and execution quality\n- Reconcile fills for accounting\n- Debug rejected or partially filled orders",
+        "description": "Get a single order by ID with its fills.\n\nReturns complete order details including execution history.\n\n**Use Cases:**\n- Track order progress and execution quality\n- Reconcile fills for accounting\n- Debug rejected or partially filled orders",
         "operationId": "get_order_v1_orders__order_id__get",
         "parameters": [
           {
@@ -1604,22 +1840,44 @@
         }
       }
     },
-    "/v1/subaccounts/{subaccount_id}/positions": {
+    "/v1/suggestions": {
       "get": {
         "tags": [
-          "subaccounts"
+          "suggestions"
         ],
-        "summary": "Get Subaccount Positions",
-        "description": "Fetch positions for a specific subaccount.\n\nReturns positions for a specific subaccount.",
-        "operationId": "get_subaccount_positions_v1_subaccounts__subaccount_id__positions_get",
+        "summary": "List Suggestions",
+        "description": "List all active suggestion groups with their approved generic assets and underlyings.",
+        "operationId": "list_suggestions_v1_suggestions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/suggestions/{tag}": {
+      "get": {
+        "tags": [
+          "suggestions"
+        ],
+        "summary": "Get Suggestion By Tag",
+        "description": "Get a single suggestion group by tag with its assets.",
+        "operationId": "get_suggestion_by_tag_v1_suggestions__tag__get",
         "parameters": [
           {
-            "name": "subaccount_id",
+            "name": "tag",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Subaccount Id"
+              "title": "Tag"
             }
           }
         ],
@@ -1629,131 +1887,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PositionListResponse"
+                  "$ref": "#/components/schemas/SuggestionGroupResponse"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/markets/lookup": {
-      "get": {
-        "tags": [
-          "markets"
-        ],
-        "summary": "Lookup Markets",
-        "description": "Batch lookup markets by river_ids.",
-        "operationId": "lookup_markets_v1_markets_lookup_get",
-        "parameters": [
-          {
-            "name": "river_ids",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "Comma-separated list of river IDs",
-              "title": "River Ids"
-            },
-            "description": "Comma-separated list of river IDs"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MarketLookupResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/markets/match": {
-      "get": {
-        "tags": [
-          "markets"
-        ],
-        "summary": "Match Market",
-        "description": "Exact match a single market by Kalshi ticker or Polymarket slug. Supply exactly one parameter.",
-        "operationId": "match_market_v1_markets_match_get",
-        "parameters": [
-          {
-            "name": "ticker",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Exact Kalshi ticker (e.g., KXNBA-26-DET)",
-              "title": "Ticker"
-            },
-            "description": "Exact Kalshi ticker (e.g., KXNBA-26-DET)"
-          },
-          {
-            "name": "slug",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Exact Polymarket slug (e.g., will-the-denver-nuggets-win-the-2026-nba-finals)",
-              "title": "Slug"
-            },
-            "description": "Exact Polymarket slug (e.g., will-the-denver-nuggets-win-the-2026-nba-finals)"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MarketSearchResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - provide exactly one of: ticker, slug"
-          },
-          "404": {
-            "description": "Market not found"
           },
           "422": {
             "description": "Validation Error",
@@ -1820,7 +1957,8 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "API key creation timestamp (UTC)"
           }
         },
         "type": "object",
@@ -1863,7 +2001,8 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "API key creation timestamp (UTC)"
           },
           "last_used_at": {
             "anyOf": [
@@ -1875,12 +2014,14 @@
                 "type": "null"
               }
             ],
-            "title": "Last Used At"
+            "title": "Last Used At",
+            "description": "Last usage timestamp (UTC)"
           },
           "expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Expires At"
+            "title": "Expires At",
+            "description": "API key expiration timestamp (UTC)"
           },
           "is_revoked": {
             "type": "boolean",
@@ -1893,7 +2034,6 @@
           "name",
           "prefix",
           "created_at",
-          "last_used_at",
           "expires_at",
           "is_revoked"
         ],
@@ -1919,7 +2059,8 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "API key creation timestamp (UTC)"
           }
         },
         "type": "object",
@@ -2023,7 +2164,7 @@
           "failed_cancelled_reasons"
         ],
         "title": "CancelOrderResponse",
-        "description": "Schema for cancel order response What is returned when user cancels an order/ orders."
+        "description": "Schema for cancel order response"
       },
       "ComplexOrderCreateRequest": {
         "properties": {
@@ -2076,6 +2217,22 @@
         ],
         "title": "ComplexOrderCreateRequest",
         "description": "Request body for creating a complex order (conditional order)."
+      },
+      "ComplexOrderCreateResponse": {
+        "properties": {
+          "complex_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Complex Order Id",
+            "description": "Unique complex order identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "complex_order_id"
+        ],
+        "title": "ComplexOrderCreateResponse",
+        "description": "Schema for a complex order response (unified across all complex order types)."
       },
       "ComplexOrderListResponse": {
         "properties": {
@@ -2208,27 +2365,28 @@
             "enum": [
               "TP",
               "SL",
-              "STOP"
+              "STOP",
+              "REVERSE_STOP"
             ],
-            "description": "Type of conditional order: TP, SL, or STOP"
+            "description": "Type of conditional order: TP (take profit), SL (stop loss), or STOP"
           },
           "stop_order_price": {
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1.0,
-                "minimum": 0.0
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
             "title": "Stop Order Price",
-            "description": "Stop price if this is a stop order."
+            "description": "Activation price for STOP conditional orders. This is the price at which the conditional order triggers and places the trigger_order."
           },
           "trigger_order": {
             "$ref": "#/components/schemas/TriggerOrder",
-            "description": "Trigger order"
+            "description": "The order that gets placed when the conditional order activates. For TP/SL this happens after the parent order fills; for STOP this happens when stop_order_price is reached."
           },
           "parent_river_order_id": {
             "anyOf": [
@@ -2278,7 +2436,7 @@
               }
             ],
             "title": "Parent River Order Id",
-            "description": "Parent order ID"
+            "description": "Parent order ID that this conditional is attached to (for TP/SL)"
           },
           "parent_complex_order_id": {
             "anyOf": [
@@ -2291,7 +2449,7 @@
               }
             ],
             "title": "Parent Complex Order Id",
-            "description": "Parent complex order ID"
+            "description": "Parent complex order ID that this conditional is attached to (for chaining)"
           },
           "conditional_order_type": {
             "anyOf": [
@@ -2303,7 +2461,7 @@
               }
             ],
             "title": "Conditional Order Type",
-            "description": "TP, SL, or STOP"
+            "description": "Type of conditional order: TP (take profit), SL (stop loss), or STOP"
           },
           "stop_order_price": {
             "anyOf": [
@@ -2315,7 +2473,7 @@
               }
             ],
             "title": "Stop Order Price",
-            "description": "Trigger price"
+            "description": "Activation price for STOP conditional orders. The price at which the conditional triggers and places the trigger order."
           },
           "trigger_stop_order_price": {
             "anyOf": [
@@ -2327,7 +2485,7 @@
               }
             ],
             "title": "Trigger Stop Order Price",
-            "description": "Trigger price for stop triggered orders"
+            "description": "Stop/reverse-stop price for the triggered order (SL or TP MARKET)"
           },
           "trigger_order_type": {
             "anyOf": [
@@ -2339,7 +2497,7 @@
               }
             ],
             "title": "Trigger Order Type",
-            "description": "LIMIT or MARKET"
+            "description": "Order type of the triggered order: LIMIT or MARKET"
           },
           "trigger_order_qty": {
             "anyOf": [
@@ -2351,7 +2509,7 @@
               }
             ],
             "title": "Trigger Order Qty",
-            "description": "Trigger quantity"
+            "description": "Quantity of the triggered order"
           },
           "trigger_order_limit_price": {
             "anyOf": [
@@ -2363,7 +2521,7 @@
               }
             ],
             "title": "Trigger Order Limit Price",
-            "description": "Trigger limit price"
+            "description": "Limit price of the triggered order (if LIMIT)"
           },
           "trigger_order_buy_flag": {
             "anyOf": [
@@ -2375,7 +2533,7 @@
               }
             ],
             "title": "Trigger Order Buy Flag",
-            "description": "Trigger direction"
+            "description": "Direction of the triggered order: true=buy, false=sell"
           },
           "trigger_river_order_id": {
             "anyOf": [
@@ -2388,7 +2546,7 @@
               }
             ],
             "title": "Trigger River Order Id",
-            "description": "Triggered order ID"
+            "description": "River order ID of the triggered order (set once activated)"
           },
           "trigger_complex_order_id": {
             "anyOf": [
@@ -2401,11 +2559,32 @@
               }
             ],
             "title": "Trigger Complex Order Id",
-            "description": "Triggered complex order ID"
+            "description": "Complex order ID of the triggered order (set once activated)"
           }
         },
         "type": "object",
-        "title": "ConditionalOrderResponse"
+        "title": "ConditionalOrderResponse",
+        "description": "Response for a conditional order. Contains both the condition definition and the trigger order\nthat gets placed when the condition is met.\n\nFor TP/SL: the parent order fills \u2192 the conditional activates \u2192 the trigger order is placed.\nFor STOP/REVERSE_STOP: stop_order_price is reached \u2192 the trigger order is placed."
+      },
+      "ConditionalOrderStatus": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "title": "ConditionalOrderStatus"
+      },
+      "ConditionalOrderType": {
+        "type": "integer",
+        "enum": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "title": "ConditionalOrderType"
       },
       "CredentialResponse": {
         "properties": {
@@ -2425,12 +2604,14 @@
           "inserted_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Inserted At"
+            "title": "Inserted At",
+            "description": "Credential creation timestamp (UTC)"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "Last update timestamp (UTC)"
           }
         },
         "type": "object",
@@ -2527,12 +2708,14 @@
           "inserted_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Inserted At"
+            "title": "Inserted At",
+            "description": "Creation timestamp (UTC)"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "Last update timestamp (UTC)"
           }
         },
         "type": "object",
@@ -2613,12 +2796,14 @@
           "inserted_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Inserted At"
+            "title": "Inserted At",
+            "description": "Creation timestamp (UTC)"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "Last update timestamp (UTC)"
           }
         },
         "type": "object",
@@ -2715,7 +2900,8 @@
           "exchange_timestamp": {
             "type": "string",
             "format": "date-time",
-            "title": "Exchange Timestamp"
+            "title": "Exchange Timestamp",
+            "description": "Execution timestamp from exchange (UTC)"
           },
           "price": {
             "type": "number",
@@ -2752,7 +2938,6 @@
         "type": "object",
         "required": [
           "river_id",
-          "client_order_id",
           "exchange_order_id",
           "exchange_trade_id",
           "exchange_timestamp",
@@ -2760,8 +2945,7 @@
           "qty",
           "fee",
           "buy_flag",
-          "is_maker",
-          "counterparty_address"
+          "is_maker"
         ],
         "title": "FillResponse",
         "description": "Schema for fill response."
@@ -2778,6 +2962,16 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "InstrumentStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "closed",
+          "inactive"
+        ],
+        "title": "InstrumentStatus",
+        "description": "Instrument status derived in mv_instruments from exchange-specific fields.\n\nKalshi: maps from kalshi_markets.status\n    - 'active' -> ACTIVE\n    - everything else (closed, determined, finalized, settled, amended, inactive, initialized) -> CLOSED\n\nPolymarket: maps from polymarket_markets.closed and polymarket_markets.active booleans\n    - closed=true -> CLOSED\n    - active=true (and not closed) -> ACTIVE\n    - else (active=false, closed=false) -> INACTIVE"
       },
       "InviteRedeemRequest": {
         "properties": {
@@ -2820,6 +3014,23 @@
         ],
         "title": "InviteRedeemResponse",
         "description": "Response after attempting to redeem an invite code."
+      },
+      "MarketLookupResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "MarketLookupResponse",
+        "description": "Schema for batch market lookup response."
       },
       "MarketSearchResponse": {
         "properties": {
@@ -2896,7 +3107,14 @@
             "title": "Token Id No"
           },
           "slug": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Slug"
           },
           "tick_size_price": {
@@ -2906,6 +3124,10 @@
           "tick_size_qty": {
             "type": "number",
             "title": "Tick Size Qty"
+          },
+          "minimum_order_size": {
+            "type": "number",
+            "title": "Minimum Order Size"
           },
           "expiration_datetime": {
             "anyOf": [
@@ -2917,7 +3139,8 @@
                 "type": "null"
               }
             ],
-            "title": "Expiration Datetime"
+            "title": "Expiration Datetime",
+            "description": "Market expiration datetime (UTC)"
           },
           "neg_risk": {
             "type": "boolean",
@@ -2933,17 +3156,6 @@
               }
             ],
             "title": "Neg Risk Id"
-          },
-          "generic_asset_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Generic Asset Id"
           },
           "condition_id": {
             "anyOf": [
@@ -2972,8 +3184,12 @@
             "title": "Description"
           },
           "status": {
+            "$ref": "#/components/schemas/InstrumentStatus"
+          },
+          "category": {
             "type": "string",
-            "title": "Status"
+            "title": "Category",
+            "default": "Other"
           },
           "rank": {
             "anyOf": [
@@ -2992,19 +3208,11 @@
           "river_id",
           "exchange_value",
           "exchange_name",
-          "ticker",
-          "token_id_yes",
-          "token_id_no",
-          "slug",
           "tick_size_price",
           "tick_size_qty",
-          "expiration_datetime",
+          "minimum_order_size",
           "neg_risk",
-          "neg_risk_id",
-          "generic_asset_id",
-          "condition_id",
           "name",
-          "description",
           "status"
         ],
         "title": "MarketSearchResult",
@@ -3040,8 +3248,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1.0,
-                "minimum": 0.0
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "null"
@@ -3078,7 +3286,7 @@
               }
             ],
             "title": "Custom Asset Id",
-            "description": "Custom asset basket ID. Mutually exclusive with river_id."
+            "description": "Custom asset basket UUID. Mutually exclusive with river_id."
           },
           "subaccount_id": {
             "type": "string",
@@ -3097,7 +3305,7 @@
               }
             ],
             "title": "Expiry Ts Utc",
-            "description": "Expiry timestamp (ISO 8601). Required for GTD orders."
+            "description": "Expiry timestamp in UTC(ISO 8601). Required for GTD orders. i.e '2023-11-07T05:31:56Z'"
           },
           "conditional_orders_params": {
             "anyOf": [
@@ -3223,7 +3431,7 @@
               }
             ],
             "title": "Custom Asset Id",
-            "description": "Custom asset basket ID"
+            "description": "Custom asset basket UUID"
           },
           "subaccount_id": {
             "type": "string",
@@ -3242,7 +3450,7 @@
               }
             ],
             "title": "Expiry Ts Utc",
-            "description": "Expiry timestamp for GTD orders"
+            "description": "Expiry timestamp in UTC for GTD orders"
           },
           "created_at": {
             "type": "string",
@@ -3281,14 +3489,16 @@
             "default": 0.0
           },
           "complex_order_ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": "array"
             },
-            "type": "array",
+            "type": "object",
             "title": "Complex Order Ids",
-            "description": "List of complex order identifiers",
-            "default": []
+            "description": "List of complex river orders id"
           },
           "reject_reason": {
             "anyOf": [
@@ -3322,7 +3532,8 @@
           "status",
           "subaccount_id",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "complex_order_ids"
         ],
         "title": "OrderDetailResponse",
         "description": "Schema for order detail response including fills."
@@ -3348,7 +3559,7 @@
             "type": "string",
             "format": "date-time",
             "title": "Exchange Timestamp",
-            "description": "Execution timestamp from exchange"
+            "description": "Execution timestamp from exchange (UTC)"
           },
           "price": {
             "type": "number",
@@ -3363,7 +3574,7 @@
           "fee": {
             "type": "number",
             "title": "Fee",
-            "description": "Fee charged for this fill"
+            "description": "Fee charged by the exchange for this fill"
           },
           "buy_flag": {
             "type": "boolean",
@@ -3483,7 +3694,7 @@
               }
             ],
             "title": "Custom Asset Id",
-            "description": "Custom asset basket ID"
+            "description": "Custom asset basket UUID"
           },
           "subaccount_id": {
             "type": "string",
@@ -3502,7 +3713,7 @@
               }
             ],
             "title": "Expiry Ts Utc",
-            "description": "Expiry timestamp for GTD orders"
+            "description": "Expiry timestamp in UTC for GTD orders"
           },
           "created_at": {
             "type": "string",
@@ -3541,14 +3752,16 @@
             "default": 0.0
           },
           "complex_order_ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": "array"
             },
-            "type": "array",
+            "type": "object",
             "title": "Complex Order Ids",
-            "description": "List of complex order identifiers",
-            "default": []
+            "description": "List of complex river orders id"
           },
           "reject_reason": {
             "anyOf": [
@@ -3573,16 +3786,69 @@
           "status",
           "subaccount_id",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "complex_order_ids"
         ],
         "title": "OrderResponse",
         "description": "Schema for order response, when user request information about an order."
       },
+      "OrderStatus": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "title": "OrderStatus"
+      },
+      "OrderTimeInForce": {
+        "type": "integer",
+        "enum": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "title": "OrderTimeInForce",
+        "description": "Time-in-force setting. Can be FOK (Fill or kill), GTC (Good till cancelled) or GTD (Good till date)."
+      },
+      "OrderType": {
+        "type": "integer",
+        "enum": [
+          1,
+          2
+        ],
+        "title": "OrderType"
+      },
       "OrderbookData": {
         "properties": {
           "river_id": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "River Id"
+          },
+          "custom_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Asset Id"
           },
           "bids": {
             "items": {
@@ -3630,22 +3896,14 @@
                 "type": "null"
               }
             ],
-            "title": "Exchange Timestamp"
-          },
-          "is_valid": {
-            "type": "boolean",
-            "title": "Is Valid"
+            "title": "Exchange Timestamp",
+            "description": "Exchange orderbook timestamp (UTC)"
           }
         },
         "type": "object",
         "required": [
-          "river_id",
           "bids",
-          "asks",
-          "best_bid_price",
-          "best_ask_price",
-          "exchange_timestamp",
-          "is_valid"
+          "asks"
         ],
         "title": "OrderbookData"
       },
@@ -3691,23 +3949,6 @@
         ],
         "title": "OrderbookStatus"
       },
-      "PositionListResponse": {
-        "properties": {
-          "positions": {
-            "items": {
-              "$ref": "#/components/schemas/PositionResponse"
-            },
-            "type": "array",
-            "title": "Positions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "positions"
-        ],
-        "title": "PositionListResponse",
-        "description": "Schema for list of positions."
-      },
       "PositionResponse": {
         "properties": {
           "river_id": {
@@ -3718,21 +3959,21 @@
             "type": "number",
             "title": "Position"
           },
-          "exchange": {
-            "type": "string",
-            "title": "Exchange"
-          },
           "exchange_name": {
             "type": "string",
             "title": "Exchange Name"
+          },
+          "exchange_ticker": {
+            "type": "string",
+            "title": "Exchange Ticker"
           }
         },
         "type": "object",
         "required": [
           "river_id",
           "position",
-          "exchange",
-          "exchange_name"
+          "exchange_name",
+          "exchange_ticker"
         ],
         "title": "PositionResponse",
         "description": "Schema for position response."
@@ -3975,6 +4216,104 @@
         "title": "SubaccountUpdate",
         "description": "Schema for updating a subaccount."
       },
+      "SuggestionAssetResponse": {
+        "properties": {
+          "generic_asset_id": {
+            "type": "string",
+            "title": "Generic Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generic_asset_id",
+          "name",
+          "river_ids"
+        ],
+        "title": "SuggestionAssetResponse",
+        "description": "Schema for a single generic asset within a suggestion group."
+      },
+      "SuggestionGroupResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionAssetResponse"
+            },
+            "type": "array",
+            "title": "Assets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tag",
+          "name",
+          "assets"
+        ],
+        "title": "SuggestionGroupResponse",
+        "description": "Schema for a suggestion group with its assets."
+      },
+      "SuggestionListResponse": {
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionGroupResponse"
+            },
+            "type": "array",
+            "title": "Groups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "groups"
+        ],
+        "title": "SuggestionListResponse",
+        "description": "Schema for the list of suggestion groups."
+      },
       "TriggerOrder": {
         "properties": {
           "order_type": {
@@ -3983,46 +4322,46 @@
               "LIMIT",
               "MARKET"
             ],
-            "description": "Order type: 'LIMIT' or 'MARKET'"
+            "description": "Order type for the triggered order: 'LIMIT' or 'MARKET'"
           },
           "qty": {
             "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Qty",
-            "description": "Order quantity (number of contracts)"
+            "description": "Quantity (number of contracts) for the triggered order"
           },
           "price": {
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1.0,
-                "minimum": 0.0
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
             "title": "Price",
-            "description": "Limit price between 0 and 1. Required for LIMIT orders."
+            "description": "Limit price for the triggered order (between 0 and 1). Required when order_type is LIMIT."
           },
           "buy_flag": {
             "type": "boolean",
             "title": "Buy Flag",
-            "description": "Order direction: true=buy, false=sell"
+            "description": "Direction of the triggered order: true=buy, false=sell"
           },
           "stop_order_price": {
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1.0,
-                "minimum": 0.0
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
             "title": "Stop Order Price",
-            "description": "Stop price if this is a stop order."
+            "description": "Price at which the triggered order activates as a stop or reverse stop. Required for SL (stop trigger) and TP MARKET (reverse stop trigger). For SL: triggers when price moves against you. For TP MARKET: triggers when price moves in your favor."
           }
         },
         "type": "object",
@@ -4031,7 +4370,8 @@
           "qty",
           "buy_flag"
         ],
-        "title": "TriggerOrder"
+        "title": "TriggerOrder",
+        "description": "The order that will be sent to the exchange when the conditional order's condition is met.\n\nFor TP/SL: the parent order fills \u2192 the conditional activates \u2192 this trigger order is placed.\nFor STOP/REVERSE_STOP: the stop_order_price is reached \u2192 this trigger order is placed."
       },
       "UserFillListResponse": {
         "properties": {
@@ -4116,6 +4456,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
@@ -4125,23 +4472,6 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "MarketLookupResponse": {
-        "properties": {
-          "results": {
-            "items": {
-              "$ref": "#/components/schemas/MarketSearchResult"
-            },
-            "type": "array",
-            "title": "Results"
-          }
-        },
-        "type": "object",
-        "required": [
-          "results"
-        ],
-        "title": "MarketLookupResponse",
-        "description": "Schema for market lookup response."
       }
     },
     "securitySchemes": {
@@ -4149,7 +4479,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "x-api-key",
-        "description": "API key for programmatic access. Generate one at app.riverfi.com under Settings → API Keys."
+        "description": "API key for programmatic access. Generate one at app.rivermarkets.com under Settings \u2192 API Keys."
       },
       "BearerAuth": {
         "type": "http",
@@ -4158,10 +4488,6 @@
       }
     }
   },
-  "security": [
-    { "ApiKeyAuth": [] },
-    { "BearerAuth": [] }
-  ],
   "tags": [
     {
       "name": "markets",
@@ -4190,6 +4516,19 @@
     {
       "name": "complex-orders",
       "description": "Manage complex orders: conditional orders (take-profit and stop-loss), TWAP, and other advanced order types."
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://api.rivermarkets.com"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    },
+    {
+      "BearerAuth": []
     }
   ]
 }

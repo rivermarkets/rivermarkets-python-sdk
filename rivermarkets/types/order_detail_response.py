@@ -54,7 +54,7 @@ class OrderDetailResponse(UniversalBaseModel):
 
     custom_asset_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Custom asset basket ID
+    Custom asset basket UUID
     """
 
     subaccount_id: str = pydantic.Field()
@@ -64,7 +64,7 @@ class OrderDetailResponse(UniversalBaseModel):
 
     expiry_ts_utc: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
-    Expiry timestamp for GTD orders
+    Expiry timestamp in UTC for GTD orders
     """
 
     created_at: dt.datetime = pydantic.Field()
@@ -92,9 +92,9 @@ class OrderDetailResponse(UniversalBaseModel):
     Total fees paid across all fills
     """
 
-    complex_order_ids: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    complex_order_ids: typing.Dict[str, typing.List[str]] = pydantic.Field()
     """
-    List of complex order identifiers
+    List of complex river orders id
     """
 
     reject_reason: typing.Optional[str] = pydantic.Field(default=None)

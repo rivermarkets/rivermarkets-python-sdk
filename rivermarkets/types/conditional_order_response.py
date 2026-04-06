@@ -6,59 +6,67 @@ import pydantic
 
 
 class ConditionalOrderResponse(UniversalBaseModel):
+    """
+    Response for a conditional order. Contains both the condition definition and the trigger order
+    that gets placed when the condition is met.
+
+    For TP/SL: the parent order fills → the conditional activates → the trigger order is placed.
+    For STOP/REVERSE_STOP: stop_order_price is reached → the trigger order is placed.
+    """
+
     parent_river_order_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Parent order ID
+    Parent order ID that this conditional is attached to (for TP/SL)
     """
 
     parent_complex_order_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Parent complex order ID
+    Parent complex order ID that this conditional is attached to (for chaining)
     """
 
     conditional_order_type: typing.Optional[str] = pydantic.Field(default=None)
     """
-    TP, SL, or STOP
+    Type of conditional order: TP (take profit), SL (stop loss), or STOP
     """
 
     stop_order_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Trigger price
+    Activation price for STOP conditional orders. The price at which the conditional triggers and places the trigger order.
     """
 
     trigger_stop_order_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Trigger price for stop triggered orders
+    Stop/reverse-stop price for the triggered order (SL or TP MARKET)
     """
 
     trigger_order_type: typing.Optional[str] = pydantic.Field(default=None)
     """
-    LIMIT or MARKET
+    Order type of the triggered order: LIMIT or MARKET
     """
 
     trigger_order_qty: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Trigger quantity
+    Quantity of the triggered order
     """
 
     trigger_order_limit_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Trigger limit price
+    Limit price of the triggered order (if LIMIT)
     """
 
     trigger_order_buy_flag: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Trigger direction
+    Direction of the triggered order: true=buy, false=sell
     """
 
     trigger_river_order_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Triggered order ID
+    River order ID of the triggered order (set once activated)
     """
 
     trigger_complex_order_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Triggered complex order ID
+    Complex order ID of the triggered order (set once activated)
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

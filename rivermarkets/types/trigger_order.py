@@ -7,29 +7,36 @@ import typing
 
 
 class TriggerOrder(UniversalBaseModel):
+    """
+    The order that will be sent to the exchange when the conditional order's condition is met.
+
+    For TP/SL: the parent order fills → the conditional activates → this trigger order is placed.
+    For STOP/REVERSE_STOP: the stop_order_price is reached → this trigger order is placed.
+    """
+
     order_type: TriggerOrderOrderType = pydantic.Field()
     """
-    Order type: 'LIMIT' or 'MARKET'
+    Order type for the triggered order: 'LIMIT' or 'MARKET'
     """
 
     qty: float = pydantic.Field()
     """
-    Order quantity (number of contracts)
+    Quantity (number of contracts) for the triggered order
     """
 
     price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Limit price between 0 and 1. Required for LIMIT orders.
+    Limit price for the triggered order (between 0 and 1). Required when order_type is LIMIT.
     """
 
     buy_flag: bool = pydantic.Field()
     """
-    Order direction: true=buy, false=sell
+    Direction of the triggered order: true=buy, false=sell
     """
 
     stop_order_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Stop price if this is a stop order.
+    Price at which the triggered order activates as a stop or reverse stop. Required for SL (stop trigger) and TP MARKET (reverse stop trigger). For SL: triggers when price moves against you. For TP MARKET: triggers when price moves in your favor.
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

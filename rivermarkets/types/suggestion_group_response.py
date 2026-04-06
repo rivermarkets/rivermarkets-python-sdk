@@ -2,28 +2,21 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-import datetime as dt
+from .suggestion_asset_response import SuggestionAssetResponse
 import pydantic
 
 
-class CustomAssetResponse(UniversalBaseModel):
+class SuggestionGroupResponse(UniversalBaseModel):
     """
-    Response schema for a custom asset (list view).
+    Schema for a suggestion group with its assets.
     """
 
-    custom_asset_id: str
-    subaccount_id: str
+    id: int
+    tag: str
     name: str
     description: typing.Optional[str] = None
-    inserted_at: dt.datetime = pydantic.Field()
-    """
-    Creation timestamp (UTC)
-    """
-
-    updated_at: dt.datetime = pydantic.Field()
-    """
-    Last update timestamp (UTC)
-    """
+    category: typing.Optional[str] = None
+    assets: typing.List[SuggestionAssetResponse]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

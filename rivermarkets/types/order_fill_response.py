@@ -28,7 +28,7 @@ class OrderFillResponse(UniversalBaseModel):
 
     exchange_timestamp: dt.datetime = pydantic.Field()
     """
-    Execution timestamp from exchange
+    Execution timestamp from exchange (UTC)
     """
 
     price: float = pydantic.Field()
@@ -43,7 +43,7 @@ class OrderFillResponse(UniversalBaseModel):
 
     fee: float = pydantic.Field()
     """
-    Fee charged for this fill
+    Fee charged by the exchange for this fill
     """
 
     buy_flag: bool = pydantic.Field()

@@ -8,13 +8,16 @@ import pydantic
 
 
 class OrderbookData(UniversalBaseModel):
-    river_id: int
+    river_id: typing.Optional[int] = None
+    custom_asset_id: typing.Optional[str] = None
     bids: typing.List[PriceLevelResponse]
     asks: typing.List[PriceLevelResponse]
     best_bid_price: typing.Optional[float] = None
     best_ask_price: typing.Optional[float] = None
-    exchange_timestamp: typing.Optional[dt.datetime] = None
-    is_valid: bool
+    exchange_timestamp: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    Exchange orderbook timestamp (UTC)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

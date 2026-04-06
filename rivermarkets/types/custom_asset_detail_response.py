@@ -17,8 +17,15 @@ class CustomAssetDetailResponse(UniversalBaseModel):
     name: str
     description: typing.Optional[str] = None
     members: typing.List[MarketSearchResult]
-    inserted_at: dt.datetime
-    updated_at: dt.datetime
+    inserted_at: dt.datetime = pydantic.Field()
+    """
+    Creation timestamp (UTC)
+    """
+
+    updated_at: dt.datetime = pydantic.Field()
+    """
+    Last update timestamp (UTC)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

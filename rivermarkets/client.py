@@ -13,6 +13,7 @@ from .orders.client import OrdersClient
 from .positions.client import PositionsClient
 from .prices.client import PricesClient
 from .subaccounts.client import SubaccountsClient
+from .suggestions.client import SuggestionsClient
 from .core.client_wrapper import AsyncClientWrapper
 from .complex_orders.client import AsyncComplexOrdersClient
 from .custom_assets.client import AsyncCustomAssetsClient
@@ -23,6 +24,7 @@ from .orders.client import AsyncOrdersClient
 from .positions.client import AsyncPositionsClient
 from .prices.client import AsyncPricesClient
 from .subaccounts.client import AsyncSubaccountsClient
+from .suggestions.client import AsyncSuggestionsClient
 
 
 class RiverMarkets:
@@ -96,6 +98,7 @@ class RiverMarkets:
         self.positions = PositionsClient(client_wrapper=self._client_wrapper)
         self.prices = PricesClient(client_wrapper=self._client_wrapper)
         self.subaccounts = SubaccountsClient(client_wrapper=self._client_wrapper)
+        self.suggestions = SuggestionsClient(client_wrapper=self._client_wrapper)
 
 
 class AsyncRiverMarkets:
@@ -173,6 +176,7 @@ class AsyncRiverMarkets:
         self.positions = AsyncPositionsClient(client_wrapper=self._client_wrapper)
         self.prices = AsyncPricesClient(client_wrapper=self._client_wrapper)
         self.subaccounts = AsyncSubaccountsClient(client_wrapper=self._client_wrapper)
+        self.suggestions = AsyncSuggestionsClient(client_wrapper=self._client_wrapper)
 
 
 def _get_base_url(

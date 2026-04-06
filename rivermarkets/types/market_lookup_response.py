@@ -8,7 +8,7 @@ import pydantic
 
 class MarketLookupResponse(UniversalBaseModel):
     """
-    Schema for market lookup response.
+    Schema for batch market lookup response.
     """
 
     results: typing.List[MarketSearchResult]

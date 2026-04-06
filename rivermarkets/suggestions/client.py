@@ -3,46 +3,35 @@
 from ..core.client_wrapper import SyncClientWrapper
 import typing
 from ..core.request_options import RequestOptions
-from ..types.orderbook_response import OrderbookResponse
-from ..core.jsonable_encoder import jsonable_encoder
+from ..types.suggestion_list_response import SuggestionListResponse
 from ..core.pydantic_utilities import parse_obj_as
-from ..errors.unprocessable_entity_error import UnprocessableEntityError
-from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
+from ..types.suggestion_group_response import SuggestionGroupResponse
+from ..core.jsonable_encoder import jsonable_encoder
+from ..errors.unprocessable_entity_error import UnprocessableEntityError
+from ..types.http_validation_error import HttpValidationError
 from ..core.client_wrapper import AsyncClientWrapper
 
 
-class OrderbooksClient:
+class SuggestionsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def get_custom_asset_orderbook(
-        self,
-        custom_asset_id: str,
-        *,
-        levels: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> OrderbookResponse:
+    def list_suggestions(
+        self, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> SuggestionListResponse:
         """
-        Get merged orderbook for a custom asset (basket).
-
-        Fetches orderbooks for all member instruments and merges them by summing
-        quantity at each price level. Touch mechanism ensures subscriptions are active.
+        List all active suggestion groups with their approved generic assets and underlyings.
 
         Parameters
         ----------
-        custom_asset_id : str
-
-        levels : typing.Optional[int]
-            Number of price levels to return
-
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        OrderbookResponse
+        SuggestionListResponse
             Successful Response
 
         Examples
@@ -52,65 +41,43 @@ class OrderbooksClient:
         client = RiverMarkets(
             api_key="YOUR_API_KEY",
         )
-        client.orderbooks.get_custom_asset_orderbook(
-            custom_asset_id="custom_asset_id",
-        )
+        client.suggestions.list_suggestions()
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/orderbooks/custom-asset/{jsonable_encoder(custom_asset_id)}",
+            "v1/suggestions",
             method="GET",
-            params={
-                "levels": levels,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    OrderbookResponse,
+                    SuggestionListResponse,
                     parse_obj_as(
-                        type_=OrderbookResponse,  # type: ignore
+                        type_=SuggestionListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
                 )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def get_orderbook(
-        self,
-        river_id: int,
-        *,
-        levels: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> OrderbookResponse:
+    def get_suggestion_by_tag(
+        self, tag: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> SuggestionGroupResponse:
         """
-        Get orderbook for a river_id.
+        Get a single suggestion group by tag with its assets.
 
         Parameters
         ----------
-        river_id : int
-
-        levels : typing.Optional[int]
-            Number of price levels to return
+        tag : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        OrderbookResponse
+        SuggestionGroupResponse
             Successful Response
 
         Examples
@@ -120,24 +87,21 @@ class OrderbooksClient:
         client = RiverMarkets(
             api_key="YOUR_API_KEY",
         )
-        client.orderbooks.get_orderbook(
-            river_id=1,
+        client.suggestions.get_suggestion_by_tag(
+            tag="tag",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/orderbooks/{jsonable_encoder(river_id)}",
+            f"v1/suggestions/{jsonable_encoder(tag)}",
             method="GET",
-            params={
-                "levels": levels,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    OrderbookResponse,
+                    SuggestionGroupResponse,
                     parse_obj_as(
-                        type_=OrderbookResponse,  # type: ignore
+                        type_=SuggestionGroupResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -157,36 +121,24 @@ class OrderbooksClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
-class AsyncOrderbooksClient:
+class AsyncSuggestionsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def get_custom_asset_orderbook(
-        self,
-        custom_asset_id: str,
-        *,
-        levels: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> OrderbookResponse:
+    async def list_suggestions(
+        self, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> SuggestionListResponse:
         """
-        Get merged orderbook for a custom asset (basket).
-
-        Fetches orderbooks for all member instruments and merges them by summing
-        quantity at each price level. Touch mechanism ensures subscriptions are active.
+        List all active suggestion groups with their approved generic assets and underlyings.
 
         Parameters
         ----------
-        custom_asset_id : str
-
-        levels : typing.Optional[int]
-            Number of price levels to return
-
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        OrderbookResponse
+        SuggestionListResponse
             Successful Response
 
         Examples
@@ -201,68 +153,46 @@ class AsyncOrderbooksClient:
 
 
         async def main() -> None:
-            await client.orderbooks.get_custom_asset_orderbook(
-                custom_asset_id="custom_asset_id",
-            )
+            await client.suggestions.list_suggestions()
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/orderbooks/custom-asset/{jsonable_encoder(custom_asset_id)}",
+            "v1/suggestions",
             method="GET",
-            params={
-                "levels": levels,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    OrderbookResponse,
+                    SuggestionListResponse,
                     parse_obj_as(
-                        type_=OrderbookResponse,  # type: ignore
+                        type_=SuggestionListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
                 )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def get_orderbook(
-        self,
-        river_id: int,
-        *,
-        levels: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> OrderbookResponse:
+    async def get_suggestion_by_tag(
+        self, tag: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> SuggestionGroupResponse:
         """
-        Get orderbook for a river_id.
+        Get a single suggestion group by tag with its assets.
 
         Parameters
         ----------
-        river_id : int
-
-        levels : typing.Optional[int]
-            Number of price levels to return
+        tag : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        OrderbookResponse
+        SuggestionGroupResponse
             Successful Response
 
         Examples
@@ -277,27 +207,24 @@ class AsyncOrderbooksClient:
 
 
         async def main() -> None:
-            await client.orderbooks.get_orderbook(
-                river_id=1,
+            await client.suggestions.get_suggestion_by_tag(
+                tag="tag",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/orderbooks/{jsonable_encoder(river_id)}",
+            f"v1/suggestions/{jsonable_encoder(tag)}",
             method="GET",
-            params={
-                "levels": levels,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    OrderbookResponse,
+                    SuggestionGroupResponse,
                     parse_obj_as(
-                        type_=OrderbookResponse,  # type: ignore
+                        type_=SuggestionGroupResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

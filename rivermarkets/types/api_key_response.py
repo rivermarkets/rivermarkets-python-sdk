@@ -21,9 +21,21 @@ class ApiKeyResponse(UniversalBaseModel):
     """
 
     scope: typing.Optional[str] = None
-    created_at: dt.datetime
-    last_used_at: typing.Optional[dt.datetime] = None
-    expires_at: dt.datetime
+    created_at: dt.datetime = pydantic.Field()
+    """
+    API key creation timestamp (UTC)
+    """
+
+    last_used_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    Last usage timestamp (UTC)
+    """
+
+    expires_at: dt.datetime = pydantic.Field()
+    """
+    API key expiration timestamp (UTC)
+    """
+
     is_revoked: bool
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

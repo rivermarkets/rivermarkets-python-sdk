@@ -5,15 +5,14 @@ import typing
 import pydantic
 
 
-class PositionResponse(UniversalBaseModel):
+class SuggestionAssetResponse(UniversalBaseModel):
     """
-    Schema for position response.
+    Schema for a single generic asset within a suggestion group.
     """
 
-    river_id: int
-    position: float
-    exchange_name: str
-    exchange_ticker: str
+    generic_asset_id: str
+    name: str
+    river_ids: typing.List[int]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

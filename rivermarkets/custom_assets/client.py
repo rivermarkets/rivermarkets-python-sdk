@@ -336,7 +336,7 @@ class CustomAssetsClient:
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> None:
         """
         Add river_ids to a custom asset.
 
@@ -351,8 +351,7 @@ class CustomAssetsClient:
 
         Returns
         -------
-        CustomAssetDetailResponse
-            Successful Response
+        None
 
         Examples
         --------
@@ -377,13 +376,7 @@ class CustomAssetsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    CustomAssetDetailResponse,
-                    parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
+                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
@@ -405,7 +398,7 @@ class CustomAssetsClient:
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> None:
         """
         Remove river_ids from a custom asset.
 
@@ -420,8 +413,7 @@ class CustomAssetsClient:
 
         Returns
         -------
-        CustomAssetDetailResponse
-            Successful Response
+        None
 
         Examples
         --------
@@ -446,13 +438,7 @@ class CustomAssetsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    CustomAssetDetailResponse,
-                    parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
+                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
@@ -828,7 +814,7 @@ class AsyncCustomAssetsClient:
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> None:
         """
         Add river_ids to a custom asset.
 
@@ -843,8 +829,7 @@ class AsyncCustomAssetsClient:
 
         Returns
         -------
-        CustomAssetDetailResponse
-            Successful Response
+        None
 
         Examples
         --------
@@ -877,13 +862,7 @@ class AsyncCustomAssetsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    CustomAssetDetailResponse,
-                    parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
+                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
@@ -905,7 +884,7 @@ class AsyncCustomAssetsClient:
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> None:
         """
         Remove river_ids from a custom asset.
 
@@ -920,8 +899,7 @@ class AsyncCustomAssetsClient:
 
         Returns
         -------
-        CustomAssetDetailResponse
-            Successful Response
+        None
 
         Examples
         --------
@@ -954,13 +932,7 @@ class AsyncCustomAssetsClient:
         )
         try:
             if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    CustomAssetDetailResponse,
-                    parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
+                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
