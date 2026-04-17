@@ -166,7 +166,7 @@ class OrdersClient:
         Submits an order for asynchronous processing. The order is persisted immediately
         and queued for execution on the target exchange.
 
-        See  [Orders](https://docs.riverfi.com/concepts/orders) and [Order Types](https://docs.riverfi.com/concepts/order-types) for more information.
+        See  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).
@@ -619,7 +619,7 @@ class AsyncOrdersClient:
         Submits an order for asynchronous processing. The order is persisted immediately
         and queued for execution on the target exchange.
 
-        See  [Orders](https://docs.riverfi.com/concepts/orders) and [Order Types](https://docs.riverfi.com/concepts/order-types) for more information.
+        See  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).
