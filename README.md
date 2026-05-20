@@ -8,12 +8,23 @@ Python SDK for the [River Markets API](https://docs.rivermarkets.com).
 pip install rivermarkets
 ```
 
+## Authentication
+
+The SDK authenticates with Ed25519 request signing. Create an API key in
+Settings → API Keys; you'll get a **Key ID** (UUID) and a **base64-encoded
+private key** (shown once at creation). Pass both to the client — every
+request is signed transparently via `X-River-Key-Id`, `X-River-Timestamp`,
+and `X-River-Signature` headers.
+
 ## Usage
 
 ```python
 from rivermarkets import RiverMarkets
 
-client = RiverMarkets(api_key="your_api_key")
+client = RiverMarkets(
+    key_id="YOUR_KEY_ID",
+    private_key="YOUR_BASE64_PRIVATE_KEY",
+)
 
 # Search markets
 results = client.markets.search_markets(q="bitcoin")
@@ -38,6 +49,9 @@ client.orders.cancel_order(order_id="...")
 ```python
 from rivermarkets import AsyncRiverMarkets
 
-client = AsyncRiverMarkets(api_key="your_api_key")
+client = AsyncRiverMarkets(
+    key_id="YOUR_KEY_ID",
+    private_key="YOUR_BASE64_PRIVATE_KEY",
+)
 results = await client.markets.search_markets(q="bitcoin")
 ```
