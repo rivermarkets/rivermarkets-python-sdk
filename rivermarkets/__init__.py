@@ -70,6 +70,7 @@ from . import (
     subaccounts,
     suggestions,
 )
+from .auth import RiverMarketsSigner
 from .client import AsyncRiverMarkets, RiverMarkets
 from .complex_orders import ListComplexOrdersV1ComplexOrdersGetRequestStatus
 from .environment import RiverMarketsEnvironment
@@ -136,6 +137,7 @@ __all__ = [
     "PriceResponseType",
     "RiverMarkets",
     "RiverMarketsEnvironment",
+    "RiverMarketsSigner",
     "SubaccountResponse",
     "SuggestionAssetResponse",
     "SuggestionGroupResponse",
