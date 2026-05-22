@@ -8,6 +8,7 @@ import pydantic
 class PriceLevelResponse(UniversalBaseModel):
     price: float
     qty: float
+    breakdown: typing.Optional[typing.Dict[str, float]] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

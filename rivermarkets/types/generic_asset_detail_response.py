@@ -2,29 +2,28 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-from .market_search_result import MarketSearchResult
 import datetime as dt
+from .market_search_result import MarketSearchResult
 import pydantic
 
 
-class CustomAssetDetailResponse(UniversalBaseModel):
+class GenericAssetDetailResponse(UniversalBaseModel):
     """
-    Response schema for a custom asset with its members (detail view).
+    Response schema for a generic asset with its resolved members (detail view).
     """
 
-    custom_asset_id: str
-    subaccount_id: str
+    generic_asset_id: str
+    owner_subaccount_id: typing.Optional[str] = None
     name: str
     description: typing.Optional[str] = None
+    category: typing.Optional[str] = None
+    subcategory: typing.Optional[str] = None
+    resolves_at: typing.Optional[dt.datetime] = None
+    status: typing.Optional[str] = None
     members: typing.List[MarketSearchResult]
-    inserted_at: dt.datetime = pydantic.Field()
+    inserted_at: str = pydantic.Field()
     """
     Creation timestamp (UTC)
-    """
-
-    updated_at: dt.datetime = pydantic.Field()
-    """
-    Last update timestamp (UTC)
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

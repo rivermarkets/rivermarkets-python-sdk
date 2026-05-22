@@ -10,7 +10,7 @@ import pydantic
 
 class UserPositionListResponse(UniversalBaseModel):
     """
-    Schema for list of positions for a user.
+    Positions grouped by subaccount.
     """
 
     subaccount_to_positions: typing.List[

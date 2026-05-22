@@ -2,7 +2,6 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
-import datetime as dt
 import typing
 
 
@@ -26,7 +25,7 @@ class OrderFillResponse(UniversalBaseModel):
     Exchange-assigned trade/fill ID
     """
 
-    exchange_timestamp: dt.datetime = pydantic.Field()
+    exchange_timestamp: str = pydantic.Field()
     """
     Execution timestamp from exchange (UTC)
     """

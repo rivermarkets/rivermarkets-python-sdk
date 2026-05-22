@@ -34,7 +34,6 @@ class PricesClient:
     ) -> PriceResponse:
         """
         Get price data for a market.
-
         Returns either candlestick OHLC data or simple price history based on the `type` parameter.
         The endpoint automatically determines the exchange and fetches data accordingly.
 
@@ -70,7 +69,7 @@ class PricesClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.prices.get_prices(
             river_id=1,
@@ -126,7 +125,6 @@ class AsyncPricesClient:
     ) -> PriceResponse:
         """
         Get price data for a market.
-
         Returns either candlestick OHLC data or simple price history based on the `type` parameter.
         The endpoint automatically determines the exchange and fetches data accordingly.
 
@@ -164,7 +162,7 @@ class AsyncPricesClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 

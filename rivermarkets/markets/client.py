@@ -26,12 +26,19 @@ class MarketsClient:
         *,
         q: typing.Optional[str] = None,
         exchange_name: typing.Optional[str] = None,
-        category: typing.Optional[str] = None,
+        category: typing.Optional[typing.Sequence[str]] = None,
+        subcategory: typing.Optional[str] = None,
         status: typing.Optional[InstrumentStatus] = None,
         expiration_date_start: typing.Optional[dt.datetime] = None,
         expiration_date_end: typing.Optional[dt.datetime] = None,
+        start_datetime_after: typing.Optional[dt.datetime] = None,
+        start_datetime_before: typing.Optional[dt.datetime] = None,
+        event_ticker: typing.Optional[str] = None,
+        sort_by: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
+        event_limit: typing.Optional[int] = None,
+        event_offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
@@ -53,8 +60,11 @@ class MarketsClient:
         exchange_name : typing.Optional[str]
             Filter by exchange name (KALSHI, POLYMARKET)
 
-        category : typing.Optional[str]
-            Filter by canonical category (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other)
+        category : typing.Optional[typing.Sequence[str]]
+            Filter by canonical category. Repeat the param to filter to multiple categories (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other).
+
+        subcategory : typing.Optional[str]
+            Filter by subcategory (e.g. Basketball, Football)
 
         status : typing.Optional[InstrumentStatus]
             Filter by instrument status
@@ -65,11 +75,29 @@ class MarketsClient:
         expiration_date_end : typing.Optional[dt.datetime]
             End of expiration date range (exclusive, ISO 8601)
 
+        start_datetime_after : typing.Optional[dt.datetime]
+            Filter to markets with start_datetime >= this (ISO 8601)
+
+        start_datetime_before : typing.Optional[dt.datetime]
+            Filter to markets with start_datetime < this (ISO 8601)
+
+        event_ticker : typing.Optional[str]
+            Filter by event_ticker (exact match)
+
+        sort_by : typing.Optional[str]
+            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time
+
         limit : typing.Optional[int]
             Maximum number of results
 
         offset : typing.Optional[int]
             Offset for pagination
+
+        event_limit : typing.Optional[int]
+            Paginate by events instead of markets. Up to 200 by default; values above that require start_datetime_after or start_datetime_before.
+
+        event_offset : typing.Optional[int]
+            Event offset for event-based pagination
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -84,7 +112,7 @@ class MarketsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.markets.search_markets()
         """
@@ -95,6 +123,7 @@ class MarketsClient:
                 "q": q,
                 "exchange_name": exchange_name,
                 "category": category,
+                "subcategory": subcategory,
                 "status": status,
                 "expiration_date_start": serialize_datetime(expiration_date_start)
                 if expiration_date_start is not None
@@ -102,8 +131,18 @@ class MarketsClient:
                 "expiration_date_end": serialize_datetime(expiration_date_end)
                 if expiration_date_end is not None
                 else None,
+                "start_datetime_after": serialize_datetime(start_datetime_after)
+                if start_datetime_after is not None
+                else None,
+                "start_datetime_before": serialize_datetime(start_datetime_before)
+                if start_datetime_before is not None
+                else None,
+                "event_ticker": event_ticker,
+                "sort_by": sort_by,
                 "limit": limit,
                 "offset": offset,
+                "event_limit": event_limit,
+                "event_offset": event_offset,
             },
             request_options=request_options,
         )
@@ -155,7 +194,7 @@ class MarketsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.markets.lookup_markets(
             river_ids="river_ids",
@@ -224,7 +263,7 @@ class MarketsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.markets.match_market()
         """
@@ -271,12 +310,19 @@ class AsyncMarketsClient:
         *,
         q: typing.Optional[str] = None,
         exchange_name: typing.Optional[str] = None,
-        category: typing.Optional[str] = None,
+        category: typing.Optional[typing.Sequence[str]] = None,
+        subcategory: typing.Optional[str] = None,
         status: typing.Optional[InstrumentStatus] = None,
         expiration_date_start: typing.Optional[dt.datetime] = None,
         expiration_date_end: typing.Optional[dt.datetime] = None,
+        start_datetime_after: typing.Optional[dt.datetime] = None,
+        start_datetime_before: typing.Optional[dt.datetime] = None,
+        event_ticker: typing.Optional[str] = None,
+        sort_by: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
+        event_limit: typing.Optional[int] = None,
+        event_offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
@@ -298,8 +344,11 @@ class AsyncMarketsClient:
         exchange_name : typing.Optional[str]
             Filter by exchange name (KALSHI, POLYMARKET)
 
-        category : typing.Optional[str]
-            Filter by canonical category (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other)
+        category : typing.Optional[typing.Sequence[str]]
+            Filter by canonical category. Repeat the param to filter to multiple categories (Sports, Crypto, Politics, Finance, Entertainment, Science & Tech, Weather, World Affairs, Health, Social, Other).
+
+        subcategory : typing.Optional[str]
+            Filter by subcategory (e.g. Basketball, Football)
 
         status : typing.Optional[InstrumentStatus]
             Filter by instrument status
@@ -310,11 +359,29 @@ class AsyncMarketsClient:
         expiration_date_end : typing.Optional[dt.datetime]
             End of expiration date range (exclusive, ISO 8601)
 
+        start_datetime_after : typing.Optional[dt.datetime]
+            Filter to markets with start_datetime >= this (ISO 8601)
+
+        start_datetime_before : typing.Optional[dt.datetime]
+            Filter to markets with start_datetime < this (ISO 8601)
+
+        event_ticker : typing.Optional[str]
+            Filter by event_ticker (exact match)
+
+        sort_by : typing.Optional[str]
+            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time
+
         limit : typing.Optional[int]
             Maximum number of results
 
         offset : typing.Optional[int]
             Offset for pagination
+
+        event_limit : typing.Optional[int]
+            Paginate by events instead of markets. Up to 200 by default; values above that require start_datetime_after or start_datetime_before.
+
+        event_offset : typing.Optional[int]
+            Event offset for event-based pagination
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -331,7 +398,7 @@ class AsyncMarketsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -348,6 +415,7 @@ class AsyncMarketsClient:
                 "q": q,
                 "exchange_name": exchange_name,
                 "category": category,
+                "subcategory": subcategory,
                 "status": status,
                 "expiration_date_start": serialize_datetime(expiration_date_start)
                 if expiration_date_start is not None
@@ -355,8 +423,18 @@ class AsyncMarketsClient:
                 "expiration_date_end": serialize_datetime(expiration_date_end)
                 if expiration_date_end is not None
                 else None,
+                "start_datetime_after": serialize_datetime(start_datetime_after)
+                if start_datetime_after is not None
+                else None,
+                "start_datetime_before": serialize_datetime(start_datetime_before)
+                if start_datetime_before is not None
+                else None,
+                "event_ticker": event_ticker,
+                "sort_by": sort_by,
                 "limit": limit,
                 "offset": offset,
+                "event_limit": event_limit,
+                "event_offset": event_offset,
             },
             request_options=request_options,
         )
@@ -410,7 +488,7 @@ class AsyncMarketsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -487,7 +565,7 @@ class AsyncMarketsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 

@@ -14,6 +14,7 @@ class MarketSearchResponse(UniversalBaseModel):
     query: str
     results: typing.List[MarketSearchResult]
     total: int
+    total_events: typing.Optional[int] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

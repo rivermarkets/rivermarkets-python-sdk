@@ -2,9 +2,6 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
-from .types.list_complex_orders_v1complex_orders_get_request_status import (
-    ListComplexOrdersV1ComplexOrdersGetRequestStatus,
-)
 from ..core.request_options import RequestOptions
 from ..types.complex_order_list_response import ComplexOrderListResponse
 from ..core.pydantic_utilities import parse_obj_as
@@ -13,6 +10,8 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.conditional_order_create import ConditionalOrderCreate
+from ..types.iceberg_order_params import IcebergOrderParams
+from ..types.peg_order_params import PegOrderParams
 from ..types.complex_order_create_response import ComplexOrderCreateResponse
 from ..core.serialization import convert_and_respect_annotation_metadata
 from ..types.cancel_complex_order_response import CancelComplexOrderResponse
@@ -32,45 +31,50 @@ class ComplexOrdersClient:
         self,
         *,
         complex_order_type: typing.Optional[str] = None,
-        status: typing.Optional[
-            ListComplexOrdersV1ComplexOrdersGetRequestStatus
-        ] = None,
+        status: typing.Optional[typing.Sequence[str]] = None,
         river_id: typing.Optional[int] = None,
-        custom_asset_id: typing.Optional[str] = None,
+        generic_asset_id: typing.Optional[str] = None,
         subaccount_id: typing.Optional[str] = None,
+        complex_order_ids: typing.Optional[typing.Sequence[str]] = None,
         parent_river_order_id: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderListResponse:
         """
-        List all complex orders with optional filters.
+        List complex orders (conditional and iceberg) with optional filters.
 
-        Returns a paginated list of complex orders (conditional, TWAP, etc.) across all
-        accessible subaccounts, ordered by `created_at` descending.
-
-        **Filters:**
-        All filters are optional and can be combined. Use `complex_order_type` to narrow
-        to a specific type. If no `subaccount_id` is specified, returns orders from all
-        subaccounts the user has access to.
+        Returns a dict keyed by complex order type (`conditional_orders`,
+        `iceberg_orders`). Use `complex_order_type` to restrict to one type.
 
         Parameters
         ----------
         complex_order_type : typing.Optional[str]
+            Filter by complex order type: CONDITIONAL, TWAP, ICEBERG, PEG.
 
-        status : typing.Optional[ListComplexOrdersV1ComplexOrdersGetRequestStatus]
+        status : typing.Optional[typing.Sequence[str]]
+            Filter by status name. Interpreted per complex_order_type (ConditionalOrderStatus for CONDITIONAL, IcebergOrderStatus for ICEBERG, PegOrderStatus for PEG). Unknown names for the active type are ignored.
 
         river_id : typing.Optional[int]
+            Filter by instrument ID
 
-        custom_asset_id : typing.Optional[str]
+        generic_asset_id : typing.Optional[str]
+            Filter by generic asset basket ID
 
         subaccount_id : typing.Optional[str]
+            Filter to a specific subaccount
+
+        complex_order_ids : typing.Optional[typing.Sequence[str]]
+            Filter by complex order IDs
 
         parent_river_order_id : typing.Optional[str]
+            Filter by parent order ID
 
         limit : typing.Optional[int]
+            Results per page (max 1000)
 
         offset : typing.Optional[int]
+            Pagination offset
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -85,7 +89,7 @@ class ComplexOrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.complex_orders.list_complex_orders()
         """
@@ -96,8 +100,9 @@ class ComplexOrdersClient:
                 "complex_order_type": complex_order_type,
                 "status": status,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
+                "complex_order_ids": complex_order_ids,
                 "parent_river_order_id": parent_river_order_id,
                 "limit": limit,
                 "offset": offset,
@@ -133,25 +138,20 @@ class ComplexOrdersClient:
         *,
         subaccount_id: str,
         river_id: typing.Optional[int] = OMIT,
-        custom_asset_id: typing.Optional[str] = OMIT,
+        generic_asset_id: typing.Optional[str] = OMIT,
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
+        iceberg_order_params: typing.Optional[IcebergOrderParams] = OMIT,
+        peg_order_params: typing.Optional[PegOrderParams] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderCreateResponse:
         """
-        Create a new complex order.
+        Create a new complex order (conditional or iceberg).
 
-        Currently supports conditional orders (TP, SL, STOP). The order is persisted
-        immediately with `PENDING` status and queued for activation.
+        Provide exactly one of `conditional_order_params` (TP/SL/STOP) or
+        `iceberg_order_params`. The body shape determines the complex_order_type.
 
-        **Conditional Order Types:**
-        - `TP`: Take-profit attached to a parent order. Requires
-          `parent_river_order_id` or `parent_complex_order_id`.
-        - `SL`: Stop-loss attached to a parent order. Requires
-          `parent_river_order_id` or `parent_complex_order_id`.
-        - `STOP`: Standalone stop order triggered by market price.
-
-        **Response:**
-        Returns `202 Accepted` with the complex order in `PENDING` status.
+        Returns 202 Accepted with the persisted complex order in PENDING status,
+        enqueued for activation by the appropriate consumer service.
 
         Parameters
         ----------
@@ -159,13 +159,19 @@ class ComplexOrdersClient:
             Subaccount to create the order under
 
         river_id : typing.Optional[int]
-            Instrument ID. Mutually exclusive with custom_asset_id.
+            Instrument ID. Mutually exclusive with generic_asset_id.
 
-        custom_asset_id : typing.Optional[str]
-            Custom asset basket ID. Mutually exclusive with river_id.
+        generic_asset_id : typing.Optional[str]
+            Generic asset basket ID. Mutually exclusive with river_id.
 
         conditional_order_params : typing.Optional[ConditionalOrderCreate]
-            Conditional order parameters
+            Conditional order parameters (TP/SL/STOP)
+
+        iceberg_order_params : typing.Optional[IcebergOrderParams]
+            Iceberg order parameters
+
+        peg_order_params : typing.Optional[PegOrderParams]
+            Peg order parameters
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -180,7 +186,7 @@ class ComplexOrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.complex_orders.create_complex_order(
             subaccount_id="subaccount_id",
@@ -192,10 +198,20 @@ class ComplexOrdersClient:
             json={
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "conditional_order_params": convert_and_respect_annotation_metadata(
                     object_=conditional_order_params,
                     annotation=ConditionalOrderCreate,
+                    direction="write",
+                ),
+                "iceberg_order_params": convert_and_respect_annotation_metadata(
+                    object_=iceberg_order_params,
+                    annotation=IcebergOrderParams,
+                    direction="write",
+                ),
+                "peg_order_params": convert_and_respect_annotation_metadata(
+                    object_=peg_order_params,
+                    annotation=PegOrderParams,
                     direction="write",
                 ),
             },
@@ -230,17 +246,21 @@ class ComplexOrdersClient:
         self,
         *,
         subaccount_id: str,
+        river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelComplexOrderResponse:
         """
-        Cancel all complex orders for a subaccount.
+        Cancel all cancellable complex orders (conditional and iceberg) for a subaccount.
 
-        Returns count of orders being cancelled. Cancellation is processed asynchronously.
+        Returns the list of complex_order_ids that were submitted for cancellation.
 
         Parameters
         ----------
         subaccount_id : str
             Subaccount to cancel all complex orders for
+
+        river_ids : typing.Optional[typing.Sequence[int]]
+            If set, only cancel cancellable complex orders for these instruments. Must be either omitted/null or a non-empty list.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -255,7 +275,7 @@ class ComplexOrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.complex_orders.cancel_all_complex_orders(
             subaccount_id="subaccount_id",
@@ -266,6 +286,7 @@ class ComplexOrdersClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
+                "river_ids": river_ids,
             },
             request_options=request_options,
             omit=OMIT,
@@ -301,10 +322,7 @@ class ComplexOrdersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderResponse:
         """
-        Get a single complex order by ID.
-
-        Returns complete complex order details including trigger configuration
-        and current status.
+        Get a single complex order by ID (conditional or iceberg).
 
         Parameters
         ----------
@@ -323,7 +341,7 @@ class ComplexOrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.complex_orders.get_complex_order(
             complex_order_id="complex_order_id",
@@ -365,11 +383,10 @@ class ComplexOrdersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelComplexOrderResponse:
         """
-        Cancel a complex order.
+        Cancel a single complex order (conditional or iceberg).
 
-        Request cancellation of a complex order.
-        Returns 202 Accepted with the current complex order state —
-        cancellation is processed asynchronously.
+        Returns 202 Accepted. Cancellation is processed asynchronously by the
+        appropriate consumer service.
 
         Parameters
         ----------
@@ -388,7 +405,7 @@ class ComplexOrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.complex_orders.cancel_complex_order(
             complex_order_id="complex_order_id",
@@ -432,45 +449,50 @@ class AsyncComplexOrdersClient:
         self,
         *,
         complex_order_type: typing.Optional[str] = None,
-        status: typing.Optional[
-            ListComplexOrdersV1ComplexOrdersGetRequestStatus
-        ] = None,
+        status: typing.Optional[typing.Sequence[str]] = None,
         river_id: typing.Optional[int] = None,
-        custom_asset_id: typing.Optional[str] = None,
+        generic_asset_id: typing.Optional[str] = None,
         subaccount_id: typing.Optional[str] = None,
+        complex_order_ids: typing.Optional[typing.Sequence[str]] = None,
         parent_river_order_id: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderListResponse:
         """
-        List all complex orders with optional filters.
+        List complex orders (conditional and iceberg) with optional filters.
 
-        Returns a paginated list of complex orders (conditional, TWAP, etc.) across all
-        accessible subaccounts, ordered by `created_at` descending.
-
-        **Filters:**
-        All filters are optional and can be combined. Use `complex_order_type` to narrow
-        to a specific type. If no `subaccount_id` is specified, returns orders from all
-        subaccounts the user has access to.
+        Returns a dict keyed by complex order type (`conditional_orders`,
+        `iceberg_orders`). Use `complex_order_type` to restrict to one type.
 
         Parameters
         ----------
         complex_order_type : typing.Optional[str]
+            Filter by complex order type: CONDITIONAL, TWAP, ICEBERG, PEG.
 
-        status : typing.Optional[ListComplexOrdersV1ComplexOrdersGetRequestStatus]
+        status : typing.Optional[typing.Sequence[str]]
+            Filter by status name. Interpreted per complex_order_type (ConditionalOrderStatus for CONDITIONAL, IcebergOrderStatus for ICEBERG, PegOrderStatus for PEG). Unknown names for the active type are ignored.
 
         river_id : typing.Optional[int]
+            Filter by instrument ID
 
-        custom_asset_id : typing.Optional[str]
+        generic_asset_id : typing.Optional[str]
+            Filter by generic asset basket ID
 
         subaccount_id : typing.Optional[str]
+            Filter to a specific subaccount
+
+        complex_order_ids : typing.Optional[typing.Sequence[str]]
+            Filter by complex order IDs
 
         parent_river_order_id : typing.Optional[str]
+            Filter by parent order ID
 
         limit : typing.Optional[int]
+            Results per page (max 1000)
 
         offset : typing.Optional[int]
+            Pagination offset
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -487,7 +509,7 @@ class AsyncComplexOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -504,8 +526,9 @@ class AsyncComplexOrdersClient:
                 "complex_order_type": complex_order_type,
                 "status": status,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
+                "complex_order_ids": complex_order_ids,
                 "parent_river_order_id": parent_river_order_id,
                 "limit": limit,
                 "offset": offset,
@@ -541,25 +564,20 @@ class AsyncComplexOrdersClient:
         *,
         subaccount_id: str,
         river_id: typing.Optional[int] = OMIT,
-        custom_asset_id: typing.Optional[str] = OMIT,
+        generic_asset_id: typing.Optional[str] = OMIT,
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
+        iceberg_order_params: typing.Optional[IcebergOrderParams] = OMIT,
+        peg_order_params: typing.Optional[PegOrderParams] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderCreateResponse:
         """
-        Create a new complex order.
+        Create a new complex order (conditional or iceberg).
 
-        Currently supports conditional orders (TP, SL, STOP). The order is persisted
-        immediately with `PENDING` status and queued for activation.
+        Provide exactly one of `conditional_order_params` (TP/SL/STOP) or
+        `iceberg_order_params`. The body shape determines the complex_order_type.
 
-        **Conditional Order Types:**
-        - `TP`: Take-profit attached to a parent order. Requires
-          `parent_river_order_id` or `parent_complex_order_id`.
-        - `SL`: Stop-loss attached to a parent order. Requires
-          `parent_river_order_id` or `parent_complex_order_id`.
-        - `STOP`: Standalone stop order triggered by market price.
-
-        **Response:**
-        Returns `202 Accepted` with the complex order in `PENDING` status.
+        Returns 202 Accepted with the persisted complex order in PENDING status,
+        enqueued for activation by the appropriate consumer service.
 
         Parameters
         ----------
@@ -567,13 +585,19 @@ class AsyncComplexOrdersClient:
             Subaccount to create the order under
 
         river_id : typing.Optional[int]
-            Instrument ID. Mutually exclusive with custom_asset_id.
+            Instrument ID. Mutually exclusive with generic_asset_id.
 
-        custom_asset_id : typing.Optional[str]
-            Custom asset basket ID. Mutually exclusive with river_id.
+        generic_asset_id : typing.Optional[str]
+            Generic asset basket ID. Mutually exclusive with river_id.
 
         conditional_order_params : typing.Optional[ConditionalOrderCreate]
-            Conditional order parameters
+            Conditional order parameters (TP/SL/STOP)
+
+        iceberg_order_params : typing.Optional[IcebergOrderParams]
+            Iceberg order parameters
+
+        peg_order_params : typing.Optional[PegOrderParams]
+            Peg order parameters
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -590,7 +614,7 @@ class AsyncComplexOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -608,10 +632,20 @@ class AsyncComplexOrdersClient:
             json={
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "conditional_order_params": convert_and_respect_annotation_metadata(
                     object_=conditional_order_params,
                     annotation=ConditionalOrderCreate,
+                    direction="write",
+                ),
+                "iceberg_order_params": convert_and_respect_annotation_metadata(
+                    object_=iceberg_order_params,
+                    annotation=IcebergOrderParams,
+                    direction="write",
+                ),
+                "peg_order_params": convert_and_respect_annotation_metadata(
+                    object_=peg_order_params,
+                    annotation=PegOrderParams,
                     direction="write",
                 ),
             },
@@ -646,17 +680,21 @@ class AsyncComplexOrdersClient:
         self,
         *,
         subaccount_id: str,
+        river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelComplexOrderResponse:
         """
-        Cancel all complex orders for a subaccount.
+        Cancel all cancellable complex orders (conditional and iceberg) for a subaccount.
 
-        Returns count of orders being cancelled. Cancellation is processed asynchronously.
+        Returns the list of complex_order_ids that were submitted for cancellation.
 
         Parameters
         ----------
         subaccount_id : str
             Subaccount to cancel all complex orders for
+
+        river_ids : typing.Optional[typing.Sequence[int]]
+            If set, only cancel cancellable complex orders for these instruments. Must be either omitted/null or a non-empty list.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -673,7 +711,7 @@ class AsyncComplexOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -690,6 +728,7 @@ class AsyncComplexOrdersClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
+                "river_ids": river_ids,
             },
             request_options=request_options,
             omit=OMIT,
@@ -725,10 +764,7 @@ class AsyncComplexOrdersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderResponse:
         """
-        Get a single complex order by ID.
-
-        Returns complete complex order details including trigger configuration
-        and current status.
+        Get a single complex order by ID (conditional or iceberg).
 
         Parameters
         ----------
@@ -749,7 +785,7 @@ class AsyncComplexOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -797,11 +833,10 @@ class AsyncComplexOrdersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelComplexOrderResponse:
         """
-        Cancel a complex order.
+        Cancel a single complex order (conditional or iceberg).
 
-        Request cancellation of a complex order.
-        Returns 202 Accepted with the current complex order state —
-        cancellation is processed asynchronously.
+        Returns 202 Accepted. Cancellation is processed asynchronously by the
+        appropriate consumer service.
 
         Parameters
         ----------
@@ -822,7 +857,7 @@ class AsyncComplexOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 

@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
 import typing
-import datetime as dt
 from .order_fill_response import OrderFillResponse
 
 
@@ -42,9 +41,14 @@ class OrderDetailResponse(UniversalBaseModel):
     Order direction: true=buy, false=sell
     """
 
+    post_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the order is post-only (maker-only)
+    """
+
     status: str = pydantic.Field()
     """
-    Order status: PENDING_SUBMISSION, PROCESSING, RESTING, PARTIALLY_FILLED, EXECUTED, CANCELLED, REJECTED, or EXPIRED
+    Order status. Live: PENDING_SUBMISSION, PROCESSING, RESTING. Terminal: EXECUTED, PARTIALLY_FILLED (cancelled with some fills), CANCELLED, REJECTED.
     """
 
     river_id: typing.Optional[int] = pydantic.Field(default=None)
@@ -52,9 +56,9 @@ class OrderDetailResponse(UniversalBaseModel):
     Instrument ID
     """
 
-    custom_asset_id: typing.Optional[str] = pydantic.Field(default=None)
+    generic_asset_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Custom asset basket UUID
+    Generic asset basket UUID
     """
 
     subaccount_id: str = pydantic.Field()
@@ -62,17 +66,17 @@ class OrderDetailResponse(UniversalBaseModel):
     Subaccount the order belongs to
     """
 
-    expiry_ts_utc: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    expiry_ts_utc: typing.Optional[str] = pydantic.Field(default=None)
     """
     Expiry timestamp in UTC for GTD orders
     """
 
-    created_at: dt.datetime = pydantic.Field()
+    created_at: str = pydantic.Field()
     """
     Order creation timestamp (UTC)
     """
 
-    updated_at: dt.datetime = pydantic.Field()
+    updated_at: str = pydantic.Field()
     """
     Last update timestamp (UTC)
     """
@@ -100,6 +104,16 @@ class OrderDetailResponse(UniversalBaseModel):
     reject_reason: typing.Optional[str] = pydantic.Field(default=None)
     """
     Reason for rejection (if status is REJECTED)
+    """
+
+    parent_iceberg_order_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    If this order is a tranche of an iceberg parent, the parent's id; otherwise null.
+    """
+
+    parent_peg_order_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    If this order is the resting child of a peg parent, the parent's id; otherwise null.
     """
 
     fills: typing.Optional[typing.List[OrderFillResponse]] = pydantic.Field(
