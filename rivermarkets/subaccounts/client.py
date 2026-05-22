@@ -7,6 +7,7 @@ from ..types.subaccount_response import SubaccountResponse
 from ..core.pydantic_utilities import parse_obj_as
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
+from ..types.account_type import AccountType
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from ..core.jsonable_encoder import jsonable_encoder
@@ -43,7 +44,7 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.subaccounts.list_subaccounts()
         """
@@ -71,6 +72,7 @@ class SubaccountsClient:
         *,
         name: str,
         description: typing.Optional[str] = OMIT,
+        account_type: typing.Optional[AccountType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountResponse:
         """
@@ -81,6 +83,8 @@ class SubaccountsClient:
         name : str
 
         description : typing.Optional[str]
+
+        account_type : typing.Optional[AccountType]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -95,7 +99,7 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.subaccounts.create_subaccount(
             name="name",
@@ -107,6 +111,7 @@ class SubaccountsClient:
             json={
                 "name": name,
                 "description": description,
+                "account_type": account_type,
             },
             request_options=request_options,
             omit=OMIT,
@@ -163,7 +168,7 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.subaccounts.get_subaccount(
             subaccount_id="subaccount_id",
@@ -205,7 +210,7 @@ class SubaccountsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Delete a subaccount.
+        Delete a subaccount. Custodial subaccounts cannot be deleted.
 
         Parameters
         ----------
@@ -223,7 +228,7 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.subaccounts.delete_subaccount(
             subaccount_id="subaccount_id",
@@ -284,7 +289,7 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.subaccounts.update_subaccount(
             subaccount_id="subaccount_id",
@@ -354,7 +359,7 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -388,6 +393,7 @@ class AsyncSubaccountsClient:
         *,
         name: str,
         description: typing.Optional[str] = OMIT,
+        account_type: typing.Optional[AccountType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountResponse:
         """
@@ -398,6 +404,8 @@ class AsyncSubaccountsClient:
         name : str
 
         description : typing.Optional[str]
+
+        account_type : typing.Optional[AccountType]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -414,7 +422,7 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -432,6 +440,7 @@ class AsyncSubaccountsClient:
             json={
                 "name": name,
                 "description": description,
+                "account_type": account_type,
             },
             request_options=request_options,
             omit=OMIT,
@@ -490,7 +499,7 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -538,7 +547,7 @@ class AsyncSubaccountsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Delete a subaccount.
+        Delete a subaccount. Custodial subaccounts cannot be deleted.
 
         Parameters
         ----------
@@ -558,7 +567,7 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -627,7 +636,7 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 

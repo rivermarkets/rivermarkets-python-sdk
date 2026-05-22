@@ -2,9 +2,6 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
-from .types.list_orders_v1orders_get_request_status import (
-    ListOrdersV1OrdersGetRequestStatus,
-)
 from ..core.request_options import RequestOptions
 from ..types.order_list_response import OrderListResponse
 from ..core.pydantic_utilities import parse_obj_as
@@ -21,6 +18,7 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..types.order_detail_response import OrderDetailResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..types.cancel_order_response import CancelOrderResponse
+from ..types.order_edit_response import OrderEditResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -34,11 +32,14 @@ class OrdersClient:
     def list_orders(
         self,
         *,
-        status: typing.Optional[ListOrdersV1OrdersGetRequestStatus] = None,
+        status: typing.Optional[str] = None,
         river_id: typing.Optional[int] = None,
-        custom_asset_id: typing.Optional[str] = None,
+        generic_asset_id: typing.Optional[str] = None,
         subaccount_id: typing.Optional[str] = None,
+        parent_iceberg_order_id: typing.Optional[str] = None,
+        parent_peg_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        show_tp_sl_active: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -55,32 +56,40 @@ class OrdersClient:
         **Order Statuses:**
         - `PENDING_SUBMISSION`: Order received, awaiting exchange submission.
         - `PROCESSING`: Being processed by the order consumer.
-        - `RESTING`: Live on the exchange order book.
-        - `PARTIALLY_FILLED`: Some quantity executed, remainder resting.
-        - `EXECUTED`: Fully filled.
-        - `CANCELLED`: Cancelled by user or system.
+        - `RESTING`: Live on the exchange order book (may include partially-filled live orders).
+        - `EXECUTED`: Terminal — fully filled.
+        - `PARTIALLY_FILLED`: Terminal — cancelled with some quantity filled.
+        - `CANCELLED`: Terminal — cancelled with no fills.
         - `REJECTED`: Rejected by exchange (see order details for reason).
-        - `EXPIRED`: GTD order past expiry time.
 
         **Aggregated Fields:**
         Each order includes `traded_qty`, `average_price`, and `fees_paid` computed from fills.
 
         Parameters
         ----------
-        status : typing.Optional[ListOrdersV1OrdersGetRequestStatus]
-            Filter by order status
+        status : typing.Optional[str]
+            Filter by order status. Accepts a single OrderStatus name (e.g. 'RESTING') or the meta-value 'ACTIVE' which resolves to RESTING.
 
         river_id : typing.Optional[int]
             Filter by instrument ID
 
-        custom_asset_id : typing.Optional[str]
-            Filter by custom asset ID
+        generic_asset_id : typing.Optional[str]
+            Filter by generic asset ID
 
         subaccount_id : typing.Optional[str]
             Filter to a specific subaccount
 
+        parent_iceberg_order_id : typing.Optional[str]
+            Filter to child tranches of a specific iceberg parent.
+
+        parent_peg_order_id : typing.Optional[str]
+            Filter to child tranches of a specific peg parent.
+
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
+
+        show_tp_sl_active : typing.Optional[bool]
+            When true, complex_order_ids only includes attached TP/SL orders with status PENDING or ACTIVE.
 
         limit : typing.Optional[int]
             Results per page (max 1000)
@@ -101,7 +110,7 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.orders.list_orders()
         """
@@ -111,9 +120,12 @@ class OrdersClient:
             params={
                 "status": status,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
+                "parent_iceberg_order_id": parent_iceberg_order_id,
+                "parent_peg_order_id": parent_peg_order_id,
                 "buy_flag": buy_flag,
+                "show_tp_sl_active": show_tp_sl_active,
                 "limit": limit,
                 "offset": offset,
             },
@@ -152,8 +164,9 @@ class OrdersClient:
         buy_flag: bool,
         subaccount_id: str,
         price: typing.Optional[float] = OMIT,
+        post_only: typing.Optional[bool] = OMIT,
         river_id: typing.Optional[int] = OMIT,
-        custom_asset_id: typing.Optional[str] = OMIT,
+        generic_asset_id: typing.Optional[str] = OMIT,
         expiry_ts_utc: typing.Optional[dt.datetime] = OMIT,
         conditional_orders_params: typing.Optional[
             typing.Sequence[ConditionalOrderCreate]
@@ -169,8 +182,8 @@ class OrdersClient:
         See  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.
 
         **Asset Selection:**
-        Provide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).
-        Custom asset orders only support `MARKET` order type — the system automatically routes
+        Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
+        Generic asset orders only support `MARKET` order type — the system automatically routes
         IOC limit orders to each underlying instrument at optimal prices.
 
         **Response:**
@@ -197,11 +210,14 @@ class OrdersClient:
         price : typing.Optional[float]
             Limit price between 0 and 1. Required for LIMIT orders.
 
-        river_id : typing.Optional[int]
-            Instrument ID. Mutually exclusive with custom_asset_id.
+        post_only : typing.Optional[bool]
+            If true, the order is rejected instead of taking liquidity. Only valid for LIMIT orders with a resting time in force (GTC or GTD).
 
-        custom_asset_id : typing.Optional[str]
-            Custom asset basket UUID. Mutually exclusive with river_id.
+        river_id : typing.Optional[int]
+            Instrument ID. Mutually exclusive with generic_asset_id.
+
+        generic_asset_id : typing.Optional[str]
+            Generic asset basket UUID. Mutually exclusive with river_id.
 
         expiry_ts_utc : typing.Optional[dt.datetime]
             Expiry timestamp in UTC(ISO 8601). Required for GTD orders. i.e '2023-11-07T05:31:56Z'
@@ -222,7 +238,7 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.orders.create_order(
             order_type="LIMIT",
@@ -241,8 +257,9 @@ class OrdersClient:
                 "qty": qty,
                 "price": price,
                 "buy_flag": buy_flag,
+                "post_only": post_only,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
                 "expiry_ts_utc": expiry_ts_utc,
                 "conditional_orders_params": convert_and_respect_annotation_metadata(
@@ -308,7 +325,7 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.orders.get_order(
             order_id="order_id",
@@ -369,7 +386,7 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.orders.cancel_order(
             order_id="order_id",
@@ -404,20 +421,104 @@ class OrdersClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    def edit_order(
+        self,
+        order_id: str,
+        *,
+        qty: typing.Optional[float] = OMIT,
+        price: typing.Optional[float] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OrderEditResponse:
+        """
+        Edit (amend) a resting simple limit order.
+
+        Only `qty` and `price` are editable. `qty` is the new TOTAL quantity (not remaining).
+        The order must be RESTING, a simple order (no iceberg/peg parent), a single-instrument
+        LIMIT order. Returns 202 Accepted; final status is delivered via the orders WS.
+
+        Parameters
+        ----------
+        order_id : str
+
+        qty : typing.Optional[float]
+            New total order quantity
+
+        price : typing.Optional[float]
+            New limit price (between 0 and 1)
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderEditResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets(
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.orders.edit_order(
+            order_id="order_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/orders/{jsonable_encoder(order_id)}",
+            method="PATCH",
+            json={
+                "qty": qty,
+                "price": price,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderEditResponse,
+                    parse_obj_as(
+                        type_=OrderEditResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     def cancel_all_orders(
         self,
         *,
         subaccount_id: str,
+        river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelOrderResponse:
         """
         Cancel all open orders for a subaccount.
 
-        Returns count of orders being cancelled. Cancellation is processed asynchronously.
+        If `river_ids` is set, only orders on those instruments are cancelled;
+        it must be omitted/null or non-empty. Cancellation is processed
+        asynchronously by the order consumer.
 
         Parameters
         ----------
         subaccount_id : str
+
+        river_ids : typing.Optional[typing.Sequence[int]]
+            If set, only cancel open orders for these instruments; otherwise cancel all open orders on the subaccount. Must be either omitted/null or a non-empty list.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -432,7 +533,7 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.orders.cancel_all_orders(
             subaccount_id="subaccount_id",
@@ -443,6 +544,7 @@ class OrdersClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
+                "river_ids": river_ids,
             },
             request_options=request_options,
             omit=OMIT,
@@ -479,11 +581,14 @@ class AsyncOrdersClient:
     async def list_orders(
         self,
         *,
-        status: typing.Optional[ListOrdersV1OrdersGetRequestStatus] = None,
+        status: typing.Optional[str] = None,
         river_id: typing.Optional[int] = None,
-        custom_asset_id: typing.Optional[str] = None,
+        generic_asset_id: typing.Optional[str] = None,
         subaccount_id: typing.Optional[str] = None,
+        parent_iceberg_order_id: typing.Optional[str] = None,
+        parent_peg_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        show_tp_sl_active: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -500,32 +605,40 @@ class AsyncOrdersClient:
         **Order Statuses:**
         - `PENDING_SUBMISSION`: Order received, awaiting exchange submission.
         - `PROCESSING`: Being processed by the order consumer.
-        - `RESTING`: Live on the exchange order book.
-        - `PARTIALLY_FILLED`: Some quantity executed, remainder resting.
-        - `EXECUTED`: Fully filled.
-        - `CANCELLED`: Cancelled by user or system.
+        - `RESTING`: Live on the exchange order book (may include partially-filled live orders).
+        - `EXECUTED`: Terminal — fully filled.
+        - `PARTIALLY_FILLED`: Terminal — cancelled with some quantity filled.
+        - `CANCELLED`: Terminal — cancelled with no fills.
         - `REJECTED`: Rejected by exchange (see order details for reason).
-        - `EXPIRED`: GTD order past expiry time.
 
         **Aggregated Fields:**
         Each order includes `traded_qty`, `average_price`, and `fees_paid` computed from fills.
 
         Parameters
         ----------
-        status : typing.Optional[ListOrdersV1OrdersGetRequestStatus]
-            Filter by order status
+        status : typing.Optional[str]
+            Filter by order status. Accepts a single OrderStatus name (e.g. 'RESTING') or the meta-value 'ACTIVE' which resolves to RESTING.
 
         river_id : typing.Optional[int]
             Filter by instrument ID
 
-        custom_asset_id : typing.Optional[str]
-            Filter by custom asset ID
+        generic_asset_id : typing.Optional[str]
+            Filter by generic asset ID
 
         subaccount_id : typing.Optional[str]
             Filter to a specific subaccount
 
+        parent_iceberg_order_id : typing.Optional[str]
+            Filter to child tranches of a specific iceberg parent.
+
+        parent_peg_order_id : typing.Optional[str]
+            Filter to child tranches of a specific peg parent.
+
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
+
+        show_tp_sl_active : typing.Optional[bool]
+            When true, complex_order_ids only includes attached TP/SL orders with status PENDING or ACTIVE.
 
         limit : typing.Optional[int]
             Results per page (max 1000)
@@ -548,7 +661,7 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -564,9 +677,12 @@ class AsyncOrdersClient:
             params={
                 "status": status,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
+                "parent_iceberg_order_id": parent_iceberg_order_id,
+                "parent_peg_order_id": parent_peg_order_id,
                 "buy_flag": buy_flag,
+                "show_tp_sl_active": show_tp_sl_active,
                 "limit": limit,
                 "offset": offset,
             },
@@ -605,8 +721,9 @@ class AsyncOrdersClient:
         buy_flag: bool,
         subaccount_id: str,
         price: typing.Optional[float] = OMIT,
+        post_only: typing.Optional[bool] = OMIT,
         river_id: typing.Optional[int] = OMIT,
-        custom_asset_id: typing.Optional[str] = OMIT,
+        generic_asset_id: typing.Optional[str] = OMIT,
         expiry_ts_utc: typing.Optional[dt.datetime] = OMIT,
         conditional_orders_params: typing.Optional[
             typing.Sequence[ConditionalOrderCreate]
@@ -622,8 +739,8 @@ class AsyncOrdersClient:
         See  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.
 
         **Asset Selection:**
-        Provide exactly one of `river_id` (standard instrument) or `custom_asset_id` (user-defined basket).
-        Custom asset orders only support `MARKET` order type — the system automatically routes
+        Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
+        Generic asset orders only support `MARKET` order type — the system automatically routes
         IOC limit orders to each underlying instrument at optimal prices.
 
         **Response:**
@@ -650,11 +767,14 @@ class AsyncOrdersClient:
         price : typing.Optional[float]
             Limit price between 0 and 1. Required for LIMIT orders.
 
-        river_id : typing.Optional[int]
-            Instrument ID. Mutually exclusive with custom_asset_id.
+        post_only : typing.Optional[bool]
+            If true, the order is rejected instead of taking liquidity. Only valid for LIMIT orders with a resting time in force (GTC or GTD).
 
-        custom_asset_id : typing.Optional[str]
-            Custom asset basket UUID. Mutually exclusive with river_id.
+        river_id : typing.Optional[int]
+            Instrument ID. Mutually exclusive with generic_asset_id.
+
+        generic_asset_id : typing.Optional[str]
+            Generic asset basket UUID. Mutually exclusive with river_id.
 
         expiry_ts_utc : typing.Optional[dt.datetime]
             Expiry timestamp in UTC(ISO 8601). Required for GTD orders. i.e '2023-11-07T05:31:56Z'
@@ -677,7 +797,7 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -702,8 +822,9 @@ class AsyncOrdersClient:
                 "qty": qty,
                 "price": price,
                 "buy_flag": buy_flag,
+                "post_only": post_only,
                 "river_id": river_id,
-                "custom_asset_id": custom_asset_id,
+                "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
                 "expiry_ts_utc": expiry_ts_utc,
                 "conditional_orders_params": convert_and_respect_annotation_metadata(
@@ -771,7 +892,7 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -840,7 +961,7 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -881,20 +1002,112 @@ class AsyncOrdersClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    async def edit_order(
+        self,
+        order_id: str,
+        *,
+        qty: typing.Optional[float] = OMIT,
+        price: typing.Optional[float] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OrderEditResponse:
+        """
+        Edit (amend) a resting simple limit order.
+
+        Only `qty` and `price` are editable. `qty` is the new TOTAL quantity (not remaining).
+        The order must be RESTING, a simple order (no iceberg/peg parent), a single-instrument
+        LIMIT order. Returns 202 Accepted; final status is delivered via the orders WS.
+
+        Parameters
+        ----------
+        order_id : str
+
+        qty : typing.Optional[float]
+            New total order quantity
+
+        price : typing.Optional[float]
+            New limit price (between 0 and 1)
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderEditResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets(
+            base_url="https://yourhost.com/path/to/api",
+        )
+
+
+        async def main() -> None:
+            await client.orders.edit_order(
+                order_id="order_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/orders/{jsonable_encoder(order_id)}",
+            method="PATCH",
+            json={
+                "qty": qty,
+                "price": price,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderEditResponse,
+                    parse_obj_as(
+                        type_=OrderEditResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     async def cancel_all_orders(
         self,
         *,
         subaccount_id: str,
+        river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelOrderResponse:
         """
         Cancel all open orders for a subaccount.
 
-        Returns count of orders being cancelled. Cancellation is processed asynchronously.
+        If `river_ids` is set, only orders on those instruments are cancelled;
+        it must be omitted/null or non-empty. Cancellation is processed
+        asynchronously by the order consumer.
 
         Parameters
         ----------
         subaccount_id : str
+
+        river_ids : typing.Optional[typing.Sequence[int]]
+            If set, only cancel open orders for these instruments; otherwise cancel all open orders on the subaccount. Must be either omitted/null or a non-empty list.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -911,7 +1124,7 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -928,6 +1141,7 @@ class AsyncOrdersClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
+                "river_ids": river_ids,
             },
             request_options=request_options,
             omit=OMIT,

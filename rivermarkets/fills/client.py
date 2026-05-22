@@ -61,7 +61,7 @@ class FillsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.fills.get_fills()
         """
@@ -156,7 +156,7 @@ class AsyncFillsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 

@@ -2,21 +2,24 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-from .suggestion_asset_response import SuggestionAssetResponse
+import datetime as dt
 import pydantic
 
 
-class SuggestionGroupResponse(UniversalBaseModel):
+class GenericAssetResponse(UniversalBaseModel):
     """
-    Schema for a suggestion group with its assets.
+    A tradeable generic asset (platform-curated or user-owned) with its member river_ids.
     """
 
-    id: int
-    tag: str
+    generic_asset_id: str
     name: str
     description: typing.Optional[str] = None
     category: typing.Optional[str] = None
-    assets: typing.List[SuggestionAssetResponse]
+    subcategory: typing.Optional[str] = None
+    resolves_at: typing.Optional[dt.datetime] = None
+    owner_subaccount_id: typing.Optional[str] = None
+    status: typing.Optional[str] = None
+    river_ids: typing.List[int]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

@@ -3,38 +3,55 @@
 import typing
 from ..core.client_wrapper import SyncClientWrapper
 from ..core.request_options import RequestOptions
-from ..types.custom_asset_response import CustomAssetResponse
+from ..types.generic_asset_list_response import GenericAssetListResponse
 from ..core.pydantic_utilities import parse_obj_as
-from json.decoder import JSONDecodeError
-from ..core.api_error import ApiError
-from ..types.custom_asset_detail_response import CustomAssetDetailResponse
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
+from json.decoder import JSONDecodeError
+from ..core.api_error import ApiError
+from ..types.generic_asset_detail_response import GenericAssetDetailResponse
 from ..core.jsonable_encoder import jsonable_encoder
+from ..types.generic_asset_response import GenericAssetResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
 
 
-class CustomAssetsClient:
+class GenericAssetsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list_custom_assets(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[CustomAssetResponse]:
+    def list_generic_assets(
+        self,
+        *,
+        category: typing.Optional[typing.Sequence[str]] = None,
+        subcategory: typing.Optional[str] = None,
+        owner: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> GenericAssetListResponse:
         """
-        List all custom assets for the authenticated user.
+        List generic assets visible to the caller (their own + platform-curated approved).
+
+        Sorted by resolves_at (soonest first), then name.
 
         Parameters
         ----------
+        category : typing.Optional[typing.Sequence[str]]
+            Filter by category. Repeat to filter to multiple categories.
+
+        subcategory : typing.Optional[str]
+            Filter by subcategory
+
+        owner : typing.Optional[str]
+            'me' for own baskets only, 'platform' for public only
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[CustomAssetResponse]
+        GenericAssetListResponse
             Successful Response
 
         Examples
@@ -42,30 +59,45 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.list_custom_assets()
+        client.generic_assets.list_generic_assets()
         """
         _response = self._client_wrapper.httpx_client.request(
-            "v1/custom-assets",
+            "v1/generic-assets",
             method="GET",
+            params={
+                "category": category,
+                "subcategory": subcategory,
+                "owner": owner,
+            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[CustomAssetResponse],
+                    GenericAssetListResponse,
                     parse_obj_as(
-                        type_=typing.List[CustomAssetResponse],  # type: ignore
+                        type_=GenericAssetListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
                 )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def create_custom_asset(
+    def create_generic_asset(
         self,
         *,
         subaccount_id: str,
@@ -73,9 +105,9 @@ class CustomAssetsClient:
         description: typing.Optional[str] = OMIT,
         river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> GenericAssetDetailResponse:
         """
-        Create a new custom asset.
+        Create a new user-owned generic asset (basket).
 
         Parameters
         ----------
@@ -92,7 +124,7 @@ class CustomAssetsClient:
 
         Returns
         -------
-        CustomAssetDetailResponse
+        GenericAssetDetailResponse
             Successful Response
 
         Examples
@@ -100,15 +132,15 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.create_custom_asset(
+        client.generic_assets.create_generic_asset(
             subaccount_id="subaccount_id",
             name="name",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            "v1/custom-assets",
+            "v1/generic-assets",
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
@@ -122,9 +154,9 @@ class CustomAssetsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    CustomAssetDetailResponse,
+                    GenericAssetDetailResponse,
                     parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
+                        type_=GenericAssetDetailResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -143,25 +175,25 @@ class CustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def get_custom_asset(
+    def get_generic_asset(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> GenericAssetDetailResponse:
         """
-        Get a custom asset with its river_ids.
+        Fetch a single generic asset (own or public-approved) with its resolved member markets.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        CustomAssetDetailResponse
+        GenericAssetDetailResponse
             Successful Response
 
         Examples
@@ -169,23 +201,23 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.get_custom_asset(
-            custom_asset_id="custom_asset_id",
+        client.generic_assets.get_generic_asset(
+            generic_asset_id="generic_asset_id",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
             method="GET",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    CustomAssetDetailResponse,
+                    GenericAssetDetailResponse,
                     parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
+                        type_=GenericAssetDetailResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -204,18 +236,18 @@ class CustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete_custom_asset(
+    def delete_generic_asset(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Delete a custom asset (cascades to members).
+        Delete a user-owned generic asset (cascades to members).
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -229,14 +261,14 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.delete_custom_asset(
-            custom_asset_id="custom_asset_id",
+        client.generic_assets.delete_generic_asset(
+            generic_asset_id="generic_asset_id",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -258,20 +290,20 @@ class CustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def update_custom_asset(
+    def update_generic_asset(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetResponse:
+    ) -> GenericAssetResponse:
         """
-        Update a custom asset's name or description.
+        Update a user-owned generic asset's name or description. Platform-curated assets cannot be edited via this route.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         name : typing.Optional[str]
 
@@ -282,7 +314,7 @@ class CustomAssetsClient:
 
         Returns
         -------
-        CustomAssetResponse
+        GenericAssetResponse
             Successful Response
 
         Examples
@@ -290,14 +322,14 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.update_custom_asset(
-            custom_asset_id="custom_asset_id",
+        client.generic_assets.update_generic_asset(
+            generic_asset_id="generic_asset_id",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
             method="PATCH",
             json={
                 "name": name,
@@ -309,9 +341,9 @@ class CustomAssetsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    CustomAssetResponse,
+                    GenericAssetResponse,
                     parse_obj_as(
-                        type_=CustomAssetResponse,  # type: ignore
+                        type_=GenericAssetResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -330,19 +362,19 @@ class CustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def add_custom_asset_members(
+    def add_generic_asset_members(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Add river_ids to a custom asset.
+        Add river_ids to a user-owned generic asset.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         river_ids : typing.Sequence[int]
 
@@ -358,15 +390,15 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.add_custom_asset_members(
-            custom_asset_id="custom_asset_id",
+        client.generic_assets.add_generic_asset_members(
+            generic_asset_id="generic_asset_id",
             river_ids=[1],
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}/members",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
             method="POST",
             json={
                 "river_ids": river_ids,
@@ -392,19 +424,19 @@ class CustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def remove_custom_asset_members(
+    def remove_generic_asset_members(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Remove river_ids from a custom asset.
+        Remove river_ids from a user-owned generic asset.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         river_ids : typing.Sequence[int]
 
@@ -420,15 +452,15 @@ class CustomAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
-        client.custom_assets.remove_custom_asset_members(
-            custom_asset_id="custom_asset_id",
+        client.generic_assets.remove_generic_asset_members(
+            generic_asset_id="generic_asset_id",
             river_ids=[1],
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}/members",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
             method="DELETE",
             json={
                 "river_ids": river_ids,
@@ -455,24 +487,40 @@ class CustomAssetsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
-class AsyncCustomAssetsClient:
+class AsyncGenericAssetsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def list_custom_assets(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[CustomAssetResponse]:
+    async def list_generic_assets(
+        self,
+        *,
+        category: typing.Optional[typing.Sequence[str]] = None,
+        subcategory: typing.Optional[str] = None,
+        owner: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> GenericAssetListResponse:
         """
-        List all custom assets for the authenticated user.
+        List generic assets visible to the caller (their own + platform-curated approved).
+
+        Sorted by resolves_at (soonest first), then name.
 
         Parameters
         ----------
+        category : typing.Optional[typing.Sequence[str]]
+            Filter by category. Repeat to filter to multiple categories.
+
+        subcategory : typing.Optional[str]
+            Filter by subcategory
+
+        owner : typing.Optional[str]
+            'me' for own baskets only, 'platform' for public only
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[CustomAssetResponse]
+        GenericAssetListResponse
             Successful Response
 
         Examples
@@ -482,36 +530,51 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.list_custom_assets()
+            await client.generic_assets.list_generic_assets()
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "v1/custom-assets",
+            "v1/generic-assets",
             method="GET",
+            params={
+                "category": category,
+                "subcategory": subcategory,
+                "owner": owner,
+            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[CustomAssetResponse],
+                    GenericAssetListResponse,
                     parse_obj_as(
-                        type_=typing.List[CustomAssetResponse],  # type: ignore
+                        type_=GenericAssetListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
                 )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def create_custom_asset(
+    async def create_generic_asset(
         self,
         *,
         subaccount_id: str,
@@ -519,9 +582,9 @@ class AsyncCustomAssetsClient:
         description: typing.Optional[str] = OMIT,
         river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> GenericAssetDetailResponse:
         """
-        Create a new custom asset.
+        Create a new user-owned generic asset (basket).
 
         Parameters
         ----------
@@ -538,7 +601,7 @@ class AsyncCustomAssetsClient:
 
         Returns
         -------
-        CustomAssetDetailResponse
+        GenericAssetDetailResponse
             Successful Response
 
         Examples
@@ -548,12 +611,12 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.create_custom_asset(
+            await client.generic_assets.create_generic_asset(
                 subaccount_id="subaccount_id",
                 name="name",
             )
@@ -562,7 +625,7 @@ class AsyncCustomAssetsClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "v1/custom-assets",
+            "v1/generic-assets",
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
@@ -576,9 +639,9 @@ class AsyncCustomAssetsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    CustomAssetDetailResponse,
+                    GenericAssetDetailResponse,
                     parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
+                        type_=GenericAssetDetailResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -597,25 +660,25 @@ class AsyncCustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def get_custom_asset(
+    async def get_generic_asset(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetDetailResponse:
+    ) -> GenericAssetDetailResponse:
         """
-        Get a custom asset with its river_ids.
+        Fetch a single generic asset (own or public-approved) with its resolved member markets.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        CustomAssetDetailResponse
+        GenericAssetDetailResponse
             Successful Response
 
         Examples
@@ -625,29 +688,29 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.get_custom_asset(
-                custom_asset_id="custom_asset_id",
+            await client.generic_assets.get_generic_asset(
+                generic_asset_id="generic_asset_id",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
             method="GET",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    CustomAssetDetailResponse,
+                    GenericAssetDetailResponse,
                     parse_obj_as(
-                        type_=CustomAssetDetailResponse,  # type: ignore
+                        type_=GenericAssetDetailResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -666,18 +729,18 @@ class AsyncCustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def delete_custom_asset(
+    async def delete_generic_asset(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Delete a custom asset (cascades to members).
+        Delete a user-owned generic asset (cascades to members).
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -693,20 +756,20 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.delete_custom_asset(
-                custom_asset_id="custom_asset_id",
+            await client.generic_assets.delete_generic_asset(
+                generic_asset_id="generic_asset_id",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -728,20 +791,20 @@ class AsyncCustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def update_custom_asset(
+    async def update_generic_asset(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> CustomAssetResponse:
+    ) -> GenericAssetResponse:
         """
-        Update a custom asset's name or description.
+        Update a user-owned generic asset's name or description. Platform-curated assets cannot be edited via this route.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         name : typing.Optional[str]
 
@@ -752,7 +815,7 @@ class AsyncCustomAssetsClient:
 
         Returns
         -------
-        CustomAssetResponse
+        GenericAssetResponse
             Successful Response
 
         Examples
@@ -762,20 +825,20 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.update_custom_asset(
-                custom_asset_id="custom_asset_id",
+            await client.generic_assets.update_generic_asset(
+                generic_asset_id="generic_asset_id",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
             method="PATCH",
             json={
                 "name": name,
@@ -787,9 +850,9 @@ class AsyncCustomAssetsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    CustomAssetResponse,
+                    GenericAssetResponse,
                     parse_obj_as(
-                        type_=CustomAssetResponse,  # type: ignore
+                        type_=GenericAssetResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -808,19 +871,19 @@ class AsyncCustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def add_custom_asset_members(
+    async def add_generic_asset_members(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Add river_ids to a custom asset.
+        Add river_ids to a user-owned generic asset.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         river_ids : typing.Sequence[int]
 
@@ -838,13 +901,13 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.add_custom_asset_members(
-                custom_asset_id="custom_asset_id",
+            await client.generic_assets.add_generic_asset_members(
+                generic_asset_id="generic_asset_id",
                 river_ids=[1],
             )
 
@@ -852,7 +915,7 @@ class AsyncCustomAssetsClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}/members",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
             method="POST",
             json={
                 "river_ids": river_ids,
@@ -878,19 +941,19 @@ class AsyncCustomAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def remove_custom_asset_members(
+    async def remove_generic_asset_members(
         self,
-        custom_asset_id: str,
+        generic_asset_id: str,
         *,
         river_ids: typing.Sequence[int],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Remove river_ids from a custom asset.
+        Remove river_ids from a user-owned generic asset.
 
         Parameters
         ----------
-        custom_asset_id : str
+        generic_asset_id : str
 
         river_ids : typing.Sequence[int]
 
@@ -908,13 +971,13 @@ class AsyncCustomAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.custom_assets.remove_custom_asset_members(
-                custom_asset_id="custom_asset_id",
+            await client.generic_assets.remove_generic_asset_members(
+                generic_asset_id="generic_asset_id",
                 river_ids=[1],
             )
 
@@ -922,7 +985,7 @@ class AsyncCustomAssetsClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"v1/custom-assets/{jsonable_encoder(custom_asset_id)}/members",
+            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
             method="DELETE",
             json={
                 "river_ids": river_ids,

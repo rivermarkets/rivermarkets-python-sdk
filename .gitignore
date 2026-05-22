@@ -6,3 +6,7 @@ build/
 .eggs/
 *.egg
 .venv/
+
+# Build intermediates from fern/regen.sh — the unfiltered upstream spec
+# leaks every internal route. The filtered fern/openapi.json is what we publish.
+fern/openapi.raw.json

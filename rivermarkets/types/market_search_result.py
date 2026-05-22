@@ -2,9 +2,10 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-import datetime as dt
 import pydantic
 from .instrument_status import InstrumentStatus
+import typing_extensions
+from ..core.serialization import FieldMetadata
 
 
 class MarketSearchResult(UniversalBaseModel):
@@ -21,20 +22,40 @@ class MarketSearchResult(UniversalBaseModel):
     slug: typing.Optional[str] = None
     tick_size_price: float
     tick_size_qty: float
+    tick_structure: typing.Optional[str] = None
     minimum_order_size: float
-    expiration_datetime: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    expiration_datetime: typing.Optional[str] = pydantic.Field(default=None)
     """
     Market expiration datetime (UTC)
+    """
+
+    start_datetime: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Game/event start datetime (UTC). Populated for sports; null otherwise.
     """
 
     neg_risk: bool
     neg_risk_id: typing.Optional[str] = None
     condition_id: typing.Optional[str] = None
     name: str
+    subtitle: typing.Optional[str] = None
     description: typing.Optional[str] = None
     status: InstrumentStatus
     category: typing.Optional[str] = None
+    subcategory: typing.Optional[str] = None
     rank: typing.Optional[float] = None
+    event_ticker: typing.Optional[str] = None
+    event_title: typing.Optional[str] = None
+    volume: typing.Optional[int] = None
+    volume24h: typing_extensions.Annotated[
+        typing.Optional[int], FieldMetadata(alias="volume_24h")
+    ] = None
+    series_ticker: typing.Optional[str] = None
+    image: typing.Optional[str] = None
+    primary_entity_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Resolved display name of the canonical structured-target entity (player, team, competitor, …) referenced by the market. NULL for markets without a structured target. Kalshi only — Polymarket has no equivalent concept.
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

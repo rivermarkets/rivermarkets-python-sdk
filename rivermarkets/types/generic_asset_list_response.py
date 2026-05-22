@@ -2,19 +2,12 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
+from .generic_asset_response import GenericAssetResponse
 import pydantic
 
 
-class ApiKeyCreate(UniversalBaseModel):
-    """
-    Schema for creating a new API key.
-    """
-
-    name: str
-    scope: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Scope for the API key
-    """
+class GenericAssetListResponse(UniversalBaseModel):
+    assets: typing.List[GenericAssetResponse]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

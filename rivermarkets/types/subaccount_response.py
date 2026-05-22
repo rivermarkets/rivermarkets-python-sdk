@@ -2,7 +2,7 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-import datetime as dt
+from .account_type import AccountType
 import pydantic
 
 
@@ -14,8 +14,9 @@ class SubaccountResponse(UniversalBaseModel):
     subaccount_id: str
     name: str
     description: typing.Optional[str] = None
+    account_type: AccountType
     is_active: bool
-    inserted_at: dt.datetime
+    inserted_at: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

@@ -7,11 +7,19 @@ import pydantic
 
 class PositionResponse(UniversalBaseModel):
     """
-    Schema for position response.
+    Schema for a position (computed from cumulative fills).
     """
 
     river_id: int
     position: float
+    avg_buy_price: typing.Optional[float] = None
+    avg_sell_price: typing.Optional[float] = None
+    total_fees: float
+    total_qty_bought: float
+    total_qty_sold: float
+    fill_count: int
+    first_fill_at: str
+    last_fill_at: str
     exchange_name: str
     exchange_ticker: str
 

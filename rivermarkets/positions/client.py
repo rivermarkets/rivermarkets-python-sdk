@@ -20,19 +20,24 @@ class PositionsClient:
         self,
         *,
         subaccount_id: typing.Optional[str] = None,
+        river_id: typing.Optional[int] = None,
         include_closed: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserPositionListResponse:
         """
         Fetch positions for user's subaccounts.
 
-        Returns positions grouped by subaccount. Optionally filter to a specific subaccount.
+        Positions are computed from cumulative fills, with avg buy/sell prices,
+        fees, and fill count. Returns positions grouped by subaccount.
         By default, only positions in open markets are returned.
 
         Parameters
         ----------
         subaccount_id : typing.Optional[str]
             Filter by specific subaccount
+
+        river_id : typing.Optional[int]
+            Filter by instrument
 
         include_closed : typing.Optional[bool]
             Include positions in closed markets
@@ -50,7 +55,7 @@ class PositionsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
         client.positions.get_positions()
         """
@@ -59,6 +64,7 @@ class PositionsClient:
             method="GET",
             params={
                 "subaccount_id": subaccount_id,
+                "river_id": river_id,
                 "include_closed": include_closed,
             },
             request_options=request_options,
@@ -96,19 +102,24 @@ class AsyncPositionsClient:
         self,
         *,
         subaccount_id: typing.Optional[str] = None,
+        river_id: typing.Optional[int] = None,
         include_closed: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserPositionListResponse:
         """
         Fetch positions for user's subaccounts.
 
-        Returns positions grouped by subaccount. Optionally filter to a specific subaccount.
+        Positions are computed from cumulative fills, with avg buy/sell prices,
+        fees, and fill count. Returns positions grouped by subaccount.
         By default, only positions in open markets are returned.
 
         Parameters
         ----------
         subaccount_id : typing.Optional[str]
             Filter by specific subaccount
+
+        river_id : typing.Optional[int]
+            Filter by instrument
 
         include_closed : typing.Optional[bool]
             Include positions in closed markets
@@ -128,7 +139,7 @@ class AsyncPositionsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -143,6 +154,7 @@ class AsyncPositionsClient:
             method="GET",
             params={
                 "subaccount_id": subaccount_id,
+                "river_id": river_id,
                 "include_closed": include_closed,
             },
             request_options=request_options,

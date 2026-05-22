@@ -3,8 +3,9 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
 import typing
-import datetime as dt
 from .conditional_order_response import ConditionalOrderResponse
+from .iceberg_order_response import IcebergOrderResponse
+from .peg_order_response import PegOrderResponse
 
 
 class ComplexOrderResponse(UniversalBaseModel):
@@ -37,9 +38,9 @@ class ComplexOrderResponse(UniversalBaseModel):
     Instrument ID
     """
 
-    custom_asset_id: typing.Optional[str] = pydantic.Field(default=None)
+    generic_asset_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Custom asset basket ID
+    Generic asset basket ID
     """
 
     status: str = pydantic.Field()
@@ -47,12 +48,12 @@ class ComplexOrderResponse(UniversalBaseModel):
     Order status (interpretation depends on complex_order_type)
     """
 
-    created_at: dt.datetime = pydantic.Field()
+    created_at: str = pydantic.Field()
     """
     Creation timestamp (UTC)
     """
 
-    updated_at: dt.datetime = pydantic.Field()
+    updated_at: str = pydantic.Field()
     """
     Last update timestamp (UTC)
     """
@@ -61,7 +62,17 @@ class ComplexOrderResponse(UniversalBaseModel):
         default=None
     )
     """
-    Conditional order
+    Conditional order detail
+    """
+
+    iceberg_order: typing.Optional[IcebergOrderResponse] = pydantic.Field(default=None)
+    """
+    Iceberg order detail
+    """
+
+    peg_order: typing.Optional[PegOrderResponse] = pydantic.Field(default=None)
+    """
+    Peg order detail
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

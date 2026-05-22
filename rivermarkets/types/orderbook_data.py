@@ -9,7 +9,7 @@ import pydantic
 
 class OrderbookData(UniversalBaseModel):
     river_id: typing.Optional[int] = None
-    custom_asset_id: typing.Optional[str] = None
+    generic_asset_id: typing.Optional[str] = None
     bids: typing.List[PriceLevelResponse]
     asks: typing.List[PriceLevelResponse]
     best_bid_price: typing.Optional[float] = None
