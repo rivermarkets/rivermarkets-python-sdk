@@ -39,6 +39,8 @@ from .price_level_response import PriceLevelResponse
 from .price_point import PricePoint
 from .price_response import PriceResponse
 from .price_response_type import PriceResponseType
+from .smart_taker_order_params import SmartTakerOrderParams
+from .smart_taker_order_response import SmartTakerOrderResponse
 from .subaccount_response import SubaccountResponse
 from .trigger_order import TriggerOrder
 from .trigger_order_order_type import TriggerOrderOrderType
@@ -91,6 +93,8 @@ __all__ = [
     "PricePoint",
     "PriceResponse",
     "PriceResponseType",
+    "SmartTakerOrderParams",
+    "SmartTakerOrderResponse",
     "SubaccountResponse",
     "TriggerOrder",
     "TriggerOrderOrderType",

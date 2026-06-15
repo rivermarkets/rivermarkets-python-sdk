@@ -38,7 +38,9 @@ class OrdersClient:
         subaccount_id: typing.Optional[str] = None,
         parent_iceberg_order_id: typing.Optional[str] = None,
         parent_peg_order_id: typing.Optional[str] = None,
+        parent_smart_taker_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        search: typing.Optional[str] = None,
         show_tp_sl_active: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
@@ -85,8 +87,14 @@ class OrdersClient:
         parent_peg_order_id : typing.Optional[str]
             Filter to child tranches of a specific peg parent.
 
+        parent_smart_taker_order_id : typing.Optional[str]
+            Filter to IOC children of a specific smart-taker parent.
+
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
+
+        search : typing.Optional[str]
+            Free-text search across the order's market: ticker/slug, the human-readable question (event title, market name, outcome) via full-text + substring match, plus the order's river_id / order id / generic asset id. Applied server-side over all matching orders, not just the current page.
 
         show_tp_sl_active : typing.Optional[bool]
             When true, complex_order_ids only includes attached TP/SL orders with status PENDING or ACTIVE.
@@ -124,7 +132,9 @@ class OrdersClient:
                 "subaccount_id": subaccount_id,
                 "parent_iceberg_order_id": parent_iceberg_order_id,
                 "parent_peg_order_id": parent_peg_order_id,
+                "parent_smart_taker_order_id": parent_smart_taker_order_id,
                 "buy_flag": buy_flag,
+                "search": search,
                 "show_tp_sl_active": show_tp_sl_active,
                 "limit": limit,
                 "offset": offset,
@@ -165,6 +175,7 @@ class OrdersClient:
         subaccount_id: str,
         price: typing.Optional[float] = OMIT,
         post_only: typing.Optional[bool] = OMIT,
+        cancel_order_on_pause: typing.Optional[bool] = OMIT,
         river_id: typing.Optional[int] = OMIT,
         generic_asset_id: typing.Optional[str] = OMIT,
         expiry_ts_utc: typing.Optional[dt.datetime] = OMIT,
@@ -213,6 +224,9 @@ class OrdersClient:
         post_only : typing.Optional[bool]
             If true, the order is rejected instead of taking liquidity. Only valid for LIMIT orders with a resting time in force (GTC or GTD).
 
+        cancel_order_on_pause : typing.Optional[bool]
+            Kalshi only: if true, the resting order is cancelled by the exchange when it enters a trading pause. Ignored on other venues.
+
         river_id : typing.Optional[int]
             Instrument ID. Mutually exclusive with generic_asset_id.
 
@@ -258,6 +272,7 @@ class OrdersClient:
                 "price": price,
                 "buy_flag": buy_flag,
                 "post_only": post_only,
+                "cancel_order_on_pause": cancel_order_on_pause,
                 "river_id": river_id,
                 "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,
@@ -587,7 +602,9 @@ class AsyncOrdersClient:
         subaccount_id: typing.Optional[str] = None,
         parent_iceberg_order_id: typing.Optional[str] = None,
         parent_peg_order_id: typing.Optional[str] = None,
+        parent_smart_taker_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        search: typing.Optional[str] = None,
         show_tp_sl_active: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
@@ -634,8 +651,14 @@ class AsyncOrdersClient:
         parent_peg_order_id : typing.Optional[str]
             Filter to child tranches of a specific peg parent.
 
+        parent_smart_taker_order_id : typing.Optional[str]
+            Filter to IOC children of a specific smart-taker parent.
+
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
+
+        search : typing.Optional[str]
+            Free-text search across the order's market: ticker/slug, the human-readable question (event title, market name, outcome) via full-text + substring match, plus the order's river_id / order id / generic asset id. Applied server-side over all matching orders, not just the current page.
 
         show_tp_sl_active : typing.Optional[bool]
             When true, complex_order_ids only includes attached TP/SL orders with status PENDING or ACTIVE.
@@ -681,7 +704,9 @@ class AsyncOrdersClient:
                 "subaccount_id": subaccount_id,
                 "parent_iceberg_order_id": parent_iceberg_order_id,
                 "parent_peg_order_id": parent_peg_order_id,
+                "parent_smart_taker_order_id": parent_smart_taker_order_id,
                 "buy_flag": buy_flag,
+                "search": search,
                 "show_tp_sl_active": show_tp_sl_active,
                 "limit": limit,
                 "offset": offset,
@@ -722,6 +747,7 @@ class AsyncOrdersClient:
         subaccount_id: str,
         price: typing.Optional[float] = OMIT,
         post_only: typing.Optional[bool] = OMIT,
+        cancel_order_on_pause: typing.Optional[bool] = OMIT,
         river_id: typing.Optional[int] = OMIT,
         generic_asset_id: typing.Optional[str] = OMIT,
         expiry_ts_utc: typing.Optional[dt.datetime] = OMIT,
@@ -769,6 +795,9 @@ class AsyncOrdersClient:
 
         post_only : typing.Optional[bool]
             If true, the order is rejected instead of taking liquidity. Only valid for LIMIT orders with a resting time in force (GTC or GTD).
+
+        cancel_order_on_pause : typing.Optional[bool]
+            Kalshi only: if true, the resting order is cancelled by the exchange when it enters a trading pause. Ignored on other venues.
 
         river_id : typing.Optional[int]
             Instrument ID. Mutually exclusive with generic_asset_id.
@@ -823,6 +852,7 @@ class AsyncOrdersClient:
                 "price": price,
                 "buy_flag": buy_flag,
                 "post_only": post_only,
+                "cancel_order_on_pause": cancel_order_on_pause,
                 "river_id": river_id,
                 "generic_asset_id": generic_asset_id,
                 "subaccount_id": subaccount_id,

@@ -11,8 +11,10 @@ class PegOrderParams(UniversalBaseModel):
     Parameters for creating a peg complex order.
 
     A peg's child limit order rests on the venue at the current best bid (for buys)
-    or best ask (for sells), capped by `limit_price` (max for buys, min for sells).
-    The peg worker repegs the child as the top of book moves.
+    or best ask (for sells), clamped to the absolute band [min_price, max_price]:
+    the child never rests below min_price or above max_price. Both bounds are
+    optional — an unset min floors at 0, an unset max ceils at 1. The peg worker
+    repegs the child as the top of book moves.
     """
 
     buy_flag: bool = pydantic.Field()
@@ -25,9 +27,14 @@ class PegOrderParams(UniversalBaseModel):
     Total peg quantity
     """
 
-    limit_price: float = pydantic.Field()
+    min_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Worst price the peg will accept — max for buy, min for sell (between 0 and 1)
+    Price floor — the child never rests below this (between 0 and 1)
+    """
+
+    max_price: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Price ceiling — the child never rests above this (between 0 and 1)
     """
 
     post_only: typing.Optional[bool] = pydantic.Field(default=None)

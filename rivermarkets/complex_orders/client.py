@@ -12,6 +12,7 @@ from ..core.api_error import ApiError
 from ..types.conditional_order_create import ConditionalOrderCreate
 from ..types.iceberg_order_params import IcebergOrderParams
 from ..types.peg_order_params import PegOrderParams
+from ..types.smart_taker_order_params import SmartTakerOrderParams
 from ..types.complex_order_create_response import ComplexOrderCreateResponse
 from ..core.serialization import convert_and_respect_annotation_metadata
 from ..types.cancel_complex_order_response import CancelComplexOrderResponse
@@ -142,6 +143,7 @@ class ComplexOrdersClient:
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
         iceberg_order_params: typing.Optional[IcebergOrderParams] = OMIT,
         peg_order_params: typing.Optional[PegOrderParams] = OMIT,
+        smart_taker_order_params: typing.Optional[SmartTakerOrderParams] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderCreateResponse:
         """
@@ -172,6 +174,9 @@ class ComplexOrdersClient:
 
         peg_order_params : typing.Optional[PegOrderParams]
             Peg order parameters
+
+        smart_taker_order_params : typing.Optional[SmartTakerOrderParams]
+            Smart-taker order parameters
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -212,6 +217,11 @@ class ComplexOrdersClient:
                 "peg_order_params": convert_and_respect_annotation_metadata(
                     object_=peg_order_params,
                     annotation=PegOrderParams,
+                    direction="write",
+                ),
+                "smart_taker_order_params": convert_and_respect_annotation_metadata(
+                    object_=smart_taker_order_params,
+                    annotation=SmartTakerOrderParams,
                     direction="write",
                 ),
             },
@@ -568,6 +578,7 @@ class AsyncComplexOrdersClient:
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
         iceberg_order_params: typing.Optional[IcebergOrderParams] = OMIT,
         peg_order_params: typing.Optional[PegOrderParams] = OMIT,
+        smart_taker_order_params: typing.Optional[SmartTakerOrderParams] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ComplexOrderCreateResponse:
         """
@@ -598,6 +609,9 @@ class AsyncComplexOrdersClient:
 
         peg_order_params : typing.Optional[PegOrderParams]
             Peg order parameters
+
+        smart_taker_order_params : typing.Optional[SmartTakerOrderParams]
+            Smart-taker order parameters
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -646,6 +660,11 @@ class AsyncComplexOrdersClient:
                 "peg_order_params": convert_and_respect_annotation_metadata(
                     object_=peg_order_params,
                     annotation=PegOrderParams,
+                    direction="write",
+                ),
+                "smart_taker_order_params": convert_and_respect_annotation_metadata(
+                    object_=smart_taker_order_params,
+                    annotation=SmartTakerOrderParams,
                     direction="write",
                 ),
             },

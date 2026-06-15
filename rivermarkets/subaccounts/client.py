@@ -212,6 +212,9 @@ class SubaccountsClient:
         """
         Delete a subaccount. Custodial subaccounts cannot be deleted.
 
+        This is a soft delete: the row is marked is_active = false so the audit trail
+        (orders, fills, ledger entries) stays intact. The user never sees it again.
+
         Parameters
         ----------
         subaccount_id : str
@@ -548,6 +551,9 @@ class AsyncSubaccountsClient:
     ) -> None:
         """
         Delete a subaccount. Custodial subaccounts cannot be deleted.
+
+        This is a soft delete: the row is marked is_active = false so the audit trail
+        (orders, fills, ledger entries) stays intact. The user never sees it again.
 
         Parameters
         ----------

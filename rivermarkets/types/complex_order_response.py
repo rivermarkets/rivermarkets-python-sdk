@@ -6,6 +6,7 @@ import typing
 from .conditional_order_response import ConditionalOrderResponse
 from .iceberg_order_response import IcebergOrderResponse
 from .peg_order_response import PegOrderResponse
+from .smart_taker_order_response import SmartTakerOrderResponse
 
 
 class ComplexOrderResponse(UniversalBaseModel):
@@ -73,6 +74,13 @@ class ComplexOrderResponse(UniversalBaseModel):
     peg_order: typing.Optional[PegOrderResponse] = pydantic.Field(default=None)
     """
     Peg order detail
+    """
+
+    smart_taker_order: typing.Optional[SmartTakerOrderResponse] = pydantic.Field(
+        default=None
+    )
+    """
+    Smart-taker order detail
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

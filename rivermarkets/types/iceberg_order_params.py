@@ -40,6 +40,11 @@ class IcebergOrderParams(UniversalBaseModel):
     If true, every tranche is posted as post-only (maker-only)
     """
 
+    cancel_order_on_pause: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Kalshi only: if true, resting tranches are cancelled by the exchange when it enters a trading pause. Ignored on other venues.
+    """
+
     reload_delay_s: typing.Optional[int] = pydantic.Field(default=None)
     """
     Optional delay between a tranche fully filling and the next one being placed, in seconds. NULL or 0 = place next tranche immediately.

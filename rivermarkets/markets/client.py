@@ -34,6 +34,9 @@ class MarketsClient:
         start_datetime_after: typing.Optional[dt.datetime] = None,
         start_datetime_before: typing.Optional[dt.datetime] = None,
         event_ticker: typing.Optional[str] = None,
+        last_price_min: typing.Optional[float] = None,
+        last_price_max: typing.Optional[float] = None,
+        volume_min: typing.Optional[int] = None,
         sort_by: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
@@ -84,8 +87,17 @@ class MarketsClient:
         event_ticker : typing.Optional[str]
             Filter by event_ticker (exact match)
 
+        last_price_min : typing.Optional[float]
+            Filter to markets with last_price >= this value (0.0–1.0 YES probability).
+
+        last_price_max : typing.Optional[float]
+            Filter to markets with last_price <= this value (0.0–1.0 YES probability).
+
+        volume_min : typing.Optional[int]
+            Filter to events whose total summed volume >= this value.
+
         sort_by : typing.Optional[str]
-            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time
+            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price
 
         limit : typing.Optional[int]
             Maximum number of results
@@ -138,6 +150,9 @@ class MarketsClient:
                 if start_datetime_before is not None
                 else None,
                 "event_ticker": event_ticker,
+                "last_price_min": last_price_min,
+                "last_price_max": last_price_max,
+                "volume_min": volume_min,
                 "sort_by": sort_by,
                 "limit": limit,
                 "offset": offset,
@@ -318,6 +333,9 @@ class AsyncMarketsClient:
         start_datetime_after: typing.Optional[dt.datetime] = None,
         start_datetime_before: typing.Optional[dt.datetime] = None,
         event_ticker: typing.Optional[str] = None,
+        last_price_min: typing.Optional[float] = None,
+        last_price_max: typing.Optional[float] = None,
+        volume_min: typing.Optional[int] = None,
         sort_by: typing.Optional[str] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
@@ -368,8 +386,17 @@ class AsyncMarketsClient:
         event_ticker : typing.Optional[str]
             Filter by event_ticker (exact match)
 
+        last_price_min : typing.Optional[float]
+            Filter to markets with last_price >= this value (0.0–1.0 YES probability).
+
+        last_price_max : typing.Optional[float]
+            Filter to markets with last_price <= this value (0.0–1.0 YES probability).
+
+        volume_min : typing.Optional[int]
+            Filter to events whose total summed volume >= this value.
+
         sort_by : typing.Optional[str]
-            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time
+            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price
 
         limit : typing.Optional[int]
             Maximum number of results
@@ -430,6 +457,9 @@ class AsyncMarketsClient:
                 if start_datetime_before is not None
                 else None,
                 "event_ticker": event_ticker,
+                "last_price_min": last_price_min,
+                "last_price_max": last_price_max,
+                "volume_min": volume_min,
                 "sort_by": sort_by,
                 "limit": limit,
                 "offset": offset,

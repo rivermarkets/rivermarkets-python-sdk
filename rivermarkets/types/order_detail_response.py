@@ -46,6 +46,11 @@ class OrderDetailResponse(UniversalBaseModel):
     Whether the order is post-only (maker-only)
     """
 
+    cancel_order_on_pause: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Kalshi only: whether the exchange cancels the resting order during a trading pause
+    """
+
     status: str = pydantic.Field()
     """
     Order status. Live: PENDING_SUBMISSION, PROCESSING, RESTING. Terminal: EXECUTED, PARTIALLY_FILLED (cancelled with some fills), CANCELLED, REJECTED.
@@ -114,6 +119,11 @@ class OrderDetailResponse(UniversalBaseModel):
     parent_peg_order_id: typing.Optional[str] = pydantic.Field(default=None)
     """
     If this order is the resting child of a peg parent, the parent's id; otherwise null.
+    """
+
+    parent_smart_taker_order_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    If this order is an IOC child of a smart-taker parent, the parent's id; otherwise null.
     """
 
     fills: typing.Optional[typing.List[OrderFillResponse]] = pydantic.Field(

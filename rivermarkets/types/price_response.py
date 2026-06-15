@@ -16,6 +16,7 @@ class PriceResponse(UniversalBaseModel):
     river_id: int
     exchange: str
     type: PriceResponseType
+    has_ohlc: typing.Optional[bool] = None
     candlesticks: typing.Optional[typing.List[PriceCandlestick]] = None
     history: typing.Optional[typing.List[PricePoint]] = None
 

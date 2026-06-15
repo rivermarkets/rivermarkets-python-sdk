@@ -1052,6 +1052,65 @@
             "description": "Filter by event_ticker (exact match)"
           },
           {
+            "name": "last_price_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to markets with last_price >= this value (0.0\u20131.0 YES probability).",
+              "title": "Last Price Min"
+            },
+            "description": "Filter to markets with last_price >= this value (0.0\u20131.0 YES probability)."
+          },
+          {
+            "name": "last_price_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to markets with last_price <= this value (0.0\u20131.0 YES probability).",
+              "title": "Last Price Max"
+            },
+            "description": "Filter to markets with last_price <= this value (0.0\u20131.0 YES probability)."
+          },
+          {
+            "name": "volume_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to events whose total summed volume >= this value.",
+              "title": "Volume Min"
+            },
+            "description": "Filter to events whose total summed volume >= this value."
+          },
+          {
             "name": "sort_by",
             "in": "query",
             "required": false,
@@ -1064,10 +1123,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time",
+              "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price",
               "title": "Sort By"
             },
-            "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time"
+            "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price"
           },
           {
             "name": "limit",
@@ -1494,6 +1553,25 @@
             "description": "Filter to child tranches of a specific peg parent."
           },
           {
+            "name": "parent_smart_taker_order_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to IOC children of a specific smart-taker parent.",
+              "title": "Parent Smart Taker Order Id"
+            },
+            "description": "Filter to IOC children of a specific smart-taker parent."
+          },
+          {
             "name": "buy_flag",
             "in": "query",
             "required": false,
@@ -1510,6 +1588,24 @@
               "title": "Buy Flag"
             },
             "description": "Filter by direction: true=buys, false=sells"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free-text search across the order's market: ticker/slug, the human-readable question (event title, market name, outcome) via full-text + substring match, plus the order's river_id / order id / generic asset id. Applied server-side over all matching orders, not just the current page.",
+              "title": "Search"
+            },
+            "description": "Free-text search across the order's market: ticker/slug, the human-readable question (event title, market name, outcome) via full-text + substring match, plus the order's river_id / order id / generic asset id. Applied server-side over all matching orders, not just the current page."
           },
           {
             "name": "show_tp_sl_active",
@@ -1898,7 +1994,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 60,
+              "maximum": 120,
               "minimum": 1,
               "description": "Minutes per data point (for Polymarket history)",
               "default": 60,
@@ -2095,7 +2191,7 @@
           "subaccounts"
         ],
         "summary": "Delete Subaccount",
-        "description": "Delete a subaccount. Custodial subaccounts cannot be deleted.",
+        "description": "Delete a subaccount. Custodial subaccounts cannot be deleted.\n\nThis is a soft delete: the row is marked is_active = false so the audit trail\n(orders, fills, ledger entries) stays intact. The user never sees it again.",
         "operationId": "delete_subaccount_v1_subaccounts__subaccount_id__delete",
         "parameters": [
           {
@@ -2325,6 +2421,17 @@
               }
             ],
             "description": "Peg order parameters"
+          },
+          "smart_taker_order_params": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartTakerOrderParams"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Smart-taker order parameters"
           }
         },
         "type": "object",
@@ -2480,6 +2587,17 @@
               }
             ],
             "description": "Peg order detail"
+          },
+          "smart_taker_order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartTakerOrderResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Smart-taker order detail"
           }
         },
         "type": "object",
@@ -3062,13 +3180,19 @@
             },
             "type": "array",
             "title": "River Ids"
+          },
+          "inserted_at": {
+            "type": "string",
+            "title": "Inserted At",
+            "description": "Creation timestamp (UTC)"
           }
         },
         "type": "object",
         "required": [
           "generic_asset_id",
           "name",
-          "river_ids"
+          "river_ids",
+          "inserted_at"
         ],
         "title": "GenericAssetResponse",
         "description": "A tradeable generic asset (platform-curated or user-owned) with its member river_ids."
@@ -3147,6 +3271,12 @@
             "title": "Post Only",
             "description": "If true, every tranche is posted as post-only (maker-only)",
             "default": false
+          },
+          "cancel_order_on_pause": {
+            "type": "boolean",
+            "title": "Cancel Order On Pause",
+            "description": "Kalshi only: if true, resting tranches are cancelled by the exchange when it enters a trading pause. Ignored on other venues.",
+            "default": true
           },
           "reload_delay_s": {
             "anyOf": [
@@ -3247,6 +3377,18 @@
             ],
             "title": "Post Only",
             "description": "Whether tranches are posted as post-only"
+          },
+          "cancel_order_on_pause": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Order On Pause",
+            "description": "Kalshi only: whether the exchange cancels resting tranches during a trading pause"
           },
           "reload_delay_s": {
             "anyOf": [
@@ -3628,6 +3770,18 @@
             ],
             "title": "Image"
           },
+          "last_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Price",
+            "description": "Most recent YES price normalized to 0.0\u20131.0 (probability). Kalshi cents / 100; Polymarket already 0.0\u20131.0. NULL when no trade has been observed."
+          },
           "primary_entity_name": {
             "anyOf": [
               {
@@ -3706,6 +3860,12 @@
             "title": "Post Only",
             "description": "If true, the order is rejected instead of taking liquidity. Only valid for LIMIT orders with a resting time in force (GTC or GTD).",
             "default": false
+          },
+          "cancel_order_on_pause": {
+            "type": "boolean",
+            "title": "Cancel Order On Pause",
+            "description": "Kalshi only: if true, the resting order is cancelled by the exchange when it enters a trading pause. Ignored on other venues.",
+            "default": true
           },
           "river_id": {
             "anyOf": [
@@ -3853,6 +4013,12 @@
             "description": "Whether the order is post-only (maker-only)",
             "default": false
           },
+          "cancel_order_on_pause": {
+            "type": "boolean",
+            "title": "Cancel Order On Pause",
+            "description": "Kalshi only: whether the exchange cancels the resting order during a trading pause",
+            "default": true
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -3984,6 +4150,19 @@
             ],
             "title": "Parent Peg Order Id",
             "description": "If this order is the resting child of a peg parent, the parent's id; otherwise null."
+          },
+          "parent_smart_taker_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Smart Taker Order Id",
+            "description": "If this order is an IOC child of a smart-taker parent, the parent's id; otherwise null."
           },
           "fills": {
             "items": {
@@ -4200,6 +4379,12 @@
             "description": "Whether the order is post-only (maker-only)",
             "default": false
           },
+          "cancel_order_on_pause": {
+            "type": "boolean",
+            "title": "Cancel Order On Pause",
+            "description": "Kalshi only: whether the exchange cancels the resting order during a trading pause",
+            "default": true
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -4331,6 +4516,19 @@
             ],
             "title": "Parent Peg Order Id",
             "description": "If this order is the resting child of a peg parent, the parent's id; otherwise null."
+          },
+          "parent_smart_taker_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Smart Taker Order Id",
+            "description": "If this order is an IOC child of a smart-taker parent, the parent's id; otherwise null."
           }
         },
         "type": "object",
@@ -4486,12 +4684,33 @@
             "title": "Total Qty",
             "description": "Total peg quantity"
           },
-          "limit_price": {
-            "type": "number",
-            "exclusiveMaximum": 1.0,
-            "exclusiveMinimum": 0.0,
-            "title": "Limit Price",
-            "description": "Worst price the peg will accept \u2014 max for buy, min for sell (between 0 and 1)"
+          "min_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Price",
+            "description": "Price floor \u2014 the child never rests below this (between 0 and 1)"
+          },
+          "max_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Price",
+            "description": "Price ceiling \u2014 the child never rests above this (between 0 and 1)"
           },
           "post_only": {
             "type": "boolean",
@@ -4530,11 +4749,10 @@
         "type": "object",
         "required": [
           "buy_flag",
-          "total_qty",
-          "limit_price"
+          "total_qty"
         ],
         "title": "PegOrderParams",
-        "description": "Parameters for creating a peg complex order.\n\nA peg's child limit order rests on the venue at the current best bid (for buys)\nor best ask (for sells), capped by `limit_price` (max for buys, min for sells).\nThe peg worker repegs the child as the top of book moves."
+        "description": "Parameters for creating a peg complex order.\n\nA peg's child limit order rests on the venue at the current best bid (for buys)\nor best ask (for sells), clamped to the absolute band [min_price, max_price]:\nthe child never rests below min_price or above max_price. Both bounds are\noptional \u2014 an unset min floors at 0, an unset max ceils at 1. The peg worker\nrepegs the child as the top of book moves."
       },
       "PegOrderResponse": {
         "properties": {
@@ -4562,7 +4780,7 @@
             "title": "Total Qty",
             "description": "Total peg quantity"
           },
-          "limit_price": {
+          "min_price": {
             "anyOf": [
               {
                 "type": "number"
@@ -4571,8 +4789,20 @@
                 "type": "null"
               }
             ],
-            "title": "Limit Price",
-            "description": "Worst price the peg will accept"
+            "title": "Min Price",
+            "description": "Price floor \u2014 the child never rests below this"
+          },
+          "max_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Price",
+            "description": "Price ceiling \u2014 the child never rests above this"
           },
           "post_only": {
             "anyOf": [
@@ -4840,6 +5070,11 @@
             ],
             "title": "Type"
           },
+          "has_ohlc": {
+            "type": "boolean",
+            "title": "Has Ohlc",
+            "default": false
+          },
           "candlesticks": {
             "anyOf": [
               {
@@ -4877,6 +5112,160 @@
         ],
         "title": "PriceResponse",
         "description": "Response for price queries."
+      },
+      "SmartTakerOrderParams": {
+        "properties": {
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "Direction: true=buy, false=sell"
+          },
+          "total_qty": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Total Qty",
+            "description": "Total quantity to acquire/offload across all IOC clips"
+          },
+          "limit_price": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Limit Price",
+            "description": "Worst price the taker will accept \u2014 max for buy, min for sell (between 0 and 1)"
+          },
+          "min_qty": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Min Qty",
+            "description": "Book-depth trigger gate: only fire when at least this much acceptable liquidity sits within limit_price on the opposite side. A depth floor, not a per-clip fill floor \u2014 it may exceed total_qty (e.g. 'take my 100 only when >=500 is resting') and an IOC may fill less if liquidity vanishes mid-flight."
+          },
+          "expiry_ts_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Ts Utc",
+            "description": "Optional expiry timestamp in UTC (ISO 8601). Once it passes, the order stops firing and is torn down by the periodic reconciliation sweep."
+          }
+        },
+        "type": "object",
+        "required": [
+          "buy_flag",
+          "total_qty",
+          "limit_price",
+          "min_qty"
+        ],
+        "title": "SmartTakerOrderParams",
+        "description": "Parameters for creating a smart-taker complex order.\n\nA smart-taker rests nothing on the book. It watches the opposite side and\nfires an IOC sweep (at `limit_price`, for the full remaining qty) whenever at\nleast `min_qty` of acceptable liquidity (price within `limit_price`) is\nresting on the book \u2014 amortising taker fee/spread and refusing to cross into\na thin book."
+      },
+      "SmartTakerOrderResponse": {
+        "properties": {
+          "buy_flag": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buy Flag",
+            "description": "Direction"
+          },
+          "total_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Qty",
+            "description": "Total quantity across all IOC clips"
+          },
+          "limit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Price",
+            "description": "Worst price the taker will accept"
+          },
+          "min_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Qty",
+            "description": "Book-depth trigger gate (min acceptable liquidity resting before firing)"
+          },
+          "executed_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executed Qty",
+            "description": "Sum of filled child qty"
+          },
+          "remaining_qty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Qty",
+            "description": "total_qty - executed_qty"
+          },
+          "expiry_ts_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Ts Utc",
+            "description": "Expiry timestamp in UTC, if set."
+          },
+          "reject_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reject Reason",
+            "description": "Reason for rejection, if any"
+          }
+        },
+        "type": "object",
+        "title": "SmartTakerOrderResponse",
+        "description": "Smart-taker-specific runtime detail returned alongside a ComplexOrderResponse.\n\nSourced from `view_smart_taker_orders` so it includes derived fields\n(executed_qty, remaining_qty)."
       },
       "SubaccountCreate": {
         "properties": {

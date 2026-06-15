@@ -20,6 +20,10 @@ class GenericAssetResponse(UniversalBaseModel):
     owner_subaccount_id: typing.Optional[str] = None
     status: typing.Optional[str] = None
     river_ids: typing.List[int]
+    inserted_at: str = pydantic.Field()
+    """
+    Creation timestamp (UTC)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

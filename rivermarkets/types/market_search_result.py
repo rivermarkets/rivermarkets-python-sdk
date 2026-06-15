@@ -52,6 +52,11 @@ class MarketSearchResult(UniversalBaseModel):
     ] = None
     series_ticker: typing.Optional[str] = None
     image: typing.Optional[str] = None
+    last_price: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Most recent YES price normalized to 0.0–1.0 (probability). Kalshi cents / 100; Polymarket already 0.0–1.0. NULL when no trade has been observed.
+    """
+
     primary_entity_name: typing.Optional[str] = pydantic.Field(default=None)
     """
     Resolved display name of the canonical structured-target entity (player, team, competitor, …) referenced by the market. NULL for markets without a structured target. Kalshi only — Polymarket has no equivalent concept.

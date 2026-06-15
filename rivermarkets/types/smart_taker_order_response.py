@@ -6,11 +6,11 @@ import pydantic
 import datetime as dt
 
 
-class PegOrderResponse(UniversalBaseModel):
+class SmartTakerOrderResponse(UniversalBaseModel):
     """
-    Peg-specific runtime detail returned alongside a ComplexOrderResponse.
+    Smart-taker-specific runtime detail returned alongside a ComplexOrderResponse.
 
-    Sourced from `view_peg_orders` so it includes derived fields
+    Sourced from `view_smart_taker_orders` so it includes derived fields
     (executed_qty, remaining_qty).
     """
 
@@ -21,22 +21,17 @@ class PegOrderResponse(UniversalBaseModel):
 
     total_qty: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Total peg quantity
+    Total quantity across all IOC clips
     """
 
-    min_price: typing.Optional[float] = pydantic.Field(default=None)
+    limit_price: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Price floor — the child never rests below this
-    """
-
-    max_price: typing.Optional[float] = pydantic.Field(default=None)
-    """
-    Price ceiling — the child never rests above this
+    Worst price the taker will accept
     """
 
-    post_only: typing.Optional[bool] = pydantic.Field(default=None)
+    min_qty: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Whether the resting child order is post-only
+    Book-depth trigger gate (min acceptable liquidity resting before firing)
     """
 
     executed_qty: typing.Optional[float] = pydantic.Field(default=None)
@@ -51,12 +46,7 @@ class PegOrderResponse(UniversalBaseModel):
 
     expiry_ts_utc: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
-    Expiry timestamp in UTC, if set. The child is submitted as GTD with this expiry.
-    """
-
-    peg_min_stay_time_s: typing.Optional[int] = pydantic.Field(default=None)
-    """
-    Minimum seconds a resting child must stay on the book before a price-driven repeg is allowed, if set.
+    Expiry timestamp in UTC, if set.
     """
 
     reject_reason: typing.Optional[str] = pydantic.Field(default=None)
