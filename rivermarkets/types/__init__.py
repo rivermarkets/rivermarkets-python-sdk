@@ -43,6 +43,10 @@ from .price_response_type import PriceResponseType
 from .smart_taker_order_params import SmartTakerOrderParams
 from .smart_taker_order_response import SmartTakerOrderResponse
 from .subaccount_response import SubaccountResponse
+from .tradeprint_event import TradeprintEvent
+from .tradeprints_bulk_response import TradeprintsBulkResponse
+from .tradeprints_response import TradeprintsResponse
+from .tradeprints_status import TradeprintsStatus
 from .trigger_order import TriggerOrder
 from .trigger_order_order_type import TriggerOrderOrderType
 from .user_fill_list_response import UserFillListResponse
@@ -98,6 +102,10 @@ __all__ = [
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SubaccountResponse",
+    "TradeprintEvent",
+    "TradeprintsBulkResponse",
+    "TradeprintsResponse",
+    "TradeprintsStatus",
     "TriggerOrder",
     "TriggerOrderOrderType",
     "UserFillListResponse",

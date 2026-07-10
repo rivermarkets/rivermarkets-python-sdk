@@ -2262,6 +2262,68 @@
           }
         }
       }
+    },
+    "/v1/tradeprints": {
+      "get": {
+        "tags": [
+          "tradeprints"
+        ],
+        "summary": "Get Tradeprints",
+        "description": "Return the most recent trades for one or more markets, sourced directly from\nthe exchanges. Markets are fetched concurrently with a small semaphore\n(`MAX_CONCURRENT_FETCHES`) so a long input list never fans out into a\nthundering herd, and the result list preserves the input order. A failure\non any single market becomes a `not_found` row with a message \u2014 the call as\na whole does not 500.\n\nPer-market lookup paths:\n  - Kalshi: `GET /markets/trades?ticker=...&limit=...`\n  - Polymarket: `GET https://data-api.polymarket.com/trades?market=<token>&limit=...`\n    (both YES and NO legs are fetched and the NO leg is flipped into YES-price terms)\n\nTrades are sorted newest-first within each market. Prices are normalised to 0-1.\n\nUse this together with the `/v1/ws/tradeprints` WebSocket: hit this endpoint to\nbackfill the tape on page load, then dedup live WS events by `exchange_trade_id`.",
+        "operationId": "get_tradeprints_v1_tradeprints_get",
+        "parameters": [
+          {
+            "name": "river_ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "description": "River market IDs (repeat the param for each)",
+              "title": "River Ids"
+            },
+            "description": "River market IDs (repeat the param for each)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Max trades returned per market",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max trades returned per market"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeprintsBulkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5480,6 +5542,126 @@
         "type": "object",
         "title": "SubaccountUpdate",
         "description": "Schema for updating a subaccount."
+      },
+      "TradeprintEvent": {
+        "properties": {
+          "exchange_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange Timestamp",
+            "description": "Exchange-reported trade timestamp (UTC)"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty"
+          },
+          "aggressor_buy_flag": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggressor Buy Flag"
+          },
+          "exchange_trade_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange Trade Id",
+            "description": "Exchange-assigned trade id. Used by clients to dedup overlap between REST backfill and WS live stream."
+          }
+        },
+        "type": "object",
+        "required": [
+          "price",
+          "qty"
+        ],
+        "title": "TradeprintEvent",
+        "description": "A single trade print.\n\n`aggressor_buy_flag` is true when the aggressing (taker) side bought \u2014\ni.e. the trade hit an ask. The frontend renders side color and \"Buy/Sell\"\nfrom this flag."
+      },
+      "TradeprintsBulkResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TradeprintsResponse"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "title": "TradeprintsBulkResponse",
+        "description": "Response for `GET /v1/tradeprints?river_ids=...`.\n\n`results` preserves the order of the requested `river_ids`. Partial failures\nare surfaced per-row (status `not_found`) with a `message` \u2014 a bad river_id\nor upstream error never aborts the whole call."
+      },
+      "TradeprintsResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/TradeprintsStatus"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id"
+          },
+          "trades": {
+            "items": {
+              "$ref": "#/components/schemas/TradeprintEvent"
+            },
+            "type": "array",
+            "title": "Trades"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "TradeprintsResponse",
+        "description": "Per-market block of recent trades from the exchange."
+      },
+      "TradeprintsStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "pending",
+          "not_found"
+        ],
+        "title": "TradeprintsStatus"
       },
       "TriggerOrder": {
         "properties": {

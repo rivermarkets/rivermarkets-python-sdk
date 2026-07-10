@@ -52,6 +52,8 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/positions", "get"),
     # prices
     ("/v1/prices/{river_id}", "get"),
+    # tradeprints
+    ("/v1/tradeprints", "get"),
     # subaccounts
     ("/v1/subaccounts", "get"),
     ("/v1/subaccounts", "post"),
