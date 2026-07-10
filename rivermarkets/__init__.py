@@ -19,6 +19,7 @@ from .types import (
     IcebergOrderResponse,
     InstrumentStatus,
     MarketLookupResponse,
+    MarketMatchBatchResponse,
     MarketSearchResponse,
     MarketSearchResult,
     OrderCreateResponse,
@@ -41,6 +42,10 @@ from .types import (
     SmartTakerOrderParams,
     SmartTakerOrderResponse,
     SubaccountResponse,
+    TradeprintEvent,
+    TradeprintsBulkResponse,
+    TradeprintsResponse,
+    TradeprintsStatus,
     TriggerOrder,
     TriggerOrderOrderType,
     UserFillListResponse,
@@ -61,6 +66,7 @@ from . import (
     positions,
     prices,
     subaccounts,
+    tradeprints,
 )
 from .auth import RiverMarketsSigner
 from .environment import RiverMarketsEnvironment
@@ -94,6 +100,7 @@ __all__ = [
     "IcebergOrderResponse",
     "InstrumentStatus",
     "MarketLookupResponse",
+    "MarketMatchBatchResponse",
     "MarketSearchResponse",
     "MarketSearchResult",
     "OrderCreateOrderType",
@@ -122,6 +129,10 @@ __all__ = [
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SubaccountResponse",
+    "TradeprintEvent",
+    "TradeprintsBulkResponse",
+    "TradeprintsResponse",
+    "TradeprintsStatus",
     "TriggerOrder",
     "TriggerOrderOrderType",
     "UnprocessableEntityError",
@@ -140,4 +151,5 @@ __all__ = [
     "positions",
     "prices",
     "subaccounts",
+    "tradeprints",
 ]

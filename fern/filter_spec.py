@@ -37,6 +37,7 @@ ALLOWED: set[tuple[str, str]] = {
     # markets
     ("/v1/markets/lookup", "get"),
     ("/v1/markets/match", "get"),
+    ("/v1/markets/match/batch", "post"),
     ("/v1/markets/search", "get"),
     # orderbooks
     ("/v1/orderbooks/{river_id}", "get"),
@@ -51,6 +52,8 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/positions", "get"),
     # prices
     ("/v1/prices/{river_id}", "get"),
+    # tradeprints
+    ("/v1/tradeprints", "get"),
     # subaccounts
     ("/v1/subaccounts", "get"),
     ("/v1/subaccounts", "post"),

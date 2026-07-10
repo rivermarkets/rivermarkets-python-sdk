@@ -25,6 +25,7 @@ class FillResponse(UniversalBaseModel):
     buy_flag: bool
     is_maker: bool
     counterparty_address: typing.Optional[str] = None
+    counterparty_exchange_order_id: typing.Optional[str] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

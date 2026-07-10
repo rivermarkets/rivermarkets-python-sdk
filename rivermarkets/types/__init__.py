@@ -20,6 +20,7 @@ from .iceberg_order_params import IcebergOrderParams
 from .iceberg_order_response import IcebergOrderResponse
 from .instrument_status import InstrumentStatus
 from .market_lookup_response import MarketLookupResponse
+from .market_match_batch_response import MarketMatchBatchResponse
 from .market_search_response import MarketSearchResponse
 from .market_search_result import MarketSearchResult
 from .order_create_response import OrderCreateResponse
@@ -42,6 +43,10 @@ from .price_response_type import PriceResponseType
 from .smart_taker_order_params import SmartTakerOrderParams
 from .smart_taker_order_response import SmartTakerOrderResponse
 from .subaccount_response import SubaccountResponse
+from .tradeprint_event import TradeprintEvent
+from .tradeprints_bulk_response import TradeprintsBulkResponse
+from .tradeprints_response import TradeprintsResponse
+from .tradeprints_status import TradeprintsStatus
 from .trigger_order import TriggerOrder
 from .trigger_order_order_type import TriggerOrderOrderType
 from .user_fill_list_response import UserFillListResponse
@@ -74,6 +79,7 @@ __all__ = [
     "IcebergOrderResponse",
     "InstrumentStatus",
     "MarketLookupResponse",
+    "MarketMatchBatchResponse",
     "MarketSearchResponse",
     "MarketSearchResult",
     "OrderCreateResponse",
@@ -96,6 +102,10 @@ __all__ = [
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SubaccountResponse",
+    "TradeprintEvent",
+    "TradeprintsBulkResponse",
+    "TradeprintsResponse",
+    "TradeprintsStatus",
     "TriggerOrder",
     "TriggerOrderOrderType",
     "UserFillListResponse",
