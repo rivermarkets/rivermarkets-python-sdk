@@ -20,6 +20,7 @@ from .iceberg_order_params import IcebergOrderParams
 from .iceberg_order_response import IcebergOrderResponse
 from .instrument_status import InstrumentStatus
 from .market_lookup_response import MarketLookupResponse
+from .market_match_batch_response import MarketMatchBatchResponse
 from .market_search_response import MarketSearchResponse
 from .market_search_result import MarketSearchResult
 from .order_create_response import OrderCreateResponse
@@ -74,6 +75,7 @@ __all__ = [
     "IcebergOrderResponse",
     "InstrumentStatus",
     "MarketLookupResponse",
+    "MarketMatchBatchResponse",
     "MarketSearchResponse",
     "MarketSearchResult",
     "OrderCreateResponse",

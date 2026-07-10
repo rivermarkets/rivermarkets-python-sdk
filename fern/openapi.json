@@ -1334,6 +1334,48 @@
         }
       }
     },
+    "/v1/markets/match/batch": {
+      "post": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Match Markets Batch",
+        "description": "Batch-resolve many markets by exact Kalshi ticker and/or Polymarket slug in one request.\n\nThe single-market ``/match`` endpoint costs one round-trip per identifier, so resolving\nthousands of mappings serially is slow. This endpoint takes lists of tickers and/or slugs\n(send them together in one call) and returns a full market row \u2014 including ``river_id``,\n``ticker``, ``slug`` and ``exchange_name`` \u2014 for every identifier that matched. Identifiers\nwith no match come back in ``unmatched_tickers`` / ``unmatched_slugs``.",
+        "operationId": "match_markets_batch_v1_markets_match_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketMatchBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketMatchBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/orderbooks/{river_id}": {
       "get": {
         "tags": [
@@ -2880,6 +2922,17 @@
               }
             ],
             "title": "Counterparty Address"
+          },
+          "counterparty_exchange_order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterparty Exchange Order Id"
           }
         },
         "type": "object",
@@ -3484,6 +3537,60 @@
         ],
         "title": "MarketLookupResponse",
         "description": "Schema for batch market lookup response."
+      },
+      "MarketMatchBatchRequest": {
+        "properties": {
+          "tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tickers",
+            "description": "Exact Kalshi tickers to resolve (e.g. KXNBA-26-DET)."
+          },
+          "slugs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Slugs",
+            "description": "Exact Polymarket / Polymarket-US slugs to resolve (e.g. will-the-denver-nuggets-win-the-2026-nba-finals)."
+          }
+        },
+        "type": "object",
+        "title": "MarketMatchBatchRequest",
+        "description": "Batch exact-match request: resolve many Kalshi tickers / Polymarket slugs at once."
+      },
+      "MarketMatchBatchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "unmatched_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unmatched Tickers"
+          },
+          "unmatched_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unmatched Slugs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "MarketMatchBatchResponse",
+        "description": "Batch exact-match response.\n\n``results`` holds a full market row (with ``river_id``, ``ticker``, ``slug`` and\n``exchange_name``) for every identifier that matched. Identifiers with no match are\nechoed back in ``unmatched_tickers`` / ``unmatched_slugs`` so callers can tell the\ndifference between \"not found\" and a lookup they forgot to send."
       },
       "MarketSearchResponse": {
         "properties": {
