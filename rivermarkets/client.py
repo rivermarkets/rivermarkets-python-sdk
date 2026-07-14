@@ -10,8 +10,10 @@ from .auth import RiverMarketsSigner
 from .realtime import RealtimeClient
 from .core.client_wrapper import SyncClientWrapper
 from .complex_orders.client import ComplexOrdersClient
+from .fair_values.client import FairValuesClient
 from .fills.client import FillsClient
 from .generic_assets.client import GenericAssetsClient
+from .balance.client import BalanceClient
 from .markets.client import MarketsClient
 from .orderbooks.client import OrderbooksClient
 from .orders.client import OrdersClient
@@ -21,8 +23,10 @@ from .subaccounts.client import SubaccountsClient
 from .tradeprints.client import TradeprintsClient
 from .core.client_wrapper import AsyncClientWrapper
 from .complex_orders.client import AsyncComplexOrdersClient
+from .fair_values.client import AsyncFairValuesClient
 from .fills.client import AsyncFillsClient
 from .generic_assets.client import AsyncGenericAssetsClient
+from .balance.client import AsyncBalanceClient
 from .markets.client import AsyncMarketsClient
 from .orderbooks.client import AsyncOrderbooksClient
 from .orders.client import AsyncOrdersClient
@@ -101,8 +105,10 @@ class RiverMarkets:
             timeout=_defaulted_timeout,
         )
         self.complex_orders = ComplexOrdersClient(client_wrapper=self._client_wrapper)
+        self.fair_values = FairValuesClient(client_wrapper=self._client_wrapper)
         self.fills = FillsClient(client_wrapper=self._client_wrapper)
         self.generic_assets = GenericAssetsClient(client_wrapper=self._client_wrapper)
+        self.balance = BalanceClient(client_wrapper=self._client_wrapper)
         self.markets = MarketsClient(client_wrapper=self._client_wrapper)
         self.orderbooks = OrderbooksClient(client_wrapper=self._client_wrapper)
         self.orders = OrdersClient(client_wrapper=self._client_wrapper)
@@ -174,8 +180,10 @@ class AsyncRiverMarkets:
             base_url=ws_base_url,
         )
         self.complex_orders = AsyncComplexOrdersClient(client_wrapper=self._client_wrapper)
+        self.fair_values = AsyncFairValuesClient(client_wrapper=self._client_wrapper)
         self.fills = AsyncFillsClient(client_wrapper=self._client_wrapper)
         self.generic_assets = AsyncGenericAssetsClient(client_wrapper=self._client_wrapper)
+        self.balance = AsyncBalanceClient(client_wrapper=self._client_wrapper)
         self.markets = AsyncMarketsClient(client_wrapper=self._client_wrapper)
         self.orderbooks = AsyncOrderbooksClient(client_wrapper=self._client_wrapper)
         self.orders = AsyncOrdersClient(client_wrapper=self._client_wrapper)

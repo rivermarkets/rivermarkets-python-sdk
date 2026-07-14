@@ -158,6 +158,18 @@
             "description": "Filter by parent order ID"
           },
           {
+            "name": "unparented_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "When true, only return conditional orders with no parent_river_order_id (standalone stops). Ignored for non-conditional types.",
+              "default": false,
+              "title": "Unparented Only"
+            },
+            "description": "When true, only return conditional orders with no parent_river_order_id (standalone stops). Ignored for non-conditional types."
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -363,6 +375,163 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/fair-values": {
+      "get": {
+        "tags": [
+          "fair-values"
+        ],
+        "summary": "List Fair Values",
+        "description": "List the caller's fair values, optionally scoped to one subaccount and/or one instrument.",
+        "operationId": "list_fair_values_v1_fair_values_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to a single subaccount",
+              "title": "Subaccount Id"
+            },
+            "description": "Restrict to a single subaccount"
+          },
+          {
+            "name": "river_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to a single instrument",
+              "title": "River Id"
+            },
+            "description": "Restrict to a single instrument"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FairValueListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "fair-values"
+        ],
+        "summary": "Set Fair Value",
+        "description": "Set the fair value for an instrument on a subaccount (insert-or-overwrite).",
+        "operationId": "set_fair_value_v1_fair_values_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FairValueUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FairValueResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/fair-values/{subaccount_id}/{river_id}": {
+      "delete": {
+        "tags": [
+          "fair-values"
+        ],
+        "summary": "Delete Fair Value",
+        "description": "Clear the fair value for an instrument on a subaccount.",
+        "operationId": "delete_fair_value_v1_fair_values__subaccount_id___river_id__delete",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Subaccount Id"
+            }
+          },
+          {
+            "name": "river_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "River Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -840,6 +1009,52 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/balance/exchange": {
+      "get": {
+        "tags": [
+          "balance"
+        ],
+        "summary": "Get Exchange Balance",
+        "description": "Return live exchange balances (Kalshi, Polymarket) for a non-custodial subaccount.",
+        "operationId": "get_exchange_balance_v1_balance_exchange_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Non-custodial subaccount to fetch exchange balances for",
+              "title": "Subaccount Id"
+            },
+            "description": "Non-custodial subaccount to fetch exchange balances for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeBalanceResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1834,6 +2049,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderEditResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/{order_id}/queue-position": {
+      "get": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Get Order Queue Position",
+        "description": "Get the best (minimum) queue position across all exchange orders backing this river order.\n\nCurrently supported only for Kalshi-backed orders.",
+        "operationId": "get_order_queue_position_v1_orders__order_id__queue_position_get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderQueuePositionResponse"
                 }
               }
             }
@@ -2923,6 +3182,143 @@
         "type": "object",
         "title": "ConditionalOrderResponse",
         "description": "Response for a conditional order. Contains both the condition definition and the trigger order\nthat gets placed when the condition is met.\n\nFor TP/SL: the parent order fills \u2192 the conditional activates \u2192 the trigger order is placed.\nFor STOP/REVERSE_STOP: stop_order_price is reached \u2192 the trigger order is placed."
+      },
+      "ExchangeBalance": {
+        "properties": {
+          "exchange_id": {
+            "type": "integer",
+            "title": "Exchange Id"
+          },
+          "exchange_name": {
+            "type": "string",
+            "title": "Exchange Name"
+          },
+          "balance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exchange_id",
+          "exchange_name"
+        ],
+        "title": "ExchangeBalance"
+      },
+      "ExchangeBalanceResponse": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "balances": {
+            "items": {
+              "$ref": "#/components/schemas/ExchangeBalance"
+            },
+            "type": "array",
+            "title": "Balances"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "balances"
+        ],
+        "title": "ExchangeBalanceResponse"
+      },
+      "FairValueListResponse": {
+        "properties": {
+          "fair_values": {
+            "items": {
+              "$ref": "#/components/schemas/FairValueResponse"
+            },
+            "type": "array",
+            "title": "Fair Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fair_values"
+        ],
+        "title": "FairValueListResponse"
+      },
+      "FairValueResponse": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "fair_value": {
+            "type": "number",
+            "title": "Fair Value"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "river_id",
+          "fair_value",
+          "updated_at"
+        ],
+        "title": "FairValueResponse",
+        "description": "A user-set fair value for one instrument on one subaccount."
+      },
+      "FairValueUpsert": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "fair_value": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fair Value",
+            "description": "Probability in [0, 1]"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "river_id",
+          "fair_value"
+        ],
+        "title": "FairValueUpsert",
+        "description": "Request schema for setting a fair value (insert-or-overwrite)."
       },
       "FillResponse": {
         "properties": {
@@ -4502,6 +4898,34 @@
         "title": "OrderListResponse",
         "description": "Schema for list of orders."
       },
+      "OrderQueuePositionResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id",
+            "description": "River order identifier"
+          },
+          "exchange_order_id": {
+            "type": "string",
+            "title": "Exchange Order Id",
+            "description": "Exchange order ID with the best (minimum) queue priority"
+          },
+          "queue_position": {
+            "type": "number",
+            "title": "Queue Position",
+            "description": "Number of preceding shares in the queue ahead of this order (lower is better priority)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id",
+          "exchange_order_id",
+          "queue_position"
+        ],
+        "title": "OrderQueuePositionResponse",
+        "description": "Schema for the queue-position response of an order."
+      },
       "OrderResponse": {
         "properties": {
           "river_order_id": {
@@ -4913,6 +5337,19 @@
             ],
             "title": "Peg Min Stay Time S",
             "description": "Optional repeg gate. When set, a price-driven repeg is suppressed until the resting child has been on the book for at least this many seconds (measured from send time). Expiry-driven cancels are unaffected."
+          },
+          "max_qty_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Qty Level",
+            "description": "Penny-jump threshold (contracts). If the level the peg would join holds more than this many contracts, rest one tick tighter instead (if not crossing the book and not already quoting the level). Unset to disable."
           }
         },
         "type": "object",
@@ -5033,6 +5470,18 @@
             ],
             "title": "Peg Min Stay Time S",
             "description": "Minimum seconds a resting child must stay on the book before a price-driven repeg is allowed, if set."
+          },
+          "max_qty_level": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Qty Level",
+            "description": "Penny-jump threshold (contracts): levels larger than this are stepped past, one tick inside the spread."
           },
           "reject_reason": {
             "anyOf": [

@@ -18,12 +18,18 @@ OUT = HERE / "openapi.json"
 # (path, method) tuples that mirror docs.rivermarkets.com/api-reference.
 # Sourced from llms.txt — keep this list in sync when the docs change.
 ALLOWED: set[tuple[str, str]] = {
+    # balance
+    ("/v1/balance/exchange", "get"),
     # complex-orders
     ("/v1/complex-orders", "get"),
     ("/v1/complex-orders", "post"),
     ("/v1/complex-orders/cancel-all", "post"),
     ("/v1/complex-orders/{complex_order_id}", "get"),
     ("/v1/complex-orders/{complex_order_id}", "delete"),
+    # fair-values
+    ("/v1/fair-values", "get"),
+    ("/v1/fair-values", "post"),
+    ("/v1/fair-values/{subaccount_id}/{river_id}", "delete"),
     # fills
     ("/v1/fills", "get"),
     # generic-assets
@@ -48,6 +54,7 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/orders/{order_id}", "get"),
     ("/v1/orders/{order_id}", "delete"),
     ("/v1/orders/{order_id}", "patch"),
+    ("/v1/orders/{order_id}/queue-position", "get"),
     # positions
     ("/v1/positions", "get"),
     # prices

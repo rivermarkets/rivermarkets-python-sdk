@@ -38,6 +38,7 @@ class ComplexOrdersClient:
         subaccount_id: typing.Optional[str] = None,
         complex_order_ids: typing.Optional[typing.Sequence[str]] = None,
         parent_river_order_id: typing.Optional[str] = None,
+        unparented_only: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -70,6 +71,9 @@ class ComplexOrdersClient:
 
         parent_river_order_id : typing.Optional[str]
             Filter by parent order ID
+
+        unparented_only : typing.Optional[bool]
+            When true, only return conditional orders with no parent_river_order_id (standalone stops). Ignored for non-conditional types.
 
         limit : typing.Optional[int]
             Results per page (max 1000)
@@ -105,6 +109,7 @@ class ComplexOrdersClient:
                 "subaccount_id": subaccount_id,
                 "complex_order_ids": complex_order_ids,
                 "parent_river_order_id": parent_river_order_id,
+                "unparented_only": unparented_only,
                 "limit": limit,
                 "offset": offset,
             },
@@ -465,6 +470,7 @@ class AsyncComplexOrdersClient:
         subaccount_id: typing.Optional[str] = None,
         complex_order_ids: typing.Optional[typing.Sequence[str]] = None,
         parent_river_order_id: typing.Optional[str] = None,
+        unparented_only: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -497,6 +503,9 @@ class AsyncComplexOrdersClient:
 
         parent_river_order_id : typing.Optional[str]
             Filter by parent order ID
+
+        unparented_only : typing.Optional[bool]
+            When true, only return conditional orders with no parent_river_order_id (standalone stops). Ignored for non-conditional types.
 
         limit : typing.Optional[int]
             Results per page (max 1000)
@@ -540,6 +549,7 @@ class AsyncComplexOrdersClient:
                 "subaccount_id": subaccount_id,
                 "complex_order_ids": complex_order_ids,
                 "parent_river_order_id": parent_river_order_id,
+                "unparented_only": unparented_only,
                 "limit": limit,
                 "offset": offset,
             },

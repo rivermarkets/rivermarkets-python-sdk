@@ -59,6 +59,11 @@ class PegOrderResponse(UniversalBaseModel):
     Minimum seconds a resting child must stay on the book before a price-driven repeg is allowed, if set.
     """
 
+    max_qty_level: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Penny-jump threshold (contracts): levels larger than this are stepped past, one tick inside the spread.
+    """
+
     reject_reason: typing.Optional[str] = pydantic.Field(default=None)
     """
     Reason for rejection, if any

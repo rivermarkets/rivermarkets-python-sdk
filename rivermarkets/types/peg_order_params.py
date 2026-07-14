@@ -52,6 +52,11 @@ class PegOrderParams(UniversalBaseModel):
     Optional repeg gate. When set, a price-driven repeg is suppressed until the resting child has been on the book for at least this many seconds (measured from send time). Expiry-driven cancels are unaffected.
     """
 
+    max_qty_level: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Penny-jump threshold (contracts). If the level the peg would join holds more than this many contracts, rest one tick tighter instead (if not crossing the book and not already quoting the level). Unset to disable.
+    """
+
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
     )  # type: ignore # Pydantic v2

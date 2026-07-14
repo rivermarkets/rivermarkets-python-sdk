@@ -19,6 +19,7 @@ from ..types.order_detail_response import OrderDetailResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..types.cancel_order_response import CancelOrderResponse
 from ..types.order_edit_response import OrderEditResponse
+from ..types.order_queue_position_response import OrderQueuePositionResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -496,6 +497,66 @@ class OrdersClient:
                     OrderEditResponse,
                     parse_obj_as(
                         type_=OrderEditResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def get_order_queue_position(
+        self, order_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> OrderQueuePositionResponse:
+        """
+        Get the best (minimum) queue position across all exchange orders backing this river order.
+
+        Currently supported only for Kalshi-backed orders.
+
+        Parameters
+        ----------
+        order_id : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderQueuePositionResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets(
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.orders.get_order_queue_position(
+            order_id="order_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/orders/{jsonable_encoder(order_id)}/queue-position",
+            method="GET",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderQueuePositionResponse,
+                    parse_obj_as(
+                        type_=OrderQueuePositionResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1100,6 +1161,74 @@ class AsyncOrdersClient:
                     OrderEditResponse,
                     parse_obj_as(
                         type_=OrderEditResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def get_order_queue_position(
+        self, order_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> OrderQueuePositionResponse:
+        """
+        Get the best (minimum) queue position across all exchange orders backing this river order.
+
+        Currently supported only for Kalshi-backed orders.
+
+        Parameters
+        ----------
+        order_id : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderQueuePositionResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets(
+            base_url="https://yourhost.com/path/to/api",
+        )
+
+
+        async def main() -> None:
+            await client.orders.get_order_queue_position(
+                order_id="order_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/orders/{jsonable_encoder(order_id)}/queue-position",
+            method="GET",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderQueuePositionResponse,
+                    parse_obj_as(
+                        type_=OrderQueuePositionResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
