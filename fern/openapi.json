@@ -2583,6 +2583,383 @@
           }
         }
       }
+    },
+    "/v1/watchlists": {
+      "get": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "List Watchlists",
+        "description": "List the caller's watchlists (optionally scoped to one subaccount), newest first.",
+        "operationId": "list_watchlists_v1_watchlists_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to a single owning subaccount",
+              "title": "Subaccount Id"
+            },
+            "description": "Restrict to a single owning subaccount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Create Watchlist",
+        "description": "Create a new watchlist, optionally seeded with an ordered set of river_ids.",
+        "operationId": "create_watchlist_v1_watchlists_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watchlists/{watchlist_id}": {
+      "get": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Get Watchlist",
+        "description": "Fetch a single watchlist with its ordered member markets.",
+        "operationId": "get_watchlist_v1_watchlists__watchlist_id__get",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Update Watchlist",
+        "description": "Rename a watchlist or edit its description.",
+        "operationId": "update_watchlist_v1_watchlists__watchlist_id__patch",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Delete Watchlist",
+        "description": "Delete a watchlist (cascades to its members).",
+        "operationId": "delete_watchlist_v1_watchlists__watchlist_id__delete",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watchlists/{watchlist_id}/members": {
+      "post": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Add Watchlist Members",
+        "description": "Append river_ids to the end of a watchlist.",
+        "operationId": "add_watchlist_members_v1_watchlists__watchlist_id__members_post",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistMemberAdd"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Remove Watchlist Members",
+        "description": "Remove river_ids from a watchlist. Remaining members keep their relative order.",
+        "operationId": "remove_watchlist_members_v1_watchlists__watchlist_id__members_delete",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistMemberAdd"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watchlists/{watchlist_id}/members/order": {
+      "put": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "Reorder Watchlist Members",
+        "description": "Reorder a watchlist. The body is the full ordered river_id list; the server\nrewrites each member's position to match. Unknown river_ids are ignored;\nmembers omitted from the list are pushed to the end in their prior order.",
+        "operationId": "reorder_watchlist_members_v1_watchlists__watchlist_id__members_order_put",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistMemberReorder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6270,6 +6647,241 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WatchlistCreate": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "river_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "name"
+        ],
+        "title": "WatchlistCreate",
+        "description": "Request schema for creating a new watchlist."
+      },
+      "WatchlistDetailResponse": {
+        "properties": {
+          "watchlist_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Watchlist Id"
+          },
+          "owner_subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Owner Subaccount Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "River Ids"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "Creation timestamp (UTC)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "watchlist_id",
+          "owner_subaccount_id",
+          "name",
+          "river_ids",
+          "members",
+          "created_at"
+        ],
+        "title": "WatchlistDetailResponse",
+        "description": "Response schema for a watchlist with its resolved members (detail view).\n\n``members`` are ordered by ``position``; ``river_ids`` is the same ordering\nas a convenience for handing straight to the multibook handoff."
+      },
+      "WatchlistListResponse": {
+        "properties": {
+          "watchlists": {
+            "items": {
+              "$ref": "#/components/schemas/WatchlistResponse"
+            },
+            "type": "array",
+            "title": "Watchlists"
+          }
+        },
+        "type": "object",
+        "required": [
+          "watchlists"
+        ],
+        "title": "WatchlistListResponse"
+      },
+      "WatchlistMemberAdd": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "WatchlistMemberAdd",
+        "description": "Request schema for adding members to a watchlist (appended at the end)."
+      },
+      "WatchlistMemberReorder": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "WatchlistMemberReorder",
+        "description": "Request schema for reordering a watchlist.\n\nThe body is the full ordered list of ``river_id``s; the server rewrites\n``position`` to match. Sending the whole array avoids partial-reorder races\nand keeps it to one round-trip."
+      },
+      "WatchlistResponse": {
+        "properties": {
+          "watchlist_id": {
+            "type": "string",
+            "title": "Watchlist Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "owner_subaccount_id": {
+            "type": "string",
+            "title": "Owner Subaccount Id"
+          },
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "River Ids"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "watchlist_id",
+          "name",
+          "owner_subaccount_id",
+          "river_ids",
+          "created_at"
+        ],
+        "title": "WatchlistResponse",
+        "description": "A watchlist summary (list view): metadata + ordered member river_ids."
+      },
+      "WatchlistUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "WatchlistUpdate",
+        "description": "Request schema for renaming / editing a watchlist."
       }
     }
   },

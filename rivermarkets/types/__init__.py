@@ -64,6 +64,10 @@ from .user_position_list_response_subaccount_to_positions_item_value import (
 )
 from .validation_error import ValidationError
 from .validation_error_loc_item import ValidationErrorLocItem
+from .watchlist_detail_response import WatchlistDetailResponse
+from .watchlist_list_response import WatchlistListResponse
+from .watchlist_member_add import WatchlistMemberAdd
+from .watchlist_response import WatchlistResponse
 
 __all__ = [
     "AccountType",
@@ -124,4 +128,8 @@ __all__ = [
     "UserPositionListResponseSubaccountToPositionsItemValue",
     "ValidationError",
     "ValidationErrorLocItem",
+    "WatchlistDetailResponse",
+    "WatchlistListResponse",
+    "WatchlistMemberAdd",
+    "WatchlistResponse",
 ]

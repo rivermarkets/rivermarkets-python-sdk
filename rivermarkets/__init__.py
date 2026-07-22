@@ -59,6 +59,10 @@ from .types import (
     UserPositionListResponseSubaccountToPositionsItemValue,
     ValidationError,
     ValidationErrorLocItem,
+    WatchlistDetailResponse,
+    WatchlistListResponse,
+    WatchlistMemberAdd,
+    WatchlistResponse,
 )
 from .errors import UnprocessableEntityError
 from . import (
@@ -74,6 +78,7 @@ from . import (
     prices,
     subaccounts,
     tradeprints,
+    watchlists,
 )
 from .auth import RiverMarketsSigner
 from .environment import RiverMarketsEnvironment
@@ -154,6 +159,10 @@ __all__ = [
     "UserPositionListResponseSubaccountToPositionsItemValue",
     "ValidationError",
     "ValidationErrorLocItem",
+    "WatchlistDetailResponse",
+    "WatchlistListResponse",
+    "WatchlistMemberAdd",
+    "WatchlistResponse",
     "balance",
     "complex_orders",
     "fair_values",
@@ -166,4 +175,5 @@ __all__ = [
     "prices",
     "subaccounts",
     "tradeprints",
+    "watchlists",
 ]

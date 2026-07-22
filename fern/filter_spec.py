@@ -61,6 +61,15 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/prices/{river_id}", "get"),
     # tradeprints
     ("/v1/tradeprints", "get"),
+    # watchlists
+    ("/v1/watchlists", "get"),
+    ("/v1/watchlists", "post"),
+    ("/v1/watchlists/{watchlist_id}", "get"),
+    ("/v1/watchlists/{watchlist_id}", "patch"),
+    ("/v1/watchlists/{watchlist_id}", "delete"),
+    ("/v1/watchlists/{watchlist_id}/members", "post"),
+    ("/v1/watchlists/{watchlist_id}/members", "delete"),
+    ("/v1/watchlists/{watchlist_id}/members/order", "put"),
     # subaccounts
     ("/v1/subaccounts", "get"),
     ("/v1/subaccounts", "post"),

@@ -40,6 +40,7 @@ DEFAULT_BASE_URL = "wss://api.rivermarkets.com"
 _PATH_ORDERBOOKS = "/v1/ws/orderbooks"
 _PATH_ORDERS = "/v1/ws/orders"
 _PATH_TRADEPRINTS = "/v1/ws/tradeprints"
+_PATH_FILLS = "/v1/ws/fills"
 
 
 class Subscription(AbstractAsyncContextManager):
@@ -213,4 +214,16 @@ class RealtimeClient:
             client=self,
             path=_PATH_TRADEPRINTS,
             active_river_ids=river_ids,
+        )
+
+    def fills(self, *, subaccount_id: str) -> Subscription:
+        """Stream live fill (execution) events for one subaccount.
+
+        The subaccount is fixed at handshake time — there is no subscribe /
+        unsubscribe frame to send.
+        """
+        return Subscription(
+            client=self,
+            path=_PATH_FILLS,
+            extra_query={"subaccount_id": subaccount_id},
         )
