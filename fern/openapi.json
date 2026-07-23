@@ -463,15 +463,15 @@
         "tags": [
           "fair-values"
         ],
-        "summary": "Set Fair Value",
-        "description": "Set the fair value for an instrument on a subaccount (insert-or-overwrite).",
-        "operationId": "set_fair_value_v1_fair_values_post",
+        "summary": "Set Fair Values",
+        "description": "Set fair values for instruments on a subaccount (insert-or-overwrite, atomic).",
+        "operationId": "set_fair_values_v1_fair_values_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FairValueUpsert"
+                "$ref": "#/components/schemas/FairValuesUpsert"
               }
             }
           }
@@ -482,7 +482,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FairValueResponse"
+                  "$ref": "#/components/schemas/FairValueListResponse"
                 }
               }
             }
@@ -2492,7 +2492,7 @@
           "subaccounts"
         ],
         "summary": "Delete Subaccount",
-        "description": "Delete a subaccount. Custodial subaccounts cannot be deleted.\n\nThis is a soft delete: the row is marked is_active = false so the audit trail\n(orders, fills, ledger entries) stays intact. The user never sees it again.",
+        "description": "Delete a subaccount. Custodial subaccounts cannot be deleted.\n\nRefused with 409 if the subaccount has any open order (resting/in-flight\norders, or an active iceberg, peg, smart-taker or conditional order) \u2014\ncancel those first.\n\nThis is a soft delete: the row is marked is_active = false so the audit trail\n(orders, fills, ledger entries) stays intact. The user never sees it again.",
         "operationId": "delete_subaccount_v1_subaccounts__subaccount_id__delete",
         "parameters": [
           {
@@ -3623,6 +3623,28 @@
         ],
         "title": "ExchangeBalanceResponse"
       },
+      "FairValueItem": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "fair_value": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Fair Value",
+            "description": "Probability in [0, 1]"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "fair_value"
+        ],
+        "title": "FairValueItem",
+        "description": "One (instrument, fair value) pair within a batch upsert."
+      },
       "FairValueListResponse": {
         "properties": {
           "fair_values": {
@@ -3669,33 +3691,30 @@
         "title": "FairValueResponse",
         "description": "A user-set fair value for one instrument on one subaccount."
       },
-      "FairValueUpsert": {
+      "FairValuesUpsert": {
         "properties": {
           "subaccount_id": {
             "type": "string",
             "format": "uuid",
             "title": "Subaccount Id"
           },
-          "river_id": {
-            "type": "integer",
-            "title": "River Id"
-          },
-          "fair_value": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Fair Value",
-            "description": "Probability in [0, 1]"
+          "fair_values": {
+            "items": {
+              "$ref": "#/components/schemas/FairValueItem"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Fair Values"
           }
         },
         "type": "object",
         "required": [
           "subaccount_id",
-          "river_id",
-          "fair_value"
+          "fair_values"
         ],
-        "title": "FairValueUpsert",
-        "description": "Request schema for setting a fair value (insert-or-overwrite)."
+        "title": "FairValuesUpsert",
+        "description": "Request schema for setting fair values on one subaccount (insert-or-overwrite)."
       },
       "FillResponse": {
         "properties": {
@@ -4758,7 +4777,8 @@
             "type": "string",
             "enum": [
               "LIMIT",
-              "MARKET"
+              "MARKET",
+              "RFQ_TAKER"
             ],
             "description": "Order type: 'LIMIT' or 'MARKET'"
           },
@@ -6495,7 +6515,8 @@
             "type": "string",
             "enum": [
               "LIMIT",
-              "MARKET"
+              "MARKET",
+              "RFQ_TAKER"
             ],
             "description": "Order type for the triggered order: 'LIMIT' or 'MARKET'"
           },

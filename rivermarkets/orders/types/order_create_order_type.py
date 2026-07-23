@@ -2,4 +2,6 @@
 
 import typing
 
-OrderCreateOrderType = typing.Union[typing.Literal["LIMIT", "MARKET"], typing.Any]
+OrderCreateOrderType = typing.Union[
+    typing.Literal["LIMIT", "MARKET", "RFQ_TAKER"], typing.Any
+]
