@@ -9,7 +9,8 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.fair_value_response import FairValueResponse
+from ..types.fair_value_item import FairValueItem
+from ..core.serialization import convert_and_respect_annotation_metadata
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.client_wrapper import AsyncClientWrapper
 
@@ -89,45 +90,45 @@ class FairValuesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def set_fair_value(
+    def set_fair_values(
         self,
         *,
         subaccount_id: str,
-        river_id: int,
-        fair_value: float,
+        fair_values: typing.Sequence[FairValueItem],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> FairValueResponse:
+    ) -> FairValueListResponse:
         """
-        Set the fair value for an instrument on a subaccount (insert-or-overwrite).
+        Set fair values for instruments on a subaccount (insert-or-overwrite, atomic).
 
         Parameters
         ----------
         subaccount_id : str
 
-        river_id : int
-
-        fair_value : float
-            Probability in [0, 1]
+        fair_values : typing.Sequence[FairValueItem]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        FairValueResponse
+        FairValueListResponse
             Successful Response
 
         Examples
         --------
-        from rivermarkets import RiverMarkets
+        from rivermarkets import FairValueItem, RiverMarkets
 
         client = RiverMarkets(
             base_url="https://yourhost.com/path/to/api",
         )
-        client.fair_values.set_fair_value(
+        client.fair_values.set_fair_values(
             subaccount_id="subaccount_id",
-            river_id=1,
-            fair_value=1.1,
+            fair_values=[
+                FairValueItem(
+                    river_id=1,
+                    fair_value=1.1,
+                )
+            ],
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -135,8 +136,11 @@ class FairValuesClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
-                "river_id": river_id,
-                "fair_value": fair_value,
+                "fair_values": convert_and_respect_annotation_metadata(
+                    object_=fair_values,
+                    annotation=typing.Sequence[FairValueItem],
+                    direction="write",
+                ),
             },
             request_options=request_options,
             omit=OMIT,
@@ -144,9 +148,9 @@ class FairValuesClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    FairValueResponse,
+                    FairValueListResponse,
                     parse_obj_as(
-                        type_=FairValueResponse,  # type: ignore
+                        type_=FairValueListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -304,39 +308,35 @@ class AsyncFairValuesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def set_fair_value(
+    async def set_fair_values(
         self,
         *,
         subaccount_id: str,
-        river_id: int,
-        fair_value: float,
+        fair_values: typing.Sequence[FairValueItem],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> FairValueResponse:
+    ) -> FairValueListResponse:
         """
-        Set the fair value for an instrument on a subaccount (insert-or-overwrite).
+        Set fair values for instruments on a subaccount (insert-or-overwrite, atomic).
 
         Parameters
         ----------
         subaccount_id : str
 
-        river_id : int
-
-        fair_value : float
-            Probability in [0, 1]
+        fair_values : typing.Sequence[FairValueItem]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        FairValueResponse
+        FairValueListResponse
             Successful Response
 
         Examples
         --------
         import asyncio
 
-        from rivermarkets import AsyncRiverMarkets
+        from rivermarkets import AsyncRiverMarkets, FairValueItem
 
         client = AsyncRiverMarkets(
             base_url="https://yourhost.com/path/to/api",
@@ -344,10 +344,14 @@ class AsyncFairValuesClient:
 
 
         async def main() -> None:
-            await client.fair_values.set_fair_value(
+            await client.fair_values.set_fair_values(
                 subaccount_id="subaccount_id",
-                river_id=1,
-                fair_value=1.1,
+                fair_values=[
+                    FairValueItem(
+                        river_id=1,
+                        fair_value=1.1,
+                    )
+                ],
             )
 
 
@@ -358,8 +362,11 @@ class AsyncFairValuesClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
-                "river_id": river_id,
-                "fair_value": fair_value,
+                "fair_values": convert_and_respect_annotation_metadata(
+                    object_=fair_values,
+                    annotation=typing.Sequence[FairValueItem],
+                    direction="write",
+                ),
             },
             request_options=request_options,
             omit=OMIT,
@@ -367,9 +374,9 @@ class AsyncFairValuesClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    FairValueResponse,
+                    FairValueListResponse,
                     parse_obj_as(
-                        type_=FairValueResponse,  # type: ignore
+                        type_=FairValueListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

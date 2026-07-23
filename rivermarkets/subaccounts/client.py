@@ -212,6 +212,10 @@ class SubaccountsClient:
         """
         Delete a subaccount. Custodial subaccounts cannot be deleted.
 
+        Refused with 409 if the subaccount has any open order (resting/in-flight
+        orders, or an active iceberg, peg, smart-taker or conditional order) —
+        cancel those first.
+
         This is a soft delete: the row is marked is_active = false so the audit trail
         (orders, fills, ledger entries) stays intact. The user never sees it again.
 
@@ -551,6 +555,10 @@ class AsyncSubaccountsClient:
     ) -> None:
         """
         Delete a subaccount. Custodial subaccounts cannot be deleted.
+
+        Refused with 409 if the subaccount has any open order (resting/in-flight
+        orders, or an active iceberg, peg, smart-taker or conditional order) —
+        cancel those first.
 
         This is a soft delete: the row is marked is_active = false so the audit trail
         (orders, fills, ledger entries) stays intact. The user never sees it again.

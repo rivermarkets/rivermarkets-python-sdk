@@ -13,6 +13,7 @@ from .conditional_order_create_conditional_order_type import (
 from .conditional_order_response import ConditionalOrderResponse
 from .exchange_balance import ExchangeBalance
 from .exchange_balance_response import ExchangeBalanceResponse
+from .fair_value_item import FairValueItem
 from .fair_value_list_response import FairValueListResponse
 from .fair_value_response import FairValueResponse
 from .fill_response import FillResponse
@@ -81,6 +82,7 @@ __all__ = [
     "ConditionalOrderResponse",
     "ExchangeBalance",
     "ExchangeBalanceResponse",
+    "FairValueItem",
     "FairValueListResponse",
     "FairValueResponse",
     "FillResponse",
