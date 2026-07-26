@@ -4,6 +4,7 @@ import typing
 from ..core.client_wrapper import SyncClientWrapper
 from ..types.instrument_status import InstrumentStatus
 import datetime as dt
+from ..types.include_combos import IncludeCombos
 from ..core.request_options import RequestOptions
 from ..types.market_search_response import MarketSearchResponse
 from ..core.datetime_utils import serialize_datetime
@@ -13,6 +14,7 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.market_lookup_response import MarketLookupResponse
+from ..types.resolve_combos_response import ResolveCombosResponse
 from ..types.market_search_result import MarketSearchResult
 from ..types.market_match_batch_response import MarketMatchBatchResponse
 from ..core.client_wrapper import AsyncClientWrapper
@@ -42,6 +44,7 @@ class MarketsClient:
         last_price_max: typing.Optional[float] = None,
         volume_min: typing.Optional[int] = None,
         sort_by: typing.Optional[str] = None,
+        include_combos: typing.Optional[IncludeCombos] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         event_limit: typing.Optional[int] = None,
@@ -103,6 +106,9 @@ class MarketsClient:
         sort_by : typing.Optional[str]
             Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price
 
+        include_combos : typing.Optional[IncludeCombos]
+            How to treat parlays: 'exclude' (default), 'include' alongside standard markets, or 'only' combos.
+
         limit : typing.Optional[int]
             Maximum number of results
 
@@ -158,6 +164,7 @@ class MarketsClient:
                 "last_price_max": last_price_max,
                 "volume_min": volume_min,
                 "sort_by": sort_by,
+                "include_combos": include_combos,
                 "limit": limit,
                 "offset": offset,
                 "event_limit": event_limit,
@@ -233,6 +240,76 @@ class MarketsClient:
                     MarketLookupResponse,
                     parse_obj_as(
                         type_=MarketLookupResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def resolve_combos(
+        self,
+        *,
+        river_ids: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ResolveCombosResponse:
+        """
+        Resolve Kalshi combo markets into their constituent legs.
+
+        Legs come back hydrated with the full market row when the leg is in the
+        universe. River_ids that are not combos (or whose legs have not been
+        ingested yet) return an empty ``legs`` list.
+
+        Parameters
+        ----------
+        river_ids : typing.Sequence[int]
+            Combo river_ids to resolve.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ResolveCombosResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets(
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.markets.resolve_combos(
+            river_ids=[1],
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/markets/resolve-combos",
+            method="POST",
+            json={
+                "river_ids": river_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    ResolveCombosResponse,
+                    parse_obj_as(
+                        type_=ResolveCombosResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -416,6 +493,7 @@ class AsyncMarketsClient:
         last_price_max: typing.Optional[float] = None,
         volume_min: typing.Optional[int] = None,
         sort_by: typing.Optional[str] = None,
+        include_combos: typing.Optional[IncludeCombos] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         event_limit: typing.Optional[int] = None,
@@ -476,6 +554,9 @@ class AsyncMarketsClient:
 
         sort_by : typing.Optional[str]
             Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price
+
+        include_combos : typing.Optional[IncludeCombos]
+            How to treat parlays: 'exclude' (default), 'include' alongside standard markets, or 'only' combos.
 
         limit : typing.Optional[int]
             Maximum number of results
@@ -540,6 +621,7 @@ class AsyncMarketsClient:
                 "last_price_max": last_price_max,
                 "volume_min": volume_min,
                 "sort_by": sort_by,
+                "include_combos": include_combos,
                 "limit": limit,
                 "offset": offset,
                 "event_limit": event_limit,
@@ -623,6 +705,84 @@ class AsyncMarketsClient:
                     MarketLookupResponse,
                     parse_obj_as(
                         type_=MarketLookupResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def resolve_combos(
+        self,
+        *,
+        river_ids: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ResolveCombosResponse:
+        """
+        Resolve Kalshi combo markets into their constituent legs.
+
+        Legs come back hydrated with the full market row when the leg is in the
+        universe. River_ids that are not combos (or whose legs have not been
+        ingested yet) return an empty ``legs`` list.
+
+        Parameters
+        ----------
+        river_ids : typing.Sequence[int]
+            Combo river_ids to resolve.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ResolveCombosResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets(
+            base_url="https://yourhost.com/path/to/api",
+        )
+
+
+        async def main() -> None:
+            await client.markets.resolve_combos(
+                river_ids=[1],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/markets/resolve-combos",
+            method="POST",
+            json={
+                "river_ids": river_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    ResolveCombosResponse,
+                    parse_obj_as(
+                        type_=ResolveCombosResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
