@@ -45,6 +45,7 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/markets/match", "get"),
     ("/v1/markets/match/batch", "post"),
     ("/v1/markets/search", "get"),
+    ("/v1/markets/resolve-combos", "post"),
     # orderbooks
     ("/v1/orderbooks/{river_id}", "get"),
     # orders

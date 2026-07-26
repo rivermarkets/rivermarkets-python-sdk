@@ -46,6 +46,11 @@ class MarketSearchResult(UniversalBaseModel):
     rank: typing.Optional[float] = None
     event_ticker: typing.Optional[str] = None
     event_title: typing.Optional[str] = None
+    is_combo: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True for parlays.
+    """
+
     volume: typing.Optional[int] = None
     volume24h: typing_extensions.Annotated[
         typing.Optional[int], FieldMetadata(alias="volume_24h")

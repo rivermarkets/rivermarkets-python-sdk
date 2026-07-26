@@ -1344,6 +1344,17 @@
             "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price"
           },
           {
+            "name": "include_combos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/IncludeCombos",
+              "description": "How to treat parlays: 'exclude' (default), 'include' alongside standard markets, or 'only' combos.",
+              "default": "exclude"
+            },
+            "description": "How to treat parlays: 'exclude' (default), 'include' alongside standard markets, or 'only' combos."
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -1462,6 +1473,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MarketLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets/resolve-combos": {
+      "post": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Resolve Combos",
+        "description": "Resolve Kalshi combo markets into their constituent legs.\n\nLegs come back hydrated with the full market row when the leg is in the\nuniverse. River_ids that are not combos (or whose legs have not been\ningested yet) return an empty ``legs`` list.",
+        "operationId": "resolve_combos_v1_markets_resolve_combos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveCombosRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolveCombosResponse"
                 }
               }
             }
@@ -3096,6 +3149,47 @@
         "title": "CancelOrderResponse",
         "description": "Schema for cancel order response"
       },
+      "ComboLeg": {
+        "properties": {
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id"
+          },
+          "ticker": {
+            "type": "string",
+            "title": "Ticker"
+          },
+          "leg_qty": {
+            "type": "integer",
+            "title": "Leg Qty",
+            "description": "+1 = yes side, -1 = no side."
+          },
+          "market": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarketSearchResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "leg_qty"
+        ],
+        "title": "ComboLeg",
+        "description": "One leg of a combo. ``market`` is null when the leg market is not in the universe."
+      },
       "ComplexOrderCreateRequest": {
         "properties": {
           "subaccount_id": {
@@ -4365,6 +4459,16 @@
         "title": "IcebergOrderResponse",
         "description": "Iceberg-specific runtime detail returned alongside a ComplexOrderResponse.\n\nSourced from `view_iceberg_orders` so it includes derived fields\n(executed_qty, remaining_qty)."
       },
+      "IncludeCombos": {
+        "type": "string",
+        "enum": [
+          "exclude",
+          "include",
+          "only"
+        ],
+        "title": "IncludeCombos",
+        "description": "How ``/v1/markets/search`` treats Kalshi parlay containers (``is_combo``).\n\n- EXCLUDE (default): drop combos \u2014 standard markets/browse behaviour.\n- INCLUDE: return combos alongside standard markets.\n- ONLY: return combos exclusively (the Combos browse tab / parlay search)."
+      },
       "InstrumentStatus": {
         "type": "string",
         "enum": [
@@ -4686,6 +4790,12 @@
               }
             ],
             "title": "Event Title"
+          },
+          "is_combo": {
+            "type": "boolean",
+            "title": "Is Combo",
+            "description": "True for parlays.",
+            "default": false
           },
           "volume": {
             "anyOf": [
@@ -6127,6 +6237,63 @@
         ],
         "title": "PriceResponse",
         "description": "Response for price queries."
+      },
+      "ResolveCombosRequest": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "River Ids",
+            "description": "Combo river_ids to resolve."
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "ResolveCombosRequest",
+        "description": "Resolve Kalshi combo markets into their constituent legs."
+      },
+      "ResolveCombosResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ResolveCombosResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "ResolveCombosResponse",
+        "description": "``legs`` is empty for river_ids that are not combos or whose legs are not ingested yet."
+      },
+      "ResolveCombosResult": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/ComboLeg"
+            },
+            "type": "array",
+            "title": "Legs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "legs"
+        ],
+        "title": "ResolveCombosResult"
       },
       "SmartTakerOrderParams": {
         "properties": {
