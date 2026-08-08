@@ -33,3 +33,8 @@ Issues = "https://github.com/rivermarkets/rivermarkets-python-sdk/issues"
 
 [tool.setuptools.packages.find]
 include = ["rivermarkets*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]

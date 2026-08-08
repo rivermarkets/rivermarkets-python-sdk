@@ -3013,6 +3013,48 @@
           }
         }
       }
+    },
+    "/v1/fees/schedules/lookup": {
+      "post": {
+        "tags": [
+          "fees"
+        ],
+        "summary": "Lookup Fee Schedules",
+        "description": "Return normalized exchange fee schedules for up to 1,000 instruments.\n\nCoefficients are decimal strings so clients can reproduce venue rounding\nwithout first losing precision through a JSON floating-point value.",
+        "operationId": "lookup_fee_schedules_v1_fees_schedules_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeScheduleLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeScheduleLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7070,6 +7112,132 @@
         "type": "object",
         "title": "WatchlistUpdate",
         "description": "Request schema for renaming / editing a watchlist."
+      },
+      "FeeModel": {
+        "type": "string",
+        "enum": [
+          "price_shape_v1"
+        ],
+        "title": "FeeModel"
+      },
+      "FeeRounding": {
+        "type": "string",
+        "enum": [
+          "none",
+          "ceil_cent",
+          "half_even_cent"
+        ],
+        "title": "FeeRounding"
+      },
+      "FeeRuleResponse": {
+        "properties": {
+          "coefficient": {
+            "type": "string",
+            "title": "Coefficient",
+            "description": "Decimal multiplier in fee = quantity \u00d7 coefficient \u00d7 price \u00d7 (1 - price)."
+          },
+          "rounding": {
+            "$ref": "#/components/schemas/FeeRounding"
+          },
+          "pre_ceiling_cent_decimals": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Ceiling Cent Decimals",
+            "description": "Decimal places used to stabilize fee \u00d7 100 before applying ceil_cent."
+          }
+        },
+        "type": "object",
+        "required": [
+          "coefficient",
+          "rounding",
+          "pre_ceiling_cent_decimals"
+        ],
+        "title": "FeeRuleResponse"
+      },
+      "FeeScheduleLookupRequest": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "River Ids",
+            "description": "River IDs whose exchange fee schedules should be returned."
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "FeeScheduleLookupRequest"
+      },
+      "FeeScheduleLookupResponse": {
+        "properties": {
+          "schedules": {
+            "items": {
+              "$ref": "#/components/schemas/FeeScheduleResponse"
+            },
+            "type": "array",
+            "title": "Schedules"
+          },
+          "missing_river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Missing River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedules",
+          "missing_river_ids"
+        ],
+        "title": "FeeScheduleLookupResponse"
+      },
+      "FeeScheduleResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "model": {
+            "$ref": "#/components/schemas/FeeModel"
+          },
+          "maker": {
+            "$ref": "#/components/schemas/FeeRuleResponse"
+          },
+          "taker": {
+            "$ref": "#/components/schemas/FeeRuleResponse"
+          },
+          "schedule_version": {
+            "type": "string",
+            "title": "Schedule Version",
+            "description": "Stable fingerprint of the normalized schedule."
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "exchange",
+          "model",
+          "maker",
+          "taker",
+          "schedule_version"
+        ],
+        "title": "FeeScheduleResponse"
       }
     }
   },
@@ -7105,6 +7273,10 @@
     {
       "name": "complex-orders",
       "description": "Manage complex orders: conditional orders (take-profit and stop-loss), TWAP, and other advanced order types."
+    },
+    {
+      "name": "fees",
+      "description": "Retrieve exchange fee schedules for local pre-trade calculations."
     }
   ]
 }
