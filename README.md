@@ -56,7 +56,7 @@ client = AsyncRiverMarkets(
 results = await client.markets.search_markets(q="bitcoin")
 ```
 
-## Local fee calculations (QA preview)
+## Local fee calculations
 
 The client fetches each market's live fee schedule once and caches it for the
 lifetime of that client. You can also warm several schedules with one request:
@@ -67,7 +67,6 @@ from rivermarkets import RiverMarkets
 client = RiverMarkets(
     key_id="YOUR_KEY_ID",
     private_key="YOUR_BASE64_PRIVATE_KEY",
-    base_url="https://qa.api.rivermarkets.com",
 )
 
 river_id = 4552150
