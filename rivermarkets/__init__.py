@@ -16,6 +16,11 @@ from .types import (
     FairValueItem,
     FairValueListResponse,
     FairValueResponse,
+    FeeModel,
+    FeeRounding,
+    FeeRuleResponse,
+    FeeScheduleLookupResponse,
+    FeeScheduleResponse,
     FillResponse,
     GenericAssetDetailResponse,
     GenericAssetListResponse,
@@ -74,6 +79,7 @@ from . import (
     balance,
     complex_orders,
     fair_values,
+    fees,
     fills,
     generic_assets,
     markets,
@@ -88,6 +94,7 @@ from . import (
 from .auth import RiverMarketsSigner
 from .environment import RiverMarketsEnvironment
 from .realtime import RealtimeClient
+from .fee_calculator import FeeScheduleNotFoundError, UnsupportedFeeScheduleError, compute_fee_from_schedule
 from .client import AsyncRiverMarkets, RiverMarkets
 from .orders import OrderCreateOrderType, OrderCreateTimeInForce
 from .prices import (
@@ -112,6 +119,12 @@ __all__ = [
     "FairValueItem",
     "FairValueListResponse",
     "FairValueResponse",
+    "FeeModel",
+    "FeeRounding",
+    "FeeRuleResponse",
+    "FeeScheduleLookupResponse",
+    "FeeScheduleResponse",
+    "FeeScheduleNotFoundError",
     "FillResponse",
     "GenericAssetDetailResponse",
     "GenericAssetListResponse",
@@ -163,6 +176,7 @@ __all__ = [
     "TriggerOrder",
     "TriggerOrderOrderType",
     "UnprocessableEntityError",
+    "UnsupportedFeeScheduleError",
     "UserFillListResponse",
     "UserFillListResponseSubaccountToFillsItemValue",
     "UserPositionListResponse",
@@ -175,7 +189,9 @@ __all__ = [
     "WatchlistResponse",
     "balance",
     "complex_orders",
+    "compute_fee_from_schedule",
     "fair_values",
+    "fees",
     "fills",
     "generic_assets",
     "markets",

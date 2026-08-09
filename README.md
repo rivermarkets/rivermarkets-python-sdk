@@ -55,3 +55,44 @@ client = AsyncRiverMarkets(
 )
 results = await client.markets.search_markets(q="bitcoin")
 ```
+
+## Local fee calculations
+
+The client fetches each market's live fee schedule once and caches it for the
+lifetime of that client. You can also warm several schedules with one request:
+
+```python
+from rivermarkets import RiverMarkets
+
+client = RiverMarkets(
+    key_id="YOUR_KEY_ID",
+    private_key="YOUR_BASE64_PRIVATE_KEY",
+)
+
+river_id = 4552150
+qty = 10
+price = 0.50
+
+client.prefetch_fee_schedules([river_id])
+
+taker_fee = client.compute_fee(
+    river_id=river_id,
+    qty=qty,
+    price=price,
+    is_maker=False,
+)
+maker_fee = client.compute_fee(
+    river_id=river_id,
+    qty=qty,
+    price=price,
+    is_maker=True,
+)
+
+# Normalize quoted prices to include the per-contract taker fee.
+buy_all_in = price + taker_fee / qty
+sell_net = price - taker_fee / qty
+```
+
+`compute_fee` makes no network request after the River ID is cached. Call
+`clear_fee_schedule_cache(river_id)` to force the next calculation to reload
+that schedule.

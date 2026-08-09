@@ -32,6 +32,8 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/fair-values/{subaccount_id}/{river_id}", "delete"),
     # fills
     ("/v1/fills", "get"),
+    # fees
+    ("/v1/fees/schedules/lookup", "post"),
     # generic-assets
     ("/v1/generic-assets", "get"),
     ("/v1/generic-assets", "post"),

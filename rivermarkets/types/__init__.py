@@ -17,6 +17,11 @@ from .exchange_balance_response import ExchangeBalanceResponse
 from .fair_value_item import FairValueItem
 from .fair_value_list_response import FairValueListResponse
 from .fair_value_response import FairValueResponse
+from .fee_model import FeeModel
+from .fee_rounding import FeeRounding
+from .fee_rule_response import FeeRuleResponse
+from .fee_schedule_lookup_response import FeeScheduleLookupResponse
+from .fee_schedule_response import FeeScheduleResponse
 from .fill_response import FillResponse
 from .generic_asset_detail_response import GenericAssetDetailResponse
 from .generic_asset_list_response import GenericAssetListResponse
@@ -90,6 +95,11 @@ __all__ = [
     "FairValueItem",
     "FairValueListResponse",
     "FairValueResponse",
+    "FeeModel",
+    "FeeRounding",
+    "FeeRuleResponse",
+    "FeeScheduleLookupResponse",
+    "FeeScheduleResponse",
     "FillResponse",
     "GenericAssetDetailResponse",
     "GenericAssetListResponse",
