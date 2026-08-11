@@ -11,7 +11,6 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper
 
-# this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
 
 
@@ -30,30 +29,6 @@ class FeesClient:
 
         Coefficients are decimal strings so clients can reproduce venue rounding
         without first losing precision through a JSON floating-point value.
-
-        Parameters
-        ----------
-        river_ids : typing.Sequence[int]
-            River IDs whose exchange fee schedules should be returned.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        FeeScheduleLookupResponse
-            Successful Response
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.fees.lookup_fee_schedules(
-            river_ids=[1],
-        )
         """
         _response = self._client_wrapper.httpx_client.request(
             "v1/fees/schedules/lookup",
@@ -104,38 +79,6 @@ class AsyncFeesClient:
 
         Coefficients are decimal strings so clients can reproduce venue rounding
         without first losing precision through a JSON floating-point value.
-
-        Parameters
-        ----------
-        river_ids : typing.Sequence[int]
-            River IDs whose exchange fee schedules should be returned.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        FeeScheduleLookupResponse
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.fees.lookup_fee_schedules(
-                river_ids=[1],
-            )
-
-
-        asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
             "v1/fees/schedules/lookup",
