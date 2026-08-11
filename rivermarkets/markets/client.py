@@ -2,7 +2,7 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
-from ..types.instrument_status import InstrumentStatus
+from ..types.instrument_status_filter import InstrumentStatusFilter
 import datetime as dt
 from ..types.include_combos import IncludeCombos
 from ..core.request_options import RequestOptions
@@ -34,7 +34,7 @@ class MarketsClient:
         exchange_name: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
-        status: typing.Optional[InstrumentStatus] = None,
+        status: typing.Optional[InstrumentStatusFilter] = None,
         expiration_date_start: typing.Optional[dt.datetime] = None,
         expiration_date_end: typing.Optional[dt.datetime] = None,
         start_datetime_after: typing.Optional[dt.datetime] = None,
@@ -49,6 +49,7 @@ class MarketsClient:
         offset: typing.Optional[int] = None,
         event_limit: typing.Optional[int] = None,
         event_offset: typing.Optional[int] = None,
+        markets_per_event: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
@@ -60,7 +61,7 @@ class MarketsClient:
         - Browse by filters (no query required)
         - Results ranked by relevance
 
-        We default to active markets in the view so things are faster
+        Defaults to status=active; pass status=all to include closed markets.
 
         Parameters
         ----------
@@ -76,8 +77,8 @@ class MarketsClient:
         subcategory : typing.Optional[str]
             Filter by subcategory (e.g. Basketball, Football)
 
-        status : typing.Optional[InstrumentStatus]
-            Filter by instrument status
+        status : typing.Optional[InstrumentStatusFilter]
+            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets.
 
         expiration_date_start : typing.Optional[dt.datetime]
             Start of expiration date range (inclusive, ISO 8601)
@@ -120,6 +121,9 @@ class MarketsClient:
 
         event_offset : typing.Optional[int]
             Event offset for event-based pagination
+
+        markets_per_event : typing.Optional[int]
+            With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -169,6 +173,7 @@ class MarketsClient:
                 "offset": offset,
                 "event_limit": event_limit,
                 "event_offset": event_offset,
+                "markets_per_event": markets_per_event,
             },
             request_options=request_options,
         )
@@ -483,7 +488,7 @@ class AsyncMarketsClient:
         exchange_name: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
-        status: typing.Optional[InstrumentStatus] = None,
+        status: typing.Optional[InstrumentStatusFilter] = None,
         expiration_date_start: typing.Optional[dt.datetime] = None,
         expiration_date_end: typing.Optional[dt.datetime] = None,
         start_datetime_after: typing.Optional[dt.datetime] = None,
@@ -498,6 +503,7 @@ class AsyncMarketsClient:
         offset: typing.Optional[int] = None,
         event_limit: typing.Optional[int] = None,
         event_offset: typing.Optional[int] = None,
+        markets_per_event: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
@@ -509,7 +515,7 @@ class AsyncMarketsClient:
         - Browse by filters (no query required)
         - Results ranked by relevance
 
-        We default to active markets in the view so things are faster
+        Defaults to status=active; pass status=all to include closed markets.
 
         Parameters
         ----------
@@ -525,8 +531,8 @@ class AsyncMarketsClient:
         subcategory : typing.Optional[str]
             Filter by subcategory (e.g. Basketball, Football)
 
-        status : typing.Optional[InstrumentStatus]
-            Filter by instrument status
+        status : typing.Optional[InstrumentStatusFilter]
+            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets.
 
         expiration_date_start : typing.Optional[dt.datetime]
             Start of expiration date range (inclusive, ISO 8601)
@@ -569,6 +575,9 @@ class AsyncMarketsClient:
 
         event_offset : typing.Optional[int]
             Event offset for event-based pagination
+
+        markets_per_event : typing.Optional[int]
+            With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -626,6 +635,7 @@ class AsyncMarketsClient:
                 "offset": offset,
                 "event_limit": event_limit,
                 "event_offset": event_offset,
+                "markets_per_event": markets_per_event,
             },
             request_options=request_options,
         )

@@ -67,6 +67,11 @@ class MarketSearchResult(UniversalBaseModel):
     Resolved display name of the canonical structured-target entity (player, team, competitor, …) referenced by the market. NULL for markets without a structured target. Kalshi only — Polymarket has no equivalent concept.
     """
 
+    event_market_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Total number of markets in this row's event. Only populated on the event-paginated path; when markets_per_event trims an event, this is how clients know more markets exist than were returned.
+    """
+
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
     )  # type: ignore # Pydantic v2

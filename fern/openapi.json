@@ -546,6 +546,48 @@
         }
       }
     },
+    "/v1/fees/schedules/lookup": {
+      "post": {
+        "tags": [
+          "fees"
+        ],
+        "summary": "Lookup Fee Schedules",
+        "description": "Return normalized exchange fee schedules for up to 1,000 instruments.\n\nCoefficients are decimal strings so clients can reproduce venue rounding\nwithout first losing precision through a JSON floating-point value.",
+        "operationId": "lookup_fee_schedules_v1_fees_schedules_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeScheduleLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeScheduleLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/fills": {
       "get": {
         "tags": [
@@ -1075,7 +1117,7 @@
           "markets"
         ],
         "summary": "Search Markets",
-        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n\nWe default to active markets in the view so things are faster",
+        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n\nDefaults to status=active; pass status=all to include closed markets.",
         "operationId": "search_markets_v1_markets_search_get",
         "parameters": [
           {
@@ -1159,18 +1201,11 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/InstrumentStatus"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by instrument status",
-              "title": "Status"
+              "$ref": "#/components/schemas/InstrumentStatusFilter",
+              "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets.",
+              "default": "active"
             },
-            "description": "Filter by instrument status"
+            "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets."
           },
           {
             "name": "expiration_date_start",
@@ -1419,6 +1454,25 @@
               "title": "Event Offset"
             },
             "description": "Event offset for event-based pagination"
+          },
+          {
+            "name": "markets_per_event",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest.",
+              "title": "Markets Per Event"
+            },
+            "description": "With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest."
           }
         ],
         "responses": {
@@ -1898,6 +1952,44 @@
               "title": "Buy Flag"
             },
             "description": "Filter by direction: true=buys, false=sells"
+          },
+          {
+            "name": "created_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).",
+              "title": "Created After"
+            },
+            "description": "Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC)."
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only orders created before this time (exclusive, ISO 8601; naive values are treated as UTC).",
+              "title": "Created Before"
+            },
+            "description": "Only orders created before this time (exclusive, ISO 8601; naive values are treated as UTC)."
           },
           {
             "name": "search",
@@ -3013,48 +3105,6 @@
           }
         }
       }
-    },
-    "/v1/fees/schedules/lookup": {
-      "post": {
-        "tags": [
-          "fees"
-        ],
-        "summary": "Lookup Fee Schedules",
-        "description": "Return normalized exchange fee schedules for up to 1,000 instruments.\n\nCoefficients are decimal strings so clients can reproduce venue rounding\nwithout first losing precision through a JSON floating-point value.",
-        "operationId": "lookup_fee_schedules_v1_fees_schedules_lookup_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FeeScheduleLookupRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FeeScheduleLookupResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -3852,6 +3902,133 @@
         "title": "FairValuesUpsert",
         "description": "Request schema for setting fair values on one subaccount (insert-or-overwrite)."
       },
+      "FeeModel": {
+        "type": "string",
+        "enum": [
+          "price_shape_v1"
+        ],
+        "title": "FeeModel",
+        "description": "Formula applied before a fee rule's rounding step.\n\n``PRICE_SHAPE_V1`` computes\n``quantity * coefficient * price * (1 - price)``."
+      },
+      "FeeRounding": {
+        "type": "string",
+        "enum": [
+          "none",
+          "ceil_cent",
+          "half_even_cent"
+        ],
+        "title": "FeeRounding"
+      },
+      "FeeRuleResponse": {
+        "properties": {
+          "coefficient": {
+            "type": "string",
+            "title": "Coefficient",
+            "description": "Decimal multiplier in fee = quantity \u00d7 coefficient \u00d7 price \u00d7 (1 - price)."
+          },
+          "rounding": {
+            "$ref": "#/components/schemas/FeeRounding"
+          },
+          "pre_ceiling_cent_decimals": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Ceiling Cent Decimals",
+            "description": "Decimal places used to stabilize fee \u00d7 100 before applying ceil_cent."
+          }
+        },
+        "type": "object",
+        "required": [
+          "coefficient",
+          "rounding",
+          "pre_ceiling_cent_decimals"
+        ],
+        "title": "FeeRuleResponse"
+      },
+      "FeeScheduleLookupRequest": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "River Ids",
+            "description": "River IDs whose exchange fee schedules should be returned."
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "FeeScheduleLookupRequest"
+      },
+      "FeeScheduleLookupResponse": {
+        "properties": {
+          "schedules": {
+            "items": {
+              "$ref": "#/components/schemas/FeeScheduleResponse"
+            },
+            "type": "array",
+            "title": "Schedules"
+          },
+          "missing_river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Missing River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedules",
+          "missing_river_ids"
+        ],
+        "title": "FeeScheduleLookupResponse"
+      },
+      "FeeScheduleResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "model": {
+            "$ref": "#/components/schemas/FeeModel"
+          },
+          "maker": {
+            "$ref": "#/components/schemas/FeeRuleResponse"
+          },
+          "taker": {
+            "$ref": "#/components/schemas/FeeRuleResponse"
+          },
+          "schedule_version": {
+            "type": "string",
+            "title": "Schedule Version",
+            "description": "Stable fingerprint of the normalized schedule."
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "exchange",
+          "model",
+          "maker",
+          "taker",
+          "schedule_version"
+        ],
+        "title": "FeeScheduleResponse"
+      },
       "FillResponse": {
         "properties": {
           "river_id": {
@@ -4521,6 +4698,17 @@
         "title": "InstrumentStatus",
         "description": "Instrument status derived in instruments table from exchange-specific fields.\n\nKalshi: maps from kalshi_markets.status\n    - 'active' -> ACTIVE\n    - everything else (closed, determined, finalized, settled, amended, inactive, initialized) -> CLOSED\n\nPolymarket: maps from polymarket_markets.closed and polymarket_markets.active booleans\n    - closed=true -> CLOSED\n    - active=true (and not closed) -> ACTIVE\n    - else (active=false, closed=false) -> INACTIVE"
       },
+      "InstrumentStatusFilter": {
+        "type": "string",
+        "enum": [
+          "active",
+          "closed",
+          "inactive",
+          "all"
+        ],
+        "title": "InstrumentStatusFilter",
+        "description": "``status`` query values for market search. ALL matches any status except\ninactive (never-activated exchange junk), which stays opt-in via INACTIVE."
+      },
       "MarketLookupResponse": {
         "properties": {
           "results": {
@@ -4906,6 +5094,18 @@
             ],
             "title": "Primary Entity Name",
             "description": "Resolved display name of the canonical structured-target entity (player, team, competitor, \u2026) referenced by the market. NULL for markets without a structured target. Kalshi only \u2014 Polymarket has no equivalent concept."
+          },
+          "event_market_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Market Count",
+            "description": "Total number of markets in this row's event. Only populated on the event-paginated path; when markets_per_event trims an event, this is how clients know more markets exist than were returned."
           }
         },
         "type": "object",
@@ -5433,16 +5633,16 @@
             "title": "Orders",
             "description": "List of orders matching the query"
           },
-          "count": {
-            "type": "integer",
-            "title": "Count",
-            "description": "Total count of matching orders (for pagination)"
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "True when more orders exist past this page"
           }
         },
         "type": "object",
         "required": [
           "orders",
-          "count"
+          "has_more"
         ],
         "title": "OrderListResponse",
         "description": "Schema for list of orders."
@@ -7112,132 +7312,6 @@
         "type": "object",
         "title": "WatchlistUpdate",
         "description": "Request schema for renaming / editing a watchlist."
-      },
-      "FeeModel": {
-        "type": "string",
-        "enum": [
-          "price_shape_v1"
-        ],
-        "title": "FeeModel"
-      },
-      "FeeRounding": {
-        "type": "string",
-        "enum": [
-          "none",
-          "ceil_cent",
-          "half_even_cent"
-        ],
-        "title": "FeeRounding"
-      },
-      "FeeRuleResponse": {
-        "properties": {
-          "coefficient": {
-            "type": "string",
-            "title": "Coefficient",
-            "description": "Decimal multiplier in fee = quantity \u00d7 coefficient \u00d7 price \u00d7 (1 - price)."
-          },
-          "rounding": {
-            "$ref": "#/components/schemas/FeeRounding"
-          },
-          "pre_ceiling_cent_decimals": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pre Ceiling Cent Decimals",
-            "description": "Decimal places used to stabilize fee \u00d7 100 before applying ceil_cent."
-          }
-        },
-        "type": "object",
-        "required": [
-          "coefficient",
-          "rounding",
-          "pre_ceiling_cent_decimals"
-        ],
-        "title": "FeeRuleResponse"
-      },
-      "FeeScheduleLookupRequest": {
-        "properties": {
-          "river_ids": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "maxItems": 1000,
-            "minItems": 1,
-            "title": "River Ids",
-            "description": "River IDs whose exchange fee schedules should be returned."
-          }
-        },
-        "type": "object",
-        "required": [
-          "river_ids"
-        ],
-        "title": "FeeScheduleLookupRequest"
-      },
-      "FeeScheduleLookupResponse": {
-        "properties": {
-          "schedules": {
-            "items": {
-              "$ref": "#/components/schemas/FeeScheduleResponse"
-            },
-            "type": "array",
-            "title": "Schedules"
-          },
-          "missing_river_ids": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "title": "Missing River Ids"
-          }
-        },
-        "type": "object",
-        "required": [
-          "schedules",
-          "missing_river_ids"
-        ],
-        "title": "FeeScheduleLookupResponse"
-      },
-      "FeeScheduleResponse": {
-        "properties": {
-          "river_id": {
-            "type": "integer",
-            "title": "River Id"
-          },
-          "exchange": {
-            "type": "string",
-            "title": "Exchange"
-          },
-          "model": {
-            "$ref": "#/components/schemas/FeeModel"
-          },
-          "maker": {
-            "$ref": "#/components/schemas/FeeRuleResponse"
-          },
-          "taker": {
-            "$ref": "#/components/schemas/FeeRuleResponse"
-          },
-          "schedule_version": {
-            "type": "string",
-            "title": "Schedule Version",
-            "description": "Stable fingerprint of the normalized schedule."
-          }
-        },
-        "type": "object",
-        "required": [
-          "river_id",
-          "exchange",
-          "model",
-          "maker",
-          "taker",
-          "schedule_version"
-        ],
-        "title": "FeeScheduleResponse"
       }
     }
   },
@@ -7245,6 +7319,10 @@
     {
       "name": "markets",
       "description": "Search and discover prediction markets across Kalshi and Polymarket."
+    },
+    {
+      "name": "fees",
+      "description": "Retrieve exchange fee schedules for local pre-trade calculations."
     },
     {
       "name": "subaccounts",
@@ -7273,10 +7351,6 @@
     {
       "name": "complex-orders",
       "description": "Manage complex orders: conditional orders (take-profit and stop-loss), TWAP, and other advanced order types."
-    },
-    {
-      "name": "fees",
-      "description": "Retrieve exchange fee schedules for local pre-trade calculations."
     }
   ]
 }
