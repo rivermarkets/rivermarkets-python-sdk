@@ -31,6 +31,7 @@ from .iceberg_order_params import IcebergOrderParams
 from .iceberg_order_response import IcebergOrderResponse
 from .include_combos import IncludeCombos
 from .instrument_status import InstrumentStatus
+from .instrument_status_filter import InstrumentStatusFilter
 from .market_lookup_response import MarketLookupResponse
 from .market_match_batch_response import MarketMatchBatchResponse
 from .market_search_response import MarketSearchResponse
@@ -109,6 +110,7 @@ __all__ = [
     "IcebergOrderResponse",
     "IncludeCombos",
     "InstrumentStatus",
+    "InstrumentStatusFilter",
     "MarketLookupResponse",
     "MarketMatchBatchResponse",
     "MarketSearchResponse",

@@ -2,8 +2,10 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
+import datetime as dt
 from ..core.request_options import RequestOptions
 from ..types.order_list_response import OrderListResponse
+from ..core.datetime_utils import serialize_datetime
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
@@ -11,7 +13,6 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from .types.order_create_order_type import OrderCreateOrderType
 from .types.order_create_time_in_force import OrderCreateTimeInForce
-import datetime as dt
 from ..types.conditional_order_create import ConditionalOrderCreate
 from ..types.order_create_response import OrderCreateResponse
 from ..core.serialization import convert_and_respect_annotation_metadata
@@ -41,6 +42,8 @@ class OrdersClient:
         parent_peg_order_id: typing.Optional[str] = None,
         parent_smart_taker_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        created_after: typing.Optional[dt.datetime] = None,
+        created_before: typing.Optional[dt.datetime] = None,
         search: typing.Optional[str] = None,
         show_tp_sl_active: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
@@ -94,6 +97,12 @@ class OrdersClient:
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
 
+        created_after : typing.Optional[dt.datetime]
+            Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
+
+        created_before : typing.Optional[dt.datetime]
+            Only orders created before this time (exclusive, ISO 8601; naive values are treated as UTC).
+
         search : typing.Optional[str]
             Free-text search across the order's market: ticker/slug, the human-readable question (event title, market name, outcome) via full-text + substring match, plus the order's river_id / order id / generic asset id. Applied server-side over all matching orders, not just the current page.
 
@@ -135,6 +144,12 @@ class OrdersClient:
                 "parent_peg_order_id": parent_peg_order_id,
                 "parent_smart_taker_order_id": parent_smart_taker_order_id,
                 "buy_flag": buy_flag,
+                "created_after": serialize_datetime(created_after)
+                if created_after is not None
+                else None,
+                "created_before": serialize_datetime(created_before)
+                if created_before is not None
+                else None,
                 "search": search,
                 "show_tp_sl_active": show_tp_sl_active,
                 "limit": limit,
@@ -665,6 +680,8 @@ class AsyncOrdersClient:
         parent_peg_order_id: typing.Optional[str] = None,
         parent_smart_taker_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        created_after: typing.Optional[dt.datetime] = None,
+        created_before: typing.Optional[dt.datetime] = None,
         search: typing.Optional[str] = None,
         show_tp_sl_active: typing.Optional[bool] = None,
         limit: typing.Optional[int] = None,
@@ -718,6 +735,12 @@ class AsyncOrdersClient:
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
 
+        created_after : typing.Optional[dt.datetime]
+            Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
+
+        created_before : typing.Optional[dt.datetime]
+            Only orders created before this time (exclusive, ISO 8601; naive values are treated as UTC).
+
         search : typing.Optional[str]
             Free-text search across the order's market: ticker/slug, the human-readable question (event title, market name, outcome) via full-text + substring match, plus the order's river_id / order id / generic asset id. Applied server-side over all matching orders, not just the current page.
 
@@ -767,6 +790,12 @@ class AsyncOrdersClient:
                 "parent_peg_order_id": parent_peg_order_id,
                 "parent_smart_taker_order_id": parent_smart_taker_order_id,
                 "buy_flag": buy_flag,
+                "created_after": serialize_datetime(created_after)
+                if created_after is not None
+                else None,
+                "created_before": serialize_datetime(created_before)
+                if created_before is not None
+                else None,
                 "search": search,
                 "show_tp_sl_active": show_tp_sl_active,
                 "limit": limit,

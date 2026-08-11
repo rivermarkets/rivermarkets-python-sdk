@@ -30,6 +30,7 @@ from .types import (
     IcebergOrderResponse,
     IncludeCombos,
     InstrumentStatus,
+    InstrumentStatusFilter,
     MarketLookupResponse,
     MarketMatchBatchResponse,
     MarketSearchResponse,
@@ -93,8 +94,8 @@ from . import (
 )
 from .auth import RiverMarketsSigner
 from .environment import RiverMarketsEnvironment
-from .realtime import RealtimeClient
 from .fee_calculator import FeeScheduleNotFoundError, UnsupportedFeeScheduleError, compute_fee_from_schedule
+from .realtime import RealtimeClient
 from .client import AsyncRiverMarkets, RiverMarkets
 from .orders import OrderCreateOrderType, OrderCreateTimeInForce
 from .prices import (
@@ -123,8 +124,8 @@ __all__ = [
     "FeeRounding",
     "FeeRuleResponse",
     "FeeScheduleLookupResponse",
-    "FeeScheduleResponse",
     "FeeScheduleNotFoundError",
+    "FeeScheduleResponse",
     "FillResponse",
     "GenericAssetDetailResponse",
     "GenericAssetListResponse",
@@ -136,6 +137,7 @@ __all__ = [
     "IcebergOrderResponse",
     "IncludeCombos",
     "InstrumentStatus",
+    "InstrumentStatusFilter",
     "MarketLookupResponse",
     "MarketMatchBatchResponse",
     "MarketSearchResponse",

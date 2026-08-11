@@ -16,9 +16,9 @@ class OrderListResponse(UniversalBaseModel):
     List of orders matching the query
     """
 
-    count: int = pydantic.Field()
+    has_more: bool = pydantic.Field()
     """
-    Total count of matching orders (for pagination)
+    True when more orders exist past this page
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

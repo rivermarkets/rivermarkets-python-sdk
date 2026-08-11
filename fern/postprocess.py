@@ -22,6 +22,11 @@ What this does (and why each piece exists):
 
 5. Removes ``rivermarkets/tests/`` — Fern's Python generator emits sample
    tests we don't want in the published SDK.
+
+6. Trims ``rivermarkets/fees/client.py`` docstrings to their summary
+   paragraphs. Fern's generated Parameters/Returns/Examples sections are
+   boilerplate, and the examples show a constructor call without the
+   required credentials.
 """
 
 from __future__ import annotations
@@ -430,6 +435,26 @@ def remove_tests_dir() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 6. fees/client.py — trim generated docstrings to their summary.
+# ---------------------------------------------------------------------------
+
+FEES_CLIENT_PY = RM / "fees" / "client.py"
+
+DOCSTRING_SECTIONS_RE = re.compile(
+    r'\n\n\s+Parameters\n\s+-+\n.*?"""', re.DOTALL
+)
+
+
+def trim_fees_docstrings() -> None:
+    text = FEES_CLIENT_PY.read_text()
+    text = DOCSTRING_SECTIONS_RE.sub('\n        """', text)
+    text = text.replace(
+        "# this is used as the default value for optional parameters\n", ""
+    )
+    FEES_CLIENT_PY.write_text(text)
+
+
+# ---------------------------------------------------------------------------
 # Entry point.
 # ---------------------------------------------------------------------------
 
@@ -440,6 +465,7 @@ def main() -> None:
     patch_init_py()
     patch_wrapper_py()
     remove_tests_dir()
+    trim_fees_docstrings()
     print("postprocess: hand-edits re-applied")
 
 
