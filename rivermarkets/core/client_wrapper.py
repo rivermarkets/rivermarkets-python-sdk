@@ -10,7 +10,18 @@ from .http_client import AsyncHttpClient
 
 
 class BaseClientWrapper:
-    def __init__(self, *, base_url: str, timeout: typing.Optional[float] = None):
+    def __init__(
+        self,
+        *,
+        river_timestamp: str,
+        river_signature: str,
+        api_key: str,
+        base_url: str,
+        timeout: typing.Optional[float] = None,
+    ):
+        self._river_timestamp = river_timestamp
+        self._river_signature = river_signature
+        self.api_key = api_key
         self._base_url = base_url
         self._timeout = timeout
 
@@ -18,6 +29,9 @@ class BaseClientWrapper:
         headers: typing.Dict[str, str] = {
             "X-Fern-Language": "Python",
         }
+        headers["X-River-Timestamp"] = self._river_timestamp
+        headers["X-River-Signature"] = self._river_signature
+        headers["X-River-Key-Id"] = self.api_key
         return headers
 
     def get_base_url(self) -> str:
@@ -31,11 +45,20 @@ class SyncClientWrapper(BaseClientWrapper):
     def __init__(
         self,
         *,
+        river_timestamp: str,
+        river_signature: str,
+        api_key: str,
         base_url: str,
         timeout: typing.Optional[float] = None,
         httpx_client: httpx.Client,
     ):
-        super().__init__(base_url=base_url, timeout=timeout)
+        super().__init__(
+            river_timestamp=river_timestamp,
+            river_signature=river_signature,
+            api_key=api_key,
+            base_url=base_url,
+            timeout=timeout,
+        )
         self.httpx_client = HttpClient(
             httpx_client=httpx_client,
             base_headers=self.get_headers,
@@ -48,11 +71,20 @@ class AsyncClientWrapper(BaseClientWrapper):
     def __init__(
         self,
         *,
+        river_timestamp: str,
+        river_signature: str,
+        api_key: str,
         base_url: str,
         timeout: typing.Optional[float] = None,
         httpx_client: httpx.AsyncClient,
     ):
-        super().__init__(base_url=base_url, timeout=timeout)
+        super().__init__(
+            river_timestamp=river_timestamp,
+            river_signature=river_signature,
+            api_key=api_key,
+            base_url=base_url,
+            timeout=timeout,
+        )
         self.httpx_client = AsyncHttpClient(
             httpx_client=httpx_client,
             base_headers=self.get_headers,

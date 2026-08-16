@@ -53,7 +53,9 @@ class FairValuesClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.fair_values.list_fair_values()
         """
@@ -119,7 +121,9 @@ class FairValuesClient:
         from rivermarkets import FairValueItem, RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.fair_values.set_fair_values(
             subaccount_id="subaccount_id",
@@ -197,7 +201,9 @@ class FairValuesClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.fair_values.delete_fair_value(
             subaccount_id="subaccount_id",
@@ -265,7 +271,9 @@ class AsyncFairValuesClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -339,7 +347,9 @@ class AsyncFairValuesClient:
         from rivermarkets import AsyncRiverMarkets, FairValueItem
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -425,7 +435,9 @@ class AsyncFairValuesClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 

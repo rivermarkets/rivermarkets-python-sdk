@@ -44,7 +44,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.list_subaccounts()
         """
@@ -99,7 +101,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.create_subaccount(
             name="name",
@@ -168,7 +172,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.get_subaccount(
             subaccount_id="subaccount_id",
@@ -235,7 +241,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.delete_subaccount(
             subaccount_id="subaccount_id",
@@ -296,7 +304,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.update_subaccount(
             subaccount_id="subaccount_id",
@@ -366,7 +376,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -429,7 +441,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -506,7 +520,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -581,7 +597,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -650,7 +668,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 

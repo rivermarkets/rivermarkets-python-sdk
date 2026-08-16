@@ -11,11 +11,13 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from .types.order_create_order_type import OrderCreateOrderType
-from .types.order_create_time_in_force import OrderCreateTimeInForce
+from ..types.order_create_order_type import OrderCreateOrderType
+from ..types.order_create_time_in_force import OrderCreateTimeInForce
 from ..types.conditional_order_create import ConditionalOrderCreate
 from ..types.order_create_response import OrderCreateResponse
 from ..core.serialization import convert_and_respect_annotation_metadata
+from ..types.order_create import OrderCreate
+from ..types.order_batch_create_response import OrderBatchCreateResponse
 from ..types.order_detail_response import OrderDetailResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..types.cancel_order_response import CancelOrderResponse
@@ -128,7 +130,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.list_orders()
         """
@@ -268,7 +272,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.create_order(
             order_type="LIMIT",
@@ -326,6 +332,94 @@ class OrdersClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    def create_order_batch(
+        self,
+        *,
+        orders: typing.Sequence[OrderCreate],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OrderBatchCreateResponse:
+        """
+        Place up to 10 orders in one request.
+
+        All orders must share one `subaccount_id`. Items are validated
+        independently: an invalid item is rejected in its per-index result while
+        valid items proceed, so the response is `202 Accepted` even when some (or
+        all) items fail validation. Generic asset orders are not supported in
+        batches. Accepted orders are queued for execution exactly like
+        `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`
+        or the orders websocket.
+
+        Parameters
+        ----------
+        orders : typing.Sequence[OrderCreate]
+            Orders to place, all for the same subaccount. At most 10 per request.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderBatchCreateResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import OrderCreate, RiverMarkets
+
+        client = RiverMarkets(
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
+        )
+        client.orders.create_order_batch(
+            orders=[
+                OrderCreate(
+                    order_type="LIMIT",
+                    time_in_force="FOK",
+                    qty=1.1,
+                    buy_flag=True,
+                    subaccount_id="subaccount_id",
+                )
+            ],
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/orders/batch",
+            method="POST",
+            json={
+                "orders": convert_and_respect_annotation_metadata(
+                    object_=orders,
+                    annotation=typing.Sequence[OrderCreate],
+                    direction="write",
+                ),
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderBatchCreateResponse,
+                    parse_obj_as(
+                        type_=OrderBatchCreateResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     def get_order(
         self, order_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> OrderDetailResponse:
@@ -356,7 +450,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.get_order(
             order_id="order_id",
@@ -417,7 +513,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.cancel_order(
             order_id="order_id",
@@ -490,7 +588,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.edit_order(
             order_id="order_id",
@@ -555,7 +655,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.get_order_queue_position(
             order_id="order_id",
@@ -624,7 +726,9 @@ class OrdersClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.orders.cancel_all_orders(
             subaccount_id="subaccount_id",
@@ -768,7 +872,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -916,7 +1022,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -980,6 +1088,102 @@ class AsyncOrdersClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    async def create_order_batch(
+        self,
+        *,
+        orders: typing.Sequence[OrderCreate],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OrderBatchCreateResponse:
+        """
+        Place up to 10 orders in one request.
+
+        All orders must share one `subaccount_id`. Items are validated
+        independently: an invalid item is rejected in its per-index result while
+        valid items proceed, so the response is `202 Accepted` even when some (or
+        all) items fail validation. Generic asset orders are not supported in
+        batches. Accepted orders are queued for execution exactly like
+        `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`
+        or the orders websocket.
+
+        Parameters
+        ----------
+        orders : typing.Sequence[OrderCreate]
+            Orders to place, all for the same subaccount. At most 10 per request.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderBatchCreateResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets, OrderCreate
+
+        client = AsyncRiverMarkets(
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.orders.create_order_batch(
+                orders=[
+                    OrderCreate(
+                        order_type="LIMIT",
+                        time_in_force="FOK",
+                        qty=1.1,
+                        buy_flag=True,
+                        subaccount_id="subaccount_id",
+                    )
+                ],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/orders/batch",
+            method="POST",
+            json={
+                "orders": convert_and_respect_annotation_metadata(
+                    object_=orders,
+                    annotation=typing.Sequence[OrderCreate],
+                    direction="write",
+                ),
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderBatchCreateResponse,
+                    parse_obj_as(
+                        type_=OrderBatchCreateResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     async def get_order(
         self, order_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> OrderDetailResponse:
@@ -1012,7 +1216,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -1081,7 +1287,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -1162,7 +1370,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -1235,7 +1445,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -1312,7 +1524,9 @@ class AsyncOrdersClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
