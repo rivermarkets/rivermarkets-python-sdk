@@ -395,7 +395,7 @@
           "fair-values"
         ],
         "summary": "List Fair Values",
-        "description": "List the caller's fair values, optionally scoped to one subaccount and/or one instrument.",
+        "description": "List the caller's fair values, optionally scoped to one subaccount and/or instruments.",
         "operationId": "list_fair_values_v1_fair_values_get",
         "parameters": [
           {
@@ -418,22 +418,25 @@
             "description": "Restrict to a single subaccount"
           },
           {
-            "name": "river_id",
+            "name": "river_ids",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "integer"
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Restrict to a single instrument",
-              "title": "River Id"
+              "description": "Restrict to a set of instruments (repeated param)",
+              "title": "River Ids"
             },
-            "description": "Restrict to a single instrument"
+            "description": "Restrict to a set of instruments (repeated param)"
           }
         ],
         "responses": {
@@ -2056,6 +2059,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/batch": {
+      "post": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Create Order Batch",
+        "description": "Place up to 10 orders in one request.\n\nAll orders must share one `subaccount_id`. Items are validated\nindependently: an invalid item is rejected in its per-index result while\nvalid items proceed, so the response is `202 Accepted` even when some (or\nall) items fail validation. Generic asset orders are not supported in\nbatches. Accepted orders are queued for execution exactly like\n`POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`\nor the orders websocket.",
+        "operationId": "create_order_batch_v1_orders_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderBatchCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderBatchCreateResponse"
                 }
               }
             }
@@ -5122,6 +5167,123 @@
         ],
         "title": "MarketSearchResult",
         "description": "Schema for a single market search result."
+      },
+      "OrderBatchCreate": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/OrderCreate"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Orders",
+            "description": "Orders to place, all for the same subaccount. At most 10 per request."
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders"
+        ],
+        "title": "OrderBatchCreate",
+        "description": "Schema for creating a batch of orders in one request."
+      },
+      "OrderBatchCreateResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/OrderBatchItemResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "One result per requested order, in request order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "OrderBatchCreateResponse",
+        "description": "Schema for batch order create response."
+      },
+      "OrderBatchItemError": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Machine-readable error code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable rejection reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "OrderBatchItemError",
+        "description": "Rejection detail for one item of a batch."
+      },
+      "OrderBatchItemResult": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index",
+            "description": "Index of the order in the request list"
+          },
+          "river_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Order Id",
+            "description": "Assigned order id when the item was accepted"
+          },
+          "complex_orders": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "type": "array"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complex Orders",
+            "description": "TP/SL complex order ids when the item was accepted"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderBatchItemError"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set when the item was rejected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index"
+        ],
+        "title": "OrderBatchItemResult",
+        "description": "Per-item result of a batch create. Exactly one of river_order_id / error is set."
       },
       "OrderCreate": {
         "properties": {

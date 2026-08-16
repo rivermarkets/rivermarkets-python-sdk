@@ -35,7 +35,13 @@ from .types import (
     MarketMatchBatchResponse,
     MarketSearchResponse,
     MarketSearchResult,
+    OrderBatchCreateResponse,
+    OrderBatchItemError,
+    OrderBatchItemResult,
+    OrderCreate,
+    OrderCreateOrderType,
     OrderCreateResponse,
+    OrderCreateTimeInForce,
     OrderDetailResponse,
     OrderEditResponse,
     OrderFillResponse,
@@ -97,7 +103,6 @@ from .environment import RiverMarketsEnvironment
 from .fee_calculator import FeeScheduleNotFoundError, UnsupportedFeeScheduleError, compute_fee_from_schedule
 from .realtime import RealtimeClient
 from .client import AsyncRiverMarkets, RiverMarkets
-from .orders import OrderCreateOrderType, OrderCreateTimeInForce
 from .prices import (
     GetPricesV1PricesRiverIdGetRequestInterval,
     GetPricesV1PricesRiverIdGetRequestType,
@@ -142,6 +147,10 @@ __all__ = [
     "MarketMatchBatchResponse",
     "MarketSearchResponse",
     "MarketSearchResult",
+    "OrderBatchCreateResponse",
+    "OrderBatchItemError",
+    "OrderBatchItemResult",
+    "OrderCreate",
     "OrderCreateOrderType",
     "OrderCreateResponse",
     "OrderCreateTimeInForce",

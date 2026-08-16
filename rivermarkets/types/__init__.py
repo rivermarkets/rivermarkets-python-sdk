@@ -36,7 +36,13 @@ from .market_lookup_response import MarketLookupResponse
 from .market_match_batch_response import MarketMatchBatchResponse
 from .market_search_response import MarketSearchResponse
 from .market_search_result import MarketSearchResult
+from .order_batch_create_response import OrderBatchCreateResponse
+from .order_batch_item_error import OrderBatchItemError
+from .order_batch_item_result import OrderBatchItemResult
+from .order_create import OrderCreate
+from .order_create_order_type import OrderCreateOrderType
 from .order_create_response import OrderCreateResponse
+from .order_create_time_in_force import OrderCreateTimeInForce
 from .order_detail_response import OrderDetailResponse
 from .order_edit_response import OrderEditResponse
 from .order_fill_response import OrderFillResponse
@@ -115,7 +121,13 @@ __all__ = [
     "MarketMatchBatchResponse",
     "MarketSearchResponse",
     "MarketSearchResult",
+    "OrderBatchCreateResponse",
+    "OrderBatchItemError",
+    "OrderBatchItemResult",
+    "OrderCreate",
+    "OrderCreateOrderType",
     "OrderCreateResponse",
+    "OrderCreateTimeInForce",
     "OrderDetailResponse",
     "OrderEditResponse",
     "OrderFillResponse",
