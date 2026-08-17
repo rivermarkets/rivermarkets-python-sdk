@@ -53,6 +53,7 @@ ALLOWED: set[tuple[str, str]] = {
     # orders
     ("/v1/orders", "post"),
     ("/v1/orders", "get"),
+    ("/v1/orders/batch", "post"),
     ("/v1/orders/cancel-all", "post"),
     ("/v1/orders/{order_id}", "get"),
     ("/v1/orders/{order_id}", "delete"),

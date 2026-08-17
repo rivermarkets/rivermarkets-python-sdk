@@ -26,19 +26,19 @@ class FairValuesClient:
         self,
         *,
         subaccount_id: typing.Optional[str] = None,
-        river_id: typing.Optional[int] = None,
+        river_ids: typing.Optional[typing.Sequence[int]] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FairValueListResponse:
         """
-        List the caller's fair values, optionally scoped to one subaccount and/or one instrument.
+        List the caller's fair values, optionally scoped to one subaccount and/or instruments.
 
         Parameters
         ----------
         subaccount_id : typing.Optional[str]
             Restrict to a single subaccount
 
-        river_id : typing.Optional[int]
-            Restrict to a single instrument
+        river_ids : typing.Optional[typing.Sequence[int]]
+            Restrict to a set of instruments (repeated param)
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -62,7 +62,7 @@ class FairValuesClient:
             method="GET",
             params={
                 "subaccount_id": subaccount_id,
-                "river_id": river_id,
+                "river_ids": river_ids,
             },
             request_options=request_options,
         )
@@ -236,19 +236,19 @@ class AsyncFairValuesClient:
         self,
         *,
         subaccount_id: typing.Optional[str] = None,
-        river_id: typing.Optional[int] = None,
+        river_ids: typing.Optional[typing.Sequence[int]] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FairValueListResponse:
         """
-        List the caller's fair values, optionally scoped to one subaccount and/or one instrument.
+        List the caller's fair values, optionally scoped to one subaccount and/or instruments.
 
         Parameters
         ----------
         subaccount_id : typing.Optional[str]
             Restrict to a single subaccount
 
-        river_id : typing.Optional[int]
-            Restrict to a single instrument
+        river_ids : typing.Optional[typing.Sequence[int]]
+            Restrict to a set of instruments (repeated param)
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -280,7 +280,7 @@ class AsyncFairValuesClient:
             method="GET",
             params={
                 "subaccount_id": subaccount_id,
-                "river_id": river_id,
+                "river_ids": river_ids,
             },
             request_options=request_options,
         )
