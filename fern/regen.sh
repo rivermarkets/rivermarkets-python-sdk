@@ -6,6 +6,8 @@
 #   bash fern/regen.sh                              # use prod openapi
 #   OPENAPI_URL=https://staging.../openapi.json \
 #       bash fern/regen.sh                          # override source
+#   SKIP_FETCH=1 bash fern/regen.sh                 # regenerate from the
+#       committed fern/openapi.json (CI: the spec update is the PR's input)
 
 set -euo pipefail
 
@@ -14,11 +16,16 @@ ROOT=$(cd "$HERE/.." && pwd)
 OPENAPI_URL="${OPENAPI_URL:-https://api.rivermarkets.com/openapi.json}"
 FERN_VERSION="${FERN_VERSION:-4.62.3}"
 
-echo "[1/4] fetching OpenAPI spec from $OPENAPI_URL"
-curl -fsSL "$OPENAPI_URL" -o "$HERE/openapi.raw.json"
+if [[ -n "${SKIP_FETCH:-}" ]]; then
+  echo "[1/4] SKIP_FETCH set — skipping fetch, using committed fern/openapi.json"
+  echo "[2/4] SKIP_FETCH set — skipping filter"
+else
+  echo "[1/4] fetching OpenAPI spec from $OPENAPI_URL"
+  curl -fsSL "$OPENAPI_URL" -o "$HERE/openapi.raw.json"
 
-echo "[2/4] filtering spec to documented routes"
-python3 "$HERE/filter_spec.py"
+  echo "[2/4] filtering spec to documented routes"
+  python3 "$HERE/filter_spec.py"
+fi
 
 echo "[3/4] running fern generate (v$FERN_VERSION)"
 cd "$HERE"
