@@ -1,0 +1,53 @@
+# Any PR that changes fern/ inputs (spec, filter, templates, generator
+# config) gets the generated client rebuilt here — GitHub-hosted runners have
+# the Docker that `fern generate --local` needs — and the result pushed back
+# onto the PR branch. Pushes made with the default GITHUB_TOKEN do not
+# retrigger workflows, so this cannot loop. Also keeps human PRs honest:
+# committed generated code can never drift from the spec inputs.
+name: Regenerate SDK
+
+on:
+  pull_request:
+    paths:
+      - "fern/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: regen-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  regen:
+    # We push the regenerated code back, which only works for same-repo branches.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate from committed spec
+        run: SKIP_FETCH=1 bash fern/regen.sh
+
+      - name: Commit regenerated client
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "generated code already in sync with fern/ inputs"
+          else
+            git commit -m "Regenerate SDK from fern/ inputs"
+            git push
+          fi
