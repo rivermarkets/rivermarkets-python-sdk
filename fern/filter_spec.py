@@ -3,6 +3,9 @@
 Run this between `curl ... > openapi.raw.json` and `fern generate --local`.
 Reads `openapi.raw.json`, writes `openapi.json`, prunes orphan component
 schemas so the generated SDK doesn't ship types for endpoints it can't call.
+
+The ALLOWED set below is also maintained by the river-pilot sdk-sync skill,
+which adds entries when newly documented endpoints land on river-markets main.
 """
 
 from __future__ import annotations
