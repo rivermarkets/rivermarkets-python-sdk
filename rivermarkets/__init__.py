@@ -13,6 +13,7 @@ from .types import (
     ConditionalOrderResponse,
     ExchangeBalance,
     ExchangeBalanceResponse,
+    ExchangeShardBalance,
     FairValueItem,
     FairValueListResponse,
     FairValueResponse,
@@ -99,10 +100,10 @@ from . import (
     watchlists,
 )
 from .auth import RiverMarketsSigner
-from .environment import RiverMarketsEnvironment
 from .fee_calculator import FeeScheduleNotFoundError, UnsupportedFeeScheduleError, compute_fee_from_schedule
 from .realtime import RealtimeClient
 from .client import AsyncRiverMarkets, RiverMarkets
+from .environment import RiverMarketsEnvironment
 from .prices import (
     GetPricesV1PricesRiverIdGetRequestInterval,
     GetPricesV1PricesRiverIdGetRequestType,
@@ -122,6 +123,7 @@ __all__ = [
     "ConditionalOrderResponse",
     "ExchangeBalance",
     "ExchangeBalanceResponse",
+    "ExchangeShardBalance",
     "FairValueItem",
     "FairValueListResponse",
     "FairValueResponse",

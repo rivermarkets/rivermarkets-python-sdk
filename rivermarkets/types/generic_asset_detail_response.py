@@ -19,7 +19,9 @@ class GenericAssetDetailResponse(UniversalBaseModel):
     category: typing.Optional[str] = None
     subcategory: typing.Optional[str] = None
     resolves_at: typing.Optional[dt.datetime] = None
+    start_datetime: typing.Optional[str] = None
     status: typing.Optional[str] = None
+    match_type: typing.Optional[str] = None
     members: typing.List[MarketSearchResult]
     inserted_at: str = pydantic.Field()
     """

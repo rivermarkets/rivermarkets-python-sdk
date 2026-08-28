@@ -59,7 +59,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.list_generic_assets()
         """
@@ -132,7 +134,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.create_generic_asset(
             subaccount_id="subaccount_id",
@@ -201,7 +205,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.get_generic_asset(
             generic_asset_id="generic_asset_id",
@@ -261,7 +267,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.delete_generic_asset(
             generic_asset_id="generic_asset_id",
@@ -322,7 +330,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.update_generic_asset(
             generic_asset_id="generic_asset_id",
@@ -390,7 +400,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.add_generic_asset_members(
             generic_asset_id="generic_asset_id",
@@ -452,7 +464,9 @@ class GenericAssetsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.generic_assets.remove_generic_asset_members(
             generic_asset_id="generic_asset_id",
@@ -530,7 +544,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -611,7 +627,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -688,7 +706,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -756,7 +776,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -825,7 +847,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -901,7 +925,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -971,7 +997,9 @@ class AsyncGenericAssetsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 

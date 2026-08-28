@@ -2,16 +2,12 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-from .exchange_shard_balance import ExchangeShardBalance
 import pydantic
 
 
-class ExchangeBalance(UniversalBaseModel):
-    exchange_id: int
-    exchange_name: str
-    balance: typing.Optional[str] = None
-    shard_balances: typing.Optional[typing.List[ExchangeShardBalance]] = None
-    error: typing.Optional[str] = None
+class ExchangeShardBalance(UniversalBaseModel):
+    exchange_shard: int
+    balance: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

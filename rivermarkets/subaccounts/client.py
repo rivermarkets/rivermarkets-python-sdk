@@ -7,7 +7,6 @@ from ..types.subaccount_response import SubaccountResponse
 from ..core.pydantic_utilities import parse_obj_as
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.account_type import AccountType
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from ..core.jsonable_encoder import jsonable_encoder
@@ -44,7 +43,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.list_subaccounts()
         """
@@ -72,19 +73,23 @@ class SubaccountsClient:
         *,
         name: str,
         description: typing.Optional[str] = OMIT,
-        account_type: typing.Optional[AccountType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountResponse:
         """
-        Create a new trading subaccount for the authenticated user.
+        Create a new trading subaccount. Any active org member can create one;
+        account_type is pinned to non_custodial server-side. A non-admin creator
+        gets an explicit admin grant on the new subaccount (org admins hold derived
+        access on every subaccount and never get grant rows).
+
+        Runs on the unscoped session: the creator holds no user:manage grant on
+        the subaccount until this transaction writes it, so the scoped-session RLS
+        WITH CHECK on subaccount_grants can never admit the bootstrap row.
 
         Parameters
         ----------
         name : str
 
         description : typing.Optional[str]
-
-        account_type : typing.Optional[AccountType]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -99,7 +104,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.create_subaccount(
             name="name",
@@ -111,7 +118,6 @@ class SubaccountsClient:
             json={
                 "name": name,
                 "description": description,
-                "account_type": account_type,
             },
             request_options=request_options,
             omit=OMIT,
@@ -168,7 +174,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.get_subaccount(
             subaccount_id="subaccount_id",
@@ -210,7 +218,8 @@ class SubaccountsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Delete a subaccount. Custodial subaccounts cannot be deleted.
+        Delete a subaccount. Requires user:manage on the subaccount. Custodial
+        subaccounts cannot be deleted.
 
         Refused with 409 if the subaccount has any open order (resting/in-flight
         orders, or an active iceberg, peg, smart-taker or conditional order) —
@@ -235,7 +244,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.delete_subaccount(
             subaccount_id="subaccount_id",
@@ -273,7 +284,7 @@ class SubaccountsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountResponse:
         """
-        Update an existing subaccount.
+        Update an existing subaccount. Requires user:manage on the subaccount.
 
         Parameters
         ----------
@@ -296,7 +307,9 @@ class SubaccountsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.subaccounts.update_subaccount(
             subaccount_id="subaccount_id",
@@ -366,7 +379,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -400,19 +415,23 @@ class AsyncSubaccountsClient:
         *,
         name: str,
         description: typing.Optional[str] = OMIT,
-        account_type: typing.Optional[AccountType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountResponse:
         """
-        Create a new trading subaccount for the authenticated user.
+        Create a new trading subaccount. Any active org member can create one;
+        account_type is pinned to non_custodial server-side. A non-admin creator
+        gets an explicit admin grant on the new subaccount (org admins hold derived
+        access on every subaccount and never get grant rows).
+
+        Runs on the unscoped session: the creator holds no user:manage grant on
+        the subaccount until this transaction writes it, so the scoped-session RLS
+        WITH CHECK on subaccount_grants can never admit the bootstrap row.
 
         Parameters
         ----------
         name : str
 
         description : typing.Optional[str]
-
-        account_type : typing.Optional[AccountType]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -429,7 +448,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -447,7 +468,6 @@ class AsyncSubaccountsClient:
             json={
                 "name": name,
                 "description": description,
-                "account_type": account_type,
             },
             request_options=request_options,
             omit=OMIT,
@@ -506,7 +526,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -554,7 +576,8 @@ class AsyncSubaccountsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Delete a subaccount. Custodial subaccounts cannot be deleted.
+        Delete a subaccount. Requires user:manage on the subaccount. Custodial
+        subaccounts cannot be deleted.
 
         Refused with 409 if the subaccount has any open order (resting/in-flight
         orders, or an active iceberg, peg, smart-taker or conditional order) —
@@ -581,7 +604,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
@@ -625,7 +650,7 @@ class AsyncSubaccountsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountResponse:
         """
-        Update an existing subaccount.
+        Update an existing subaccount. Requires user:manage on the subaccount.
 
         Parameters
         ----------
@@ -650,7 +675,9 @@ class AsyncSubaccountsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 

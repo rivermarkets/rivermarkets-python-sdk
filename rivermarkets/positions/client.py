@@ -55,7 +55,9 @@ class PositionsClient:
         from rivermarkets import RiverMarkets
 
         client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
         client.positions.get_positions()
         """
@@ -139,7 +141,9 @@ class AsyncPositionsClient:
         from rivermarkets import AsyncRiverMarkets
 
         client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
+            river_timestamp="YOUR_RIVER_TIMESTAMP",
+            river_signature="YOUR_RIVER_SIGNATURE",
+            api_key="YOUR_API_KEY",
         )
 
 
