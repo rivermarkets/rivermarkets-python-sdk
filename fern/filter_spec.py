@@ -106,6 +106,18 @@ def filter_paths(spec: dict) -> tuple[dict, list[str]]:
     return spec, dropped
 
 
+def strip_auth(spec: dict) -> None:
+    """Auth is hand-written (per-request Ed25519 signing via templates/postprocess);
+    securitySchemes in the spec make Fern generate static auth constructor params
+    that collide with it."""
+    spec.pop("security", None)
+    spec.get("components", {}).pop("securitySchemes", None)
+    for methods in spec["paths"].values():
+        for key, op in methods.items():
+            if key.lower() in HTTP_METHODS and isinstance(op, dict):
+                op.pop("security", None)
+
+
 REF_RE = re.compile(r'"\$ref"\s*:\s*"#/components/schemas/([^"]+)"')
 
 
@@ -143,6 +155,7 @@ def prune_schemas(spec: dict) -> list[str]:
 def main() -> None:
     spec = json.loads(RAW.read_text())
     spec, dropped_routes = filter_paths(spec)
+    strip_auth(spec)
     dropped_schemas = prune_schemas(spec)
     OUT.write_text(json.dumps(spec, indent=2) + "\n")
 

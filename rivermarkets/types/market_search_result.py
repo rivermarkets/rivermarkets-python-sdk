@@ -51,6 +51,11 @@ class MarketSearchResult(UniversalBaseModel):
     True for parlays.
     """
 
+    flip: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Generic-asset members only: true when this member's YES side is the opposite of the asset's outcome. NULL outside basket-member contexts.
+    """
+
     volume: typing.Optional[int] = None
     volume24h: typing_extensions.Annotated[
         typing.Optional[int], FieldMetadata(alias="volume_24h")

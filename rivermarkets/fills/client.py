@@ -60,9 +60,7 @@ class FillsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.fills.get_fills()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -155,9 +153,7 @@ class AsyncFillsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

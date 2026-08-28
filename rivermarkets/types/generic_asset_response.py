@@ -17,8 +17,18 @@ class GenericAssetResponse(UniversalBaseModel):
     category: typing.Optional[str] = None
     subcategory: typing.Optional[str] = None
     resolves_at: typing.Optional[dt.datetime] = None
+    start_datetime: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Underlying event start (e.g. first pitch), for calendar views
+    """
+
     owner_subaccount_id: typing.Optional[str] = None
     status: typing.Optional[str] = None
+    match_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    'manual' | 'owner' | 'auto_*' — auto-matched assets group by game in the UI
+    """
+
     river_ids: typing.List[int]
     inserted_at: str = pydantic.Field()
     """

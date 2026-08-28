@@ -58,9 +58,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.list_generic_assets()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -131,9 +129,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.create_generic_asset(
             subaccount_id="subaccount_id",
             name="name",
@@ -200,9 +196,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.get_generic_asset(
             generic_asset_id="generic_asset_id",
         )
@@ -260,9 +254,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.delete_generic_asset(
             generic_asset_id="generic_asset_id",
         )
@@ -321,9 +313,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.update_generic_asset(
             generic_asset_id="generic_asset_id",
         )
@@ -389,9 +379,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.add_generic_asset_members(
             generic_asset_id="generic_asset_id",
             river_ids=[1],
@@ -451,9 +439,7 @@ class GenericAssetsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.generic_assets.remove_generic_asset_members(
             generic_asset_id="generic_asset_id",
             river_ids=[1],
@@ -529,9 +515,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -610,9 +594,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -687,9 +669,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -755,9 +735,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -824,9 +802,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -900,9 +876,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -970,9 +944,7 @@ class AsyncGenericAssetsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

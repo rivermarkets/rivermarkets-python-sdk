@@ -76,6 +76,11 @@ class OrderCreate(UniversalBaseModel):
     Optional list of conditional orders (TP/SL) to attach to this order.
     """
 
+    exchanges: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Generic asset orders only: restrict routing to these exchanges (e.g. ['KALSHI', 'POLYMARKET']). Omit to route across all member venues.
+    """
+
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
     )  # type: ignore # Pydantic v2

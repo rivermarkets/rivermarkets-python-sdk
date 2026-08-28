@@ -54,9 +54,7 @@ class PositionsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.positions.get_positions()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -138,9 +136,7 @@ class AsyncPositionsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

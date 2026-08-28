@@ -12,11 +12,14 @@ class SubaccountResponse(UniversalBaseModel):
     """
 
     subaccount_id: str
+    org_id: str
     name: str
     description: typing.Optional[str] = None
     account_type: AccountType
     is_active: bool
     inserted_at: str
+    permissions: typing.List[str]
+    role: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

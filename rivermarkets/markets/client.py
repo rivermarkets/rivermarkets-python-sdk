@@ -137,9 +137,7 @@ class MarketsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.markets.search_markets()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -224,9 +222,7 @@ class MarketsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.markets.lookup_markets(
             river_ids="river_ids",
         )
@@ -293,9 +289,7 @@ class MarketsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.markets.resolve_combos(
             river_ids=[1],
         )
@@ -363,9 +357,7 @@ class MarketsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.markets.match_market()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -437,9 +429,7 @@ class MarketsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.markets.match_markets_batch()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -593,9 +583,7 @@ class AsyncMarketsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -688,9 +676,7 @@ class AsyncMarketsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -765,9 +751,7 @@ class AsyncMarketsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -843,9 +827,7 @@ class AsyncMarketsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -925,9 +907,7 @@ class AsyncMarketsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

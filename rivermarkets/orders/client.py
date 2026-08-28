@@ -129,9 +129,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.list_orders()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -200,6 +198,7 @@ class OrdersClient:
         conditional_orders_params: typing.Optional[
             typing.Sequence[ConditionalOrderCreate]
         ] = OMIT,
+        exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderCreateResponse:
         """
@@ -212,8 +211,9 @@ class OrdersClient:
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
-        Generic asset orders only support `MARKET` order type — the system automatically routes
-        IOC limit orders to each underlying instrument at optimal prices.
+        Generic asset orders are `LIMIT` only — the system routes IOC limit orders to each
+        underlying instrument at optimal prices. `price` bounds the fills (max for buys, min
+        for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.
 
         **Response:**
         Returns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).
@@ -257,6 +257,9 @@ class OrdersClient:
         conditional_orders_params : typing.Optional[typing.Sequence[ConditionalOrderCreate]]
             Optional list of conditional orders (TP/SL) to attach to this order.
 
+        exchanges : typing.Optional[typing.Sequence[str]]
+            Generic asset orders only: restrict routing to these exchanges (e.g. ['KALSHI', 'POLYMARKET']). Omit to route across all member venues.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -269,9 +272,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.create_order(
             order_type="LIMIT",
             time_in_force="FOK",
@@ -300,6 +301,7 @@ class OrdersClient:
                     annotation=typing.Sequence[ConditionalOrderCreate],
                     direction="write",
                 ),
+                "exchanges": exchanges,
             },
             request_options=request_options,
             omit=OMIT,
@@ -362,9 +364,7 @@ class OrdersClient:
         --------
         from rivermarkets import OrderCreate, RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.create_order_batch(
             orders=[
                 OrderCreate(
@@ -443,9 +443,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.get_order(
             order_id="order_id",
         )
@@ -504,9 +502,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.cancel_order(
             order_id="order_id",
         )
@@ -577,9 +573,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.edit_order(
             order_id="order_id",
         )
@@ -642,9 +636,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.get_order_queue_position(
             order_id="order_id",
         )
@@ -711,9 +703,7 @@ class OrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.orders.cancel_all_orders(
             subaccount_id="subaccount_id",
         )
@@ -855,9 +845,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -932,6 +920,7 @@ class AsyncOrdersClient:
         conditional_orders_params: typing.Optional[
             typing.Sequence[ConditionalOrderCreate]
         ] = OMIT,
+        exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderCreateResponse:
         """
@@ -944,8 +933,9 @@ class AsyncOrdersClient:
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
-        Generic asset orders only support `MARKET` order type — the system automatically routes
-        IOC limit orders to each underlying instrument at optimal prices.
+        Generic asset orders are `LIMIT` only — the system routes IOC limit orders to each
+        underlying instrument at optimal prices. `price` bounds the fills (max for buys, min
+        for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.
 
         **Response:**
         Returns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).
@@ -989,6 +979,9 @@ class AsyncOrdersClient:
         conditional_orders_params : typing.Optional[typing.Sequence[ConditionalOrderCreate]]
             Optional list of conditional orders (TP/SL) to attach to this order.
 
+        exchanges : typing.Optional[typing.Sequence[str]]
+            Generic asset orders only: restrict routing to these exchanges (e.g. ['KALSHI', 'POLYMARKET']). Omit to route across all member venues.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -1003,9 +996,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -1040,6 +1031,7 @@ class AsyncOrdersClient:
                     annotation=typing.Sequence[ConditionalOrderCreate],
                     direction="write",
                 ),
+                "exchanges": exchanges,
             },
             request_options=request_options,
             omit=OMIT,
@@ -1104,9 +1096,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets, OrderCreate
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -1193,9 +1183,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -1262,9 +1250,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -1343,9 +1329,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -1416,9 +1400,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -1493,9 +1475,7 @@ class AsyncOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

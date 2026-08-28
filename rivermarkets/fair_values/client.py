@@ -52,9 +52,7 @@ class FairValuesClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.fair_values.list_fair_values()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -118,9 +116,7 @@ class FairValuesClient:
         --------
         from rivermarkets import FairValueItem, RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.fair_values.set_fair_values(
             subaccount_id="subaccount_id",
             fair_values=[
@@ -196,9 +192,7 @@ class FairValuesClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = RiverMarkets()
         client.fair_values.delete_fair_value(
             subaccount_id="subaccount_id",
             river_id=1,
@@ -264,9 +258,7 @@ class AsyncFairValuesClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -338,9 +330,7 @@ class AsyncFairValuesClient:
 
         from rivermarkets import AsyncRiverMarkets, FairValueItem
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -424,9 +414,7 @@ class AsyncFairValuesClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            base_url="https://yourhost.com/path/to/api",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
