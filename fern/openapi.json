@@ -7597,31 +7597,6 @@
         "title": "WatchlistUpdate",
         "description": "Request schema for renaming / editing a watchlist."
       }
-    },
-    "securitySchemes": {
-      "SignedRequestKeyId": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-River-Key-Id",
-        "description": "UUID of your API key (from Settings \u2192 API Keys)."
-      },
-      "SignedRequestTimestamp": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-River-Timestamp",
-        "description": "Current unix seconds. Must be within 30s of server time."
-      },
-      "SignedRequestSignature": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-River-Signature",
-        "description": "Base64 Ed25519 signature over the canonical request: METHOD\\nPATH\\nSORTED_QUERY\\nTIMESTAMP\\nSHA256(body) hex. See /api-reference/authentication for the full recipe."
-      },
-      "BearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "JWT bearer token for web client authentication."
-      }
     }
   },
   "tags": [
@@ -7665,16 +7640,6 @@
   "servers": [
     {
       "url": "https://api.rivermarkets.com"
-    }
-  ],
-  "security": [
-    {
-      "SignedRequestKeyId": [],
-      "SignedRequestTimestamp": [],
-      "SignedRequestSignature": []
-    },
-    {
-      "BearerAuth": []
     }
   ]
 }
