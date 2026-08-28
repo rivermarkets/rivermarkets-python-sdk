@@ -93,11 +93,7 @@ class ComplexOrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.complex_orders.list_complex_orders()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -197,11 +193,7 @@ class ComplexOrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.complex_orders.create_complex_order(
             subaccount_id="subaccount_id",
         )
@@ -293,11 +285,7 @@ class ComplexOrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.complex_orders.cancel_all_complex_orders(
             subaccount_id="subaccount_id",
         )
@@ -361,11 +349,7 @@ class ComplexOrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.complex_orders.get_complex_order(
             complex_order_id="complex_order_id",
         )
@@ -427,11 +411,7 @@ class ComplexOrdersClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.complex_orders.cancel_complex_order(
             complex_order_id="complex_order_id",
         )
@@ -537,11 +517,7 @@ class AsyncComplexOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -649,11 +625,7 @@ class AsyncComplexOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -753,11 +725,7 @@ class AsyncComplexOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -829,11 +797,7 @@ class AsyncComplexOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
@@ -903,11 +867,7 @@ class AsyncComplexOrdersClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

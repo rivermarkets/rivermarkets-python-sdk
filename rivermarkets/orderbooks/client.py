@@ -46,11 +46,7 @@ class OrderbooksClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.orderbooks.get_orderbook(
             river_id=1,
         )
@@ -123,11 +119,7 @@ class AsyncOrderbooksClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:

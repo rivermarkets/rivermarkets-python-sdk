@@ -61,11 +61,7 @@ class TradeprintsClient:
         --------
         from rivermarkets import RiverMarkets
 
-        client = RiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = RiverMarkets()
         client.tradeprints.get_tradeprints()
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -153,11 +149,7 @@ class AsyncTradeprintsClient:
 
         from rivermarkets import AsyncRiverMarkets
 
-        client = AsyncRiverMarkets(
-            river_timestamp="YOUR_RIVER_TIMESTAMP",
-            river_signature="YOUR_RIVER_SIGNATURE",
-            api_key="YOUR_API_KEY",
-        )
+        client = AsyncRiverMarkets()
 
 
         async def main() -> None:
