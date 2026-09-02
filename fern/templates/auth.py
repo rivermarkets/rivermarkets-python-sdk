@@ -35,7 +35,7 @@ class RiverMarketsSigner(httpx.Auth):
             quote_via=quote,
         )
         body = request.content or b""
-        ts = str(int(time.time()))
+        ts = str(int(time.time() * 1000))
         canonical = "\n".join(
             [
                 request.method.upper(),
