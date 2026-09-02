@@ -112,7 +112,7 @@ class OrdersClient:
             When true, complex_order_ids only includes attached TP/SL orders with status PENDING or ACTIVE.
 
         limit : typing.Optional[int]
-            Results per page (max 1000)
+            Results per page (max 10000)
 
         offset : typing.Optional[int]
             Pagination offset
@@ -826,7 +826,7 @@ class AsyncOrdersClient:
             When true, complex_order_ids only includes attached TP/SL orders with status PENDING or ACTIVE.
 
         limit : typing.Optional[int]
-            Results per page (max 1000)
+            Results per page (max 10000)
 
         offset : typing.Optional[int]
             Pagination offset
