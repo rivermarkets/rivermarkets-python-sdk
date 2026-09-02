@@ -2031,13 +2031,13 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 1000,
+              "maximum": 10000,
               "minimum": 1,
-              "description": "Results per page (max 1000)",
+              "description": "Results per page (max 10000)",
               "default": 100,
               "title": "Limit"
             },
-            "description": "Results per page (max 1000)"
+            "description": "Results per page (max 10000)"
           },
           {
             "name": "offset",
