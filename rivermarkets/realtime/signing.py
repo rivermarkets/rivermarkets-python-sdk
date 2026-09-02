@@ -30,7 +30,7 @@ def sign_ws_url(
 ) -> str:
     """Return a fully-signed wss:// URL ready for websockets.connect()."""
     extra = dict(extra_query or {})
-    ts = str(int(time.time()))
+    ts = str(int(time.time() * 1000))
     sorted_query = urlencode(sorted(extra.items()), quote_via=quote)
     canonical = "\n".join(["WS", path, sorted_query, ts]).encode()
     sig = base64.b64encode(signing_key.sign(canonical).signature).decode()
