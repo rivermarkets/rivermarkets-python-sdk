@@ -37,6 +37,7 @@ ALLOWED: set[tuple[str, str]] = {
     # generic-assets
     ("/v1/generic-assets", "get"),
     ("/v1/generic-assets", "post"),
+    ("/v1/generic-assets/lookup", "post"),
     ("/v1/generic-assets/{generic_asset_id}", "get"),
     ("/v1/generic-assets/{generic_asset_id}", "patch"),
     ("/v1/generic-assets/{generic_asset_id}", "delete"),

@@ -2,14 +2,45 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
+import pydantic
 import datetime as dt
 from .market_search_result import MarketSearchResult
-import pydantic
+from .generic_event_response import GenericEventResponse
 
 
 class GenericAssetDetailResponse(UniversalBaseModel):
     """
     Response schema for a generic asset with its resolved members (detail view).
+    """
+
+    asset_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    moneyline | spread | threshold
+    """
+
+    period: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    NULL = full game; h1, q1, f5_innings, inning_1, ...
+    """
+
+    metric: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    runs | points for thresholds
+    """
+
+    entity_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The entity the YES is about: the first participant for a two-outcome moneyline or a spread, the leg's own side where a tie is listed as its own contract, the team for team totals
+    """
+
+    side: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    over for thresholds
+    """
+
+    strike: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    First participant's line for spreads, over line for totals
     """
 
     generic_asset_id: str
@@ -27,6 +58,8 @@ class GenericAssetDetailResponse(UniversalBaseModel):
     """
     Creation timestamp (UTC)
     """
+
+    event: typing.Optional[GenericEventResponse] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
