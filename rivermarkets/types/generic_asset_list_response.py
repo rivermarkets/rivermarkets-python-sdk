@@ -4,10 +4,22 @@ from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 from .generic_asset_response import GenericAssetResponse
 import pydantic
+from .subcategory_count import SubcategoryCount
 
 
 class GenericAssetListResponse(UniversalBaseModel):
     assets: typing.List[GenericAssetResponse]
+    total_events: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Total event groups matching the filters (event-paginated requests only)
+    """
+
+    subcategories: typing.Optional[typing.List[SubcategoryCount]] = pydantic.Field(
+        default=None
+    )
+    """
+    Event counts per subcategory for the chip row (event-paginated requests only)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

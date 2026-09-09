@@ -2,16 +2,18 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
+import datetime as dt
 from ..core.request_options import RequestOptions
 from ..types.generic_asset_list_response import GenericAssetListResponse
+from ..core.datetime_utils import serialize_datetime
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.generic_asset_detail_response import GenericAssetDetailResponse
-from ..core.jsonable_encoder import jsonable_encoder
 from ..types.generic_asset_response import GenericAssetResponse
+from ..core.jsonable_encoder import jsonable_encoder
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -25,18 +27,30 @@ class GenericAssetsClient:
     def list_generic_assets(
         self,
         *,
+        q: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
         owner: typing.Optional[str] = None,
+        status: typing.Optional[str] = None,
+        start_after: typing.Optional[dt.datetime] = None,
+        start_before: typing.Optional[dt.datetime] = None,
+        sort_by: typing.Optional[str] = None,
+        event_limit: typing.Optional[int] = None,
+        event_offset: typing.Optional[int] = None,
+        assets_per_event: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetListResponse:
         """
         List generic assets visible to the caller (their own + platform-curated approved).
 
-        Sorted by resolves_at (soonest first), then name.
+        Event-paginated (``event_limit``) requests group assets by generic event, order events by
+        ``sort_by``, order assets within an event winner-first then by line, and hydrate members.
 
         Parameters
         ----------
+        q : typing.Optional[str]
+            Search name, description, series and team names
+
         category : typing.Optional[typing.Sequence[str]]
             Filter by category. Repeat to filter to multiple categories.
 
@@ -45,6 +59,27 @@ class GenericAssetsClient:
 
         owner : typing.Optional[str]
             'me' for own baskets only, 'platform' for public only
+
+        status : typing.Optional[str]
+            'approved' (default), 'expired', 'pending', 'rejected' or 'all'
+
+        start_after : typing.Optional[dt.datetime]
+            Event start at or after (UTC)
+
+        start_before : typing.Optional[dt.datetime]
+            Event start before (UTC)
+
+        sort_by : typing.Optional[str]
+            start-time (default), ending-soon, volume, trending
+
+        event_limit : typing.Optional[int]
+            Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members).
+
+        event_offset : typing.Optional[int]
+            Event offset for event pagination
+
+        assets_per_event : typing.Optional[int]
+            Cap assets returned per event
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -65,9 +100,21 @@ class GenericAssetsClient:
             "v1/generic-assets",
             method="GET",
             params={
+                "q": q,
                 "category": category,
                 "subcategory": subcategory,
                 "owner": owner,
+                "status": status,
+                "start_after": serialize_datetime(start_after)
+                if start_after is not None
+                else None,
+                "start_before": serialize_datetime(start_before)
+                if start_before is not None
+                else None,
+                "sort_by": sort_by,
+                "event_limit": event_limit,
+                "event_offset": event_offset,
+                "assets_per_event": assets_per_event,
             },
             request_options=request_options,
         )
@@ -153,6 +200,71 @@ class GenericAssetsClient:
                     GenericAssetDetailResponse,
                     parse_obj_as(
                         type_=GenericAssetDetailResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def lookup_generic_assets(
+        self,
+        *,
+        river_ids: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, GenericAssetResponse]:
+        """
+        Map river_ids to the generic asset each belongs to (visible assets only, platform preferred over own baskets).
+
+        River_ids with no visible generic asset are omitted from the response.
+
+        Parameters
+        ----------
+        river_ids : typing.Sequence[int]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, GenericAssetResponse]
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.generic_assets.lookup_generic_assets(
+            river_ids=[1],
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/generic-assets/lookup",
+            method="POST",
+            json={
+                "river_ids": river_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.Dict[str, GenericAssetResponse],
+                    parse_obj_as(
+                        type_=typing.Dict[str, GenericAssetResponse],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -480,18 +592,30 @@ class AsyncGenericAssetsClient:
     async def list_generic_assets(
         self,
         *,
+        q: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
         owner: typing.Optional[str] = None,
+        status: typing.Optional[str] = None,
+        start_after: typing.Optional[dt.datetime] = None,
+        start_before: typing.Optional[dt.datetime] = None,
+        sort_by: typing.Optional[str] = None,
+        event_limit: typing.Optional[int] = None,
+        event_offset: typing.Optional[int] = None,
+        assets_per_event: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetListResponse:
         """
         List generic assets visible to the caller (their own + platform-curated approved).
 
-        Sorted by resolves_at (soonest first), then name.
+        Event-paginated (``event_limit``) requests group assets by generic event, order events by
+        ``sort_by``, order assets within an event winner-first then by line, and hydrate members.
 
         Parameters
         ----------
+        q : typing.Optional[str]
+            Search name, description, series and team names
+
         category : typing.Optional[typing.Sequence[str]]
             Filter by category. Repeat to filter to multiple categories.
 
@@ -500,6 +624,27 @@ class AsyncGenericAssetsClient:
 
         owner : typing.Optional[str]
             'me' for own baskets only, 'platform' for public only
+
+        status : typing.Optional[str]
+            'approved' (default), 'expired', 'pending', 'rejected' or 'all'
+
+        start_after : typing.Optional[dt.datetime]
+            Event start at or after (UTC)
+
+        start_before : typing.Optional[dt.datetime]
+            Event start before (UTC)
+
+        sort_by : typing.Optional[str]
+            start-time (default), ending-soon, volume, trending
+
+        event_limit : typing.Optional[int]
+            Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members).
+
+        event_offset : typing.Optional[int]
+            Event offset for event pagination
+
+        assets_per_event : typing.Optional[int]
+            Cap assets returned per event
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -528,9 +673,21 @@ class AsyncGenericAssetsClient:
             "v1/generic-assets",
             method="GET",
             params={
+                "q": q,
                 "category": category,
                 "subcategory": subcategory,
                 "owner": owner,
+                "status": status,
+                "start_after": serialize_datetime(start_after)
+                if start_after is not None
+                else None,
+                "start_before": serialize_datetime(start_before)
+                if start_before is not None
+                else None,
+                "sort_by": sort_by,
+                "event_limit": event_limit,
+                "event_offset": event_offset,
+                "assets_per_event": assets_per_event,
             },
             request_options=request_options,
         )
@@ -624,6 +781,79 @@ class AsyncGenericAssetsClient:
                     GenericAssetDetailResponse,
                     parse_obj_as(
                         type_=GenericAssetDetailResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def lookup_generic_assets(
+        self,
+        *,
+        river_ids: typing.Sequence[int],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, GenericAssetResponse]:
+        """
+        Map river_ids to the generic asset each belongs to (visible assets only, platform preferred over own baskets).
+
+        River_ids with no visible generic asset are omitted from the response.
+
+        Parameters
+        ----------
+        river_ids : typing.Sequence[int]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, GenericAssetResponse]
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.generic_assets.lookup_generic_assets(
+                river_ids=[1],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/generic-assets/lookup",
+            method="POST",
+            json={
+                "river_ids": river_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.Dict[str, GenericAssetResponse],
+                    parse_obj_as(
+                        type_=typing.Dict[str, GenericAssetResponse],  # type: ignore
                         object_=_response.json(),
                     ),
                 )

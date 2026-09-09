@@ -2,13 +2,47 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-import datetime as dt
 import pydantic
+import datetime as dt
+from .generic_event_response import GenericEventResponse
+import typing_extensions
+from ..core.serialization import FieldMetadata
+from .market_search_result import MarketSearchResult
 
 
 class GenericAssetResponse(UniversalBaseModel):
     """
     A tradeable generic asset (platform-curated or user-owned) with its member river_ids.
+    """
+
+    asset_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    moneyline | spread | threshold
+    """
+
+    period: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    NULL = full game; h1, q1, f5_innings, inning_1, ...
+    """
+
+    metric: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    runs | points for thresholds
+    """
+
+    entity_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The entity the YES is about: the first participant for a two-outcome moneyline or a spread, the leg's own side where a tie is listed as its own contract, the team for team totals
+    """
+
+    side: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    over for thresholds
+    """
+
+    strike: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    First participant's line for spreads, over line for totals
     """
 
     generic_asset_id: str
@@ -33,6 +67,28 @@ class GenericAssetResponse(UniversalBaseModel):
     inserted_at: str = pydantic.Field()
     """
     Creation timestamp (UTC)
+    """
+
+    event: typing.Optional[GenericEventResponse] = None
+    member_count: typing.Optional[int] = None
+    exchanges: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Exchanges the members trade on
+    """
+
+    volume: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Summed member volume
+    """
+
+    volume24h: typing_extensions.Annotated[
+        typing.Optional[float], FieldMetadata(alias="volume_24h")
+    ] = None
+    members: typing.Optional[typing.List[MarketSearchResult]] = pydantic.Field(
+        default=None
+    )
+    """
+    Member markets with flip; populated on event-paginated requests
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

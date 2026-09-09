@@ -27,6 +27,9 @@ from .fill_response import FillResponse
 from .generic_asset_detail_response import GenericAssetDetailResponse
 from .generic_asset_list_response import GenericAssetListResponse
 from .generic_asset_response import GenericAssetResponse
+from .generic_entity import GenericEntity
+from .generic_event_participant import GenericEventParticipant
+from .generic_event_response import GenericEventResponse
 from .http_validation_error import HttpValidationError
 from .iceberg_order_params import IcebergOrderParams
 from .iceberg_order_response import IcebergOrderResponse
@@ -66,6 +69,7 @@ from .resolve_combos_result import ResolveCombosResult
 from .smart_taker_order_params import SmartTakerOrderParams
 from .smart_taker_order_response import SmartTakerOrderResponse
 from .subaccount_response import SubaccountResponse
+from .subcategory_count import SubcategoryCount
 from .tradeprint_event import TradeprintEvent
 from .tradeprints_bulk_response import TradeprintsBulkResponse
 from .tradeprints_response import TradeprintsResponse
@@ -113,6 +117,9 @@ __all__ = [
     "GenericAssetDetailResponse",
     "GenericAssetListResponse",
     "GenericAssetResponse",
+    "GenericEntity",
+    "GenericEventParticipant",
+    "GenericEventResponse",
     "HttpValidationError",
     "IcebergOrderParams",
     "IcebergOrderResponse",
@@ -152,6 +159,7 @@ __all__ = [
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SubaccountResponse",
+    "SubcategoryCount",
     "TradeprintEvent",
     "TradeprintsBulkResponse",
     "TradeprintsResponse",
