@@ -721,9 +721,28 @@
           "generic-assets"
         ],
         "summary": "List Generic Assets",
-        "description": "List generic assets visible to the caller (their own + platform-curated approved).\n\nSorted by resolves_at (soonest first), then name.",
+        "description": "List generic assets visible to the caller (their own + platform-curated approved).\n\nEvent-paginated (``event_limit``) requests group assets by generic event, order events by\n``sort_by``, order assets within an event winner-first then by line, and hydrate members.",
         "operationId": "list_generic_assets_v1_generic_assets_get",
         "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search name, description, series and team names",
+              "title": "Q"
+            },
+            "description": "Search name, description, series and team names"
+          },
           {
             "name": "category",
             "in": "query",
@@ -780,6 +799,125 @@
               "title": "Owner"
             },
             "description": "'me' for own baskets only, 'platform' for public only"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "'approved' (default), 'expired', 'pending', 'rejected' or 'all'",
+              "default": "approved",
+              "title": "Status"
+            },
+            "description": "'approved' (default), 'expired', 'pending', 'rejected' or 'all'"
+          },
+          {
+            "name": "start_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event start at or after (UTC)",
+              "title": "Start After"
+            },
+            "description": "Event start at or after (UTC)"
+          },
+          {
+            "name": "start_before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event start before (UTC)",
+              "title": "Start Before"
+            },
+            "description": "Event start before (UTC)"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "start-time (default), ending-soon, volume, trending",
+              "title": "Sort By"
+            },
+            "description": "start-time (default), ending-soon, volume, trending"
+          },
+          {
+            "name": "event_limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members).",
+              "title": "Event Limit"
+            },
+            "description": "Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members)."
+          },
+          {
+            "name": "event_offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Event offset for event pagination",
+              "default": 0,
+              "title": "Event Offset"
+            },
+            "description": "Event offset for event pagination"
+          },
+          {
+            "name": "assets_per_event",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cap assets returned per event",
+              "title": "Assets Per Event"
+            },
+            "description": "Cap assets returned per event"
           }
         ],
         "responses": {
@@ -829,6 +967,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GenericAssetDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/generic-assets/lookup": {
+      "post": {
+        "tags": [
+          "generic-assets"
+        ],
+        "summary": "Lookup Generic Assets",
+        "description": "Map river_ids to the generic asset each belongs to (visible assets only, platform preferred over own baskets).\n\nRiver_ids with no visible generic asset are omitted from the response.",
+        "operationId": "lookup_generic_assets_v1_generic_assets_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericAssetLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/GenericAssetResponse"
+                  },
+                  "type": "object",
+                  "title": "Response Lookup Generic Assets V1 Generic Assets Lookup Post"
                 }
               }
             }
@@ -4244,6 +4428,78 @@
       },
       "GenericAssetDetailResponse": {
         "properties": {
+          "asset_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Type",
+            "description": "moneyline | spread | threshold"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period",
+            "description": "NULL = full game; h1, q1, f5_innings, inning_1, ..."
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric",
+            "description": "runs | points for thresholds"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id",
+            "description": "The entity the YES is about: the first participant for a two-outcome moneyline or a spread, the leg's own side where a tie is listed as its own contract, the team for team totals"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side",
+            "description": "over for thresholds"
+          },
+          "strike": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strike",
+            "description": "First participant's line for spreads, over line for totals"
+          },
           "generic_asset_id": {
             "type": "string",
             "format": "uuid",
@@ -4354,6 +4610,16 @@
             "type": "string",
             "title": "Inserted At",
             "description": "Creation timestamp (UTC)"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GenericEventResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -4374,6 +4640,26 @@
             },
             "type": "array",
             "title": "Assets"
+          },
+          "total_events": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Events",
+            "description": "Total event groups matching the filters (event-paginated requests only)"
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#/components/schemas/SubcategoryCount"
+            },
+            "type": "array",
+            "title": "Subcategories",
+            "description": "Event counts per subcategory for the chip row (event-paginated requests only)"
           }
         },
         "type": "object",
@@ -4381,6 +4667,24 @@
           "assets"
         ],
         "title": "GenericAssetListResponse"
+      },
+      "GenericAssetLookupRequest": {
+        "properties": {
+          "river_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "River Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_ids"
+        ],
+        "title": "GenericAssetLookupRequest",
+        "description": "Request schema for resolving river_ids to the generic asset each belongs to."
       },
       "GenericAssetMemberAdd": {
         "properties": {
@@ -4420,6 +4724,78 @@
       },
       "GenericAssetResponse": {
         "properties": {
+          "asset_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Type",
+            "description": "moneyline | spread | threshold"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period",
+            "description": "NULL = full game; h1, q1, f5_innings, inning_1, ..."
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric",
+            "description": "runs | points for thresholds"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id",
+            "description": "The entity the YES is about: the first participant for a two-outcome moneyline or a spread, the leg's own side where a tie is listed as its own contract, the team for team totals"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side",
+            "description": "over for thresholds"
+          },
+          "strike": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strike",
+            "description": "First participant's line for spreads, over line for totals"
+          },
           "generic_asset_id": {
             "type": "string",
             "title": "Generic Asset Id"
@@ -4530,6 +4906,60 @@
             "type": "string",
             "title": "Inserted At",
             "description": "Creation timestamp (UTC)"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GenericEventResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "member_count": {
+            "type": "integer",
+            "title": "Member Count",
+            "default": 0
+          },
+          "exchanges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Exchanges",
+            "description": "Exchanges the members trade on"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume",
+            "description": "Summed member volume"
+          },
+          "volume_24h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume 24H"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSearchResult"
+            },
+            "type": "array",
+            "title": "Members",
+            "description": "Member markets with flip; populated on event-paginated requests"
           }
         },
         "type": "object",
@@ -4571,6 +5001,120 @@
         "type": "object",
         "title": "GenericAssetUpdate",
         "description": "Request schema for updating a user-owned generic asset."
+      },
+      "GenericEntity": {
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name, e.g. 'Seattle Seahawks' or 'Carlos Alcaraz'"
+          },
+          "abbreviation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abbreviation",
+            "description": "Short code for a team ('SEA'), last name for a person ('Alcaraz')"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_id",
+          "name"
+        ],
+        "title": "GenericEntity",
+        "description": "Whatever an asset or event is about: a team, or a player in an individual sport."
+      },
+      "GenericEventParticipant": {
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/GenericEntity"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "description": "'home' | 'away' for two-sided games, NULL otherwise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity"
+        ],
+        "title": "GenericEventParticipant"
+      },
+      "GenericEventResponse": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "series": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series",
+            "description": "League / series name, e.g. NFL"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start",
+            "description": "Event start (UTC)"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "'AWAY @ HOME' for games, with (G2) for doubleheaders; 'A vs B' where there is no home side"
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/GenericEventParticipant"
+            },
+            "type": "array",
+            "title": "Participants",
+            "description": "Away first then home for games; name order otherwise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id"
+        ],
+        "title": "GenericEventResponse",
+        "description": "The generic event (normalization.events) an auto-matched asset settles on."
       },
       "HTTPValidationError": {
         "properties": {
@@ -7081,6 +7625,25 @@
         "type": "object",
         "title": "SubaccountUpdate",
         "description": "Schema for updating a subaccount."
+      },
+      "SubcategoryCount": {
+        "properties": {
+          "subcategory": {
+            "type": "string",
+            "title": "Subcategory"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subcategory",
+          "count"
+        ],
+        "title": "SubcategoryCount",
+        "description": "One subcategory row with a market count."
       },
       "TradeprintEvent": {
         "properties": {
