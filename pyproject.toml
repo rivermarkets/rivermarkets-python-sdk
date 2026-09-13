@@ -25,6 +25,9 @@ dependencies = [
     "websockets>=12.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
 [project.urls]
 Homepage = "https://rivermarkets.com"
 Documentation = "https://docs.rivermarkets.com"
