@@ -126,6 +126,11 @@ class OrderDetailResponse(UniversalBaseModel):
     If this order is an IOC child of a smart-taker parent, the parent's id; otherwise null.
     """
 
+    parent_generic_peg_order_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    If this order rests under a leg of a generic-asset peg, that peg's id; otherwise null.
+    """
+
     fills: typing.Optional[typing.List[OrderFillResponse]] = pydantic.Field(
         default=None
     )

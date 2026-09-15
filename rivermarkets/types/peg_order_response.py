@@ -4,6 +4,7 @@ from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
 import datetime as dt
+from .peg_leg_response import PegLegResponse
 
 
 class PegOrderResponse(UniversalBaseModel):
@@ -67,6 +68,16 @@ class PegOrderResponse(UniversalBaseModel):
     reject_reason: typing.Optional[str] = pydantic.Field(default=None)
     """
     Reason for rejection, if any
+    """
+
+    exchanges: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Generic-asset pegs: the venues legs may be placed on
+    """
+
+    legs: typing.Optional[typing.List[PegLegResponse]] = pydantic.Field(default=None)
+    """
+    Generic-asset pegs: one leg per member venue with its allocation
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

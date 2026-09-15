@@ -344,6 +344,7 @@ class WatchlistsClient:
         watchlist_id: str,
         *,
         river_ids: typing.Sequence[int],
+        flipped: typing.Optional[typing.Sequence[bool]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> WatchlistDetailResponse:
         """
@@ -354,6 +355,9 @@ class WatchlistsClient:
         watchlist_id : str
 
         river_ids : typing.Sequence[int]
+
+        flipped : typing.Optional[typing.Sequence[bool]]
+            Parallel to river_ids; True where the member's YES is the opposite of the tracked outcome
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -378,6 +382,7 @@ class WatchlistsClient:
             method="POST",
             json={
                 "river_ids": river_ids,
+                "flipped": flipped,
             },
             request_options=request_options,
             omit=OMIT,
@@ -411,6 +416,7 @@ class WatchlistsClient:
         watchlist_id: str,
         *,
         river_ids: typing.Sequence[int],
+        flipped: typing.Optional[typing.Sequence[bool]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
@@ -421,6 +427,9 @@ class WatchlistsClient:
         watchlist_id : str
 
         river_ids : typing.Sequence[int]
+
+        flipped : typing.Optional[typing.Sequence[bool]]
+            Parallel to river_ids; True where the member's YES is the opposite of the tracked outcome
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -444,6 +453,7 @@ class WatchlistsClient:
             method="DELETE",
             json={
                 "river_ids": river_ids,
+                "flipped": flipped,
             },
             request_options=request_options,
             omit=OMIT,
@@ -903,6 +913,7 @@ class AsyncWatchlistsClient:
         watchlist_id: str,
         *,
         river_ids: typing.Sequence[int],
+        flipped: typing.Optional[typing.Sequence[bool]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> WatchlistDetailResponse:
         """
@@ -913,6 +924,9 @@ class AsyncWatchlistsClient:
         watchlist_id : str
 
         river_ids : typing.Sequence[int]
+
+        flipped : typing.Optional[typing.Sequence[bool]]
+            Parallel to river_ids; True where the member's YES is the opposite of the tracked outcome
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -945,6 +959,7 @@ class AsyncWatchlistsClient:
             method="POST",
             json={
                 "river_ids": river_ids,
+                "flipped": flipped,
             },
             request_options=request_options,
             omit=OMIT,
@@ -978,6 +993,7 @@ class AsyncWatchlistsClient:
         watchlist_id: str,
         *,
         river_ids: typing.Sequence[int],
+        flipped: typing.Optional[typing.Sequence[bool]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
@@ -988,6 +1004,9 @@ class AsyncWatchlistsClient:
         watchlist_id : str
 
         river_ids : typing.Sequence[int]
+
+        flipped : typing.Optional[typing.Sequence[bool]]
+            Parallel to river_ids; True where the member's YES is the opposite of the tracked outcome
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1019,6 +1038,7 @@ class AsyncWatchlistsClient:
             method="DELETE",
             json={
                 "river_ids": river_ids,
+                "flipped": flipped,
             },
             request_options=request_options,
             omit=OMIT,

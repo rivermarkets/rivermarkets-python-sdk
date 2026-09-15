@@ -56,6 +56,7 @@ from .order_response import OrderResponse
 from .orderbook_data import OrderbookData
 from .orderbook_response import OrderbookResponse
 from .orderbook_status import OrderbookStatus
+from .peg_leg_response import PegLegResponse
 from .peg_order_params import PegOrderParams
 from .peg_order_response import PegOrderResponse
 from .position_response import PositionResponse
@@ -146,6 +147,7 @@ __all__ = [
     "OrderbookData",
     "OrderbookResponse",
     "OrderbookStatus",
+    "PegLegResponse",
     "PegOrderParams",
     "PegOrderResponse",
     "PositionResponse",

@@ -11,6 +11,10 @@ class WatchlistMemberAdd(UniversalBaseModel):
     """
 
     river_ids: typing.List[int]
+    flipped: typing.Optional[typing.List[bool]] = pydantic.Field(default=None)
+    """
+    Parallel to river_ids; True where the member's YES is the opposite of the tracked outcome
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
