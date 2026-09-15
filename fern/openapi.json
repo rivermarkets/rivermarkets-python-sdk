@@ -3545,6 +3545,21 @@
             "title": "Generic Asset Id",
             "description": "Generic asset basket ID. Mutually exclusive with river_id."
           },
+          "exchanges": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchanges",
+            "description": "Peg orders on a generic asset only: venues legs may be placed on (e.g. ['KALSHI', 'POLYMARKET_US']). Omit to use every member venue where the subaccount has valid credentials."
+          },
           "conditional_order_params": {
             "anyOf": [
               {
@@ -6291,6 +6306,19 @@
             "title": "Parent Smart Taker Order Id",
             "description": "If this order is an IOC child of a smart-taker parent, the parent's id; otherwise null."
           },
+          "parent_generic_peg_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Generic Peg Order Id",
+            "description": "If this order rests under a leg of a generic-asset peg, that peg's id; otherwise null."
+          },
           "fills": {
             "items": {
               "$ref": "#/components/schemas/OrderFillResponse"
@@ -6684,6 +6712,19 @@
             ],
             "title": "Parent Smart Taker Order Id",
             "description": "If this order is an IOC child of a smart-taker parent, the parent's id; otherwise null."
+          },
+          "parent_generic_peg_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Generic Peg Order Id",
+            "description": "If this order rests under a leg of a generic-asset peg, that peg's id; otherwise null."
           }
         },
         "type": "object",
@@ -6825,6 +6866,62 @@
           "not_found"
         ],
         "title": "OrderbookStatus"
+      },
+      "PegLegResponse": {
+        "properties": {
+          "peg_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Peg Order Id",
+            "description": "The leg's own peg id"
+          },
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "exchange_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange Name"
+          },
+          "flipped": {
+            "type": "boolean",
+            "title": "Flipped",
+            "description": "Member YES is the opposite of the asset's outcome; leg side and band are inverted"
+          },
+          "total_qty": {
+            "type": "number",
+            "title": "Total Qty",
+            "description": "Quantity currently allocated to this leg"
+          },
+          "executed_qty": {
+            "type": "number",
+            "title": "Executed Qty",
+            "description": "Filled on this leg"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Leg peg status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "peg_order_id",
+          "river_id",
+          "flipped",
+          "total_qty",
+          "executed_qty",
+          "status"
+        ],
+        "title": "PegLegResponse",
+        "description": "One member venue of a generic-asset peg: an ordinary peg row on that market."
       },
       "PegOrderParams": {
         "properties": {
@@ -7056,6 +7153,29 @@
             ],
             "title": "Reject Reason",
             "description": "Reason for rejection, if any"
+          },
+          "exchanges": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchanges",
+            "description": "Generic-asset pegs: the venues legs may be placed on"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/PegLegResponse"
+            },
+            "type": "array",
+            "title": "Legs",
+            "description": "Generic-asset pegs: one leg per member venue with its allocation"
           }
         },
         "type": "object",
@@ -8055,6 +8175,21 @@
             "type": "array",
             "minItems": 1,
             "title": "River Ids"
+          },
+          "flipped": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flipped",
+            "description": "Parallel to river_ids; True where the member's YES is the opposite of the tracked outcome"
           }
         },
         "type": "object",
