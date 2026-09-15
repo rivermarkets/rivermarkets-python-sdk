@@ -143,6 +143,7 @@ class ComplexOrdersClient:
         subaccount_id: str,
         river_id: typing.Optional[int] = OMIT,
         generic_asset_id: typing.Optional[str] = OMIT,
+        exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
         iceberg_order_params: typing.Optional[IcebergOrderParams] = OMIT,
         peg_order_params: typing.Optional[PegOrderParams] = OMIT,
@@ -168,6 +169,9 @@ class ComplexOrdersClient:
 
         generic_asset_id : typing.Optional[str]
             Generic asset basket ID. Mutually exclusive with river_id.
+
+        exchanges : typing.Optional[typing.Sequence[str]]
+            Peg orders on a generic asset only: venues legs may be placed on (e.g. ['KALSHI', 'POLYMARKET_US']). Omit to use every member venue where the subaccount has valid credentials.
 
         conditional_order_params : typing.Optional[ConditionalOrderCreate]
             Conditional order parameters (TP/SL/STOP)
@@ -205,6 +209,7 @@ class ComplexOrdersClient:
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
                 "generic_asset_id": generic_asset_id,
+                "exchanges": exchanges,
                 "conditional_order_params": convert_and_respect_annotation_metadata(
                     object_=conditional_order_params,
                     annotation=ConditionalOrderCreate,
@@ -573,6 +578,7 @@ class AsyncComplexOrdersClient:
         subaccount_id: str,
         river_id: typing.Optional[int] = OMIT,
         generic_asset_id: typing.Optional[str] = OMIT,
+        exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
         conditional_order_params: typing.Optional[ConditionalOrderCreate] = OMIT,
         iceberg_order_params: typing.Optional[IcebergOrderParams] = OMIT,
         peg_order_params: typing.Optional[PegOrderParams] = OMIT,
@@ -598,6 +604,9 @@ class AsyncComplexOrdersClient:
 
         generic_asset_id : typing.Optional[str]
             Generic asset basket ID. Mutually exclusive with river_id.
+
+        exchanges : typing.Optional[typing.Sequence[str]]
+            Peg orders on a generic asset only: venues legs may be placed on (e.g. ['KALSHI', 'POLYMARKET_US']). Omit to use every member venue where the subaccount has valid credentials.
 
         conditional_order_params : typing.Optional[ConditionalOrderCreate]
             Conditional order parameters (TP/SL/STOP)
@@ -643,6 +652,7 @@ class AsyncComplexOrdersClient:
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
                 "generic_asset_id": generic_asset_id,
+                "exchanges": exchanges,
                 "conditional_order_params": convert_and_respect_annotation_metadata(
                     object_=conditional_order_params,
                     annotation=ConditionalOrderCreate,
