@@ -44,6 +44,7 @@ class OrdersClient:
         parent_peg_order_id: typing.Optional[str] = None,
         parent_smart_taker_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        order_type: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
         created_before: typing.Optional[dt.datetime] = None,
         search: typing.Optional[str] = None,
@@ -99,6 +100,9 @@ class OrdersClient:
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
 
+        order_type : typing.Optional[str]
+            Filter by order type: LIMIT, MARKET, or RFQ_TAKER.
+
         created_after : typing.Optional[dt.datetime]
             Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
 
@@ -144,6 +148,7 @@ class OrdersClient:
                 "parent_peg_order_id": parent_peg_order_id,
                 "parent_smart_taker_order_id": parent_smart_taker_order_id,
                 "buy_flag": buy_flag,
+                "order_type": order_type,
                 "created_after": serialize_datetime(created_after)
                 if created_after is not None
                 else None,
@@ -758,6 +763,7 @@ class AsyncOrdersClient:
         parent_peg_order_id: typing.Optional[str] = None,
         parent_smart_taker_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
+        order_type: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
         created_before: typing.Optional[dt.datetime] = None,
         search: typing.Optional[str] = None,
@@ -813,6 +819,9 @@ class AsyncOrdersClient:
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
 
+        order_type : typing.Optional[str]
+            Filter by order type: LIMIT, MARKET, or RFQ_TAKER.
+
         created_after : typing.Optional[dt.datetime]
             Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
 
@@ -866,6 +875,7 @@ class AsyncOrdersClient:
                 "parent_peg_order_id": parent_peg_order_id,
                 "parent_smart_taker_order_id": parent_smart_taker_order_id,
                 "buy_flag": buy_flag,
+                "order_type": order_type,
                 "created_after": serialize_datetime(created_after)
                 if created_after is not None
                 else None,
