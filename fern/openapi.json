@@ -2142,6 +2142,24 @@
             "description": "Filter by direction: true=buys, false=sells"
           },
           {
+            "name": "order_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by order type: LIMIT, MARKET, or RFQ_TAKER.",
+              "title": "Order Type"
+            },
+            "description": "Filter by order type: LIMIT, MARKET, or RFQ_TAKER."
+          },
+          {
             "name": "created_after",
             "in": "query",
             "required": false,
