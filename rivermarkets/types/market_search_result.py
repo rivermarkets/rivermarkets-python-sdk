@@ -46,6 +46,7 @@ class MarketSearchResult(UniversalBaseModel):
     rank: typing.Optional[float] = None
     event_ticker: typing.Optional[str] = None
     event_title: typing.Optional[str] = None
+    event_subtitle: typing.Optional[str] = None
     is_combo: typing.Optional[bool] = pydantic.Field(default=None)
     """
     True for parlays.
