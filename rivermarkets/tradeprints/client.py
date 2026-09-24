@@ -24,17 +24,19 @@ class TradeprintsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> TradeprintsBulkResponse:
         """
-        Return the most recent trades for one or more markets, sourced directly from
-        the exchanges. Markets are fetched concurrently with a small semaphore
-        (`MAX_CONCURRENT_FETCHES`) so a long input list never fans out into a
-        thundering herd, and the result list preserves the input order. A failure
-        on any single market becomes a `not_found` row with a message — the call as
-        a whole does not 500.
+        Return the most recent trades for one or more markets. Markets whose trade
+        history River has fully captured are served from River's own data; the rest
+        are fetched from the exchange (concurrently, under a small semaphore so a long
+        input list never fans out into a thundering herd) while a backfill of their
+        history is queued. The result list preserves the input order. A failure on
+        any single market becomes a `not_found` row with a message — the call as a
+        whole does not 500.
 
-        Per-market lookup paths:
+        Exchange lookup paths:
           - Kalshi: `GET /markets/trades?ticker=...&limit=...`
-          - Polymarket: `GET https://data-api.polymarket.com/trades?market=<token>&limit=...`
-            (both YES and NO legs are fetched and the NO leg is flipped into YES-price terms)
+          - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`
+            (the NO leg is flipped into YES-price terms)
+          - Polymarket US: always River's own capture (no public API)
 
         Trades are sorted newest-first within each market. Prices are normalised to 0-1.
 
@@ -110,17 +112,19 @@ class AsyncTradeprintsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> TradeprintsBulkResponse:
         """
-        Return the most recent trades for one or more markets, sourced directly from
-        the exchanges. Markets are fetched concurrently with a small semaphore
-        (`MAX_CONCURRENT_FETCHES`) so a long input list never fans out into a
-        thundering herd, and the result list preserves the input order. A failure
-        on any single market becomes a `not_found` row with a message — the call as
-        a whole does not 500.
+        Return the most recent trades for one or more markets. Markets whose trade
+        history River has fully captured are served from River's own data; the rest
+        are fetched from the exchange (concurrently, under a small semaphore so a long
+        input list never fans out into a thundering herd) while a backfill of their
+        history is queued. The result list preserves the input order. A failure on
+        any single market becomes a `not_found` row with a message — the call as a
+        whole does not 500.
 
-        Per-market lookup paths:
+        Exchange lookup paths:
           - Kalshi: `GET /markets/trades?ticker=...&limit=...`
-          - Polymarket: `GET https://data-api.polymarket.com/trades?market=<token>&limit=...`
-            (both YES and NO legs are fetched and the NO leg is flipped into YES-price terms)
+          - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`
+            (the NO leg is flipped into YES-price terms)
+          - Polymarket US: always River's own capture (no public API)
 
         Trades are sorted newest-first within each market. Prices are normalised to 0-1.
 
