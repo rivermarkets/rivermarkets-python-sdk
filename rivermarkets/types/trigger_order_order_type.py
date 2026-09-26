@@ -3,5 +3,5 @@
 import typing
 
 TriggerOrderOrderType = typing.Union[
-    typing.Literal["LIMIT", "MARKET", "RFQ_TAKER"], typing.Any
+    typing.Literal["LIMIT", "MARKET", "RFQ_TAKER", "RFQ_MAKER"], typing.Any
 ]
