@@ -5972,7 +5972,8 @@
             "enum": [
               "LIMIT",
               "MARKET",
-              "RFQ_TAKER"
+              "RFQ_TAKER",
+              "RFQ_MAKER"
             ],
             "description": "Order type: 'LIMIT' or 'MARKET'"
           },
@@ -7921,7 +7922,8 @@
             "enum": [
               "LIMIT",
               "MARKET",
-              "RFQ_TAKER"
+              "RFQ_TAKER",
+              "RFQ_MAKER"
             ],
             "description": "Order type for the triggered order: 'LIMIT' or 'MARKET'"
           },
