@@ -22,6 +22,7 @@ from .orderbooks.client import OrderbooksClient
 from .orders.client import OrdersClient
 from .positions.client import PositionsClient
 from .prices.client import PricesClient
+from .rfqs.client import RfqsClient
 from .subaccounts.client import SubaccountsClient
 from .tradeprints.client import TradeprintsClient
 from .watchlists.client import WatchlistsClient
@@ -37,6 +38,7 @@ from .orderbooks.client import AsyncOrderbooksClient
 from .orders.client import AsyncOrdersClient
 from .positions.client import AsyncPositionsClient
 from .prices.client import AsyncPricesClient
+from .rfqs.client import AsyncRfqsClient
 from .subaccounts.client import AsyncSubaccountsClient
 from .tradeprints.client import AsyncTradeprintsClient
 from .watchlists.client import AsyncWatchlistsClient
@@ -121,6 +123,7 @@ class RiverMarkets:
         self.orders = OrdersClient(client_wrapper=self._client_wrapper)
         self.positions = PositionsClient(client_wrapper=self._client_wrapper)
         self.prices = PricesClient(client_wrapper=self._client_wrapper)
+        self.rfqs = RfqsClient(client_wrapper=self._client_wrapper)
         self.subaccounts = SubaccountsClient(client_wrapper=self._client_wrapper)
         self.tradeprints = TradeprintsClient(client_wrapper=self._client_wrapper)
         self.watchlists = WatchlistsClient(client_wrapper=self._client_wrapper)
@@ -224,6 +227,7 @@ class AsyncRiverMarkets:
         self.orders = AsyncOrdersClient(client_wrapper=self._client_wrapper)
         self.positions = AsyncPositionsClient(client_wrapper=self._client_wrapper)
         self.prices = AsyncPricesClient(client_wrapper=self._client_wrapper)
+        self.rfqs = AsyncRfqsClient(client_wrapper=self._client_wrapper)
         self.subaccounts = AsyncSubaccountsClient(client_wrapper=self._client_wrapper)
         self.tradeprints = AsyncTradeprintsClient(client_wrapper=self._client_wrapper)
         self.watchlists = AsyncWatchlistsClient(client_wrapper=self._client_wrapper)

@@ -35,9 +35,9 @@ class OrderResponse(UniversalBaseModel):
     Limit price (null for market orders)
     """
 
-    buy_flag: bool = pydantic.Field()
+    buy_flag: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Order direction: true=buy, false=sell
+    Order direction: true=buy, false=sell. Null on a two-sided RFQ_MAKER quote until the taker picks a side, at which point the executed side is stamped.
     """
 
     post_only: typing.Optional[bool] = pydantic.Field(default=None)
