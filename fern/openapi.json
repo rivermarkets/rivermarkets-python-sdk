@@ -2721,6 +2721,184 @@
         }
       }
     },
+    "/v1/rfqs/quotes": {
+      "get": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "List Maker Quotes",
+        "description": "Live (non-terminal) maker quotes for a subaccount.",
+        "operationId": "list_maker_quotes_v1_rfqs_quotes_get",
+        "parameters": [
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Subaccount whose quotes to list",
+              "title": "Subaccount Id"
+            },
+            "description": "Subaccount whose quotes to list"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MakerQuoteListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs/{river_rfq_id}/quotes": {
+      "post": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Create Maker Quote",
+        "description": "Quote an RFQ from the /v1/ws/rfqs stream as a maker.",
+        "operationId": "create_maker_quote_v1_rfqs__river_rfq_id__quotes_post",
+        "parameters": [
+          {
+            "name": "river_rfq_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "River Rfq Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMakerQuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMakerQuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs/quotes/{river_order_id}/confirm": {
+      "post": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Confirm Maker Quote",
+        "description": "Confirm an accepted quote.",
+        "operationId": "confirm_maker_quote_v1_rfqs_quotes__river_order_id__confirm_post",
+        "parameters": [
+          {
+            "name": "river_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "River Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs/quotes/{river_order_id}": {
+      "delete": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Cancel Maker Quote",
+        "description": "Cancel an open quote, or refuse one that was accepted but not yet\nconfirmed \u2014 the same venue call either way.",
+        "operationId": "cancel_maker_quote_v1_rfqs_quotes__river_order_id__delete",
+        "parameters": [
+          {
+            "name": "river_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "River Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/subaccounts": {
       "get": {
         "tags": [
@@ -4008,6 +4186,63 @@
         "type": "object",
         "title": "ConditionalOrderResponse",
         "description": "Response for a conditional order. Contains both the condition definition and the trigger order\nthat gets placed when the condition is met.\n\nFor TP/SL: the parent order fills \u2192 the conditional activates \u2192 the trigger order is placed.\nFor STOP/REVERSE_STOP: stop_order_price is reached \u2192 the trigger order is placed."
+      },
+      "CreateMakerQuoteRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Non-custodial subaccount quoting the RFQ"
+          },
+          "bid": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Bid",
+            "description": "YES-space bid: our price to buy YES"
+          },
+          "ask": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Ask",
+            "description": "YES-space ask: our price to sell YES (venue no_bid = 1 - ask)"
+          },
+          "auto_confirm": {
+            "type": "boolean",
+            "title": "Auto Confirm",
+            "description": "Confirm automatically the moment the taker accepts, instead of waiting for the confirm call",
+            "default": false
+          },
+          "rest_remainder": {
+            "type": "boolean",
+            "title": "Rest Remainder",
+            "description": "Rest any unfilled remainder on the book after execution",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "bid",
+          "ask"
+        ],
+        "title": "CreateMakerQuoteRequest"
+      },
+      "CreateMakerQuoteResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id"
+        ],
+        "title": "CreateMakerQuoteResponse"
       },
       "ExchangeBalance": {
         "properties": {
@@ -5411,6 +5646,115 @@
         "title": "InstrumentStatusFilter",
         "description": "``status`` query values for market search. ALL matches any status except\ninactive (never-activated exchange junk), which stays opt-in via INACTIVE."
       },
+      "MakerQuoteListResponse": {
+        "properties": {
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/MakerQuoteResponse"
+            },
+            "type": "array",
+            "title": "Quotes",
+            "description": "Live quotes, newest first"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quotes"
+        ],
+        "title": "MakerQuoteListResponse"
+      },
+      "MakerQuoteResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id",
+            "description": "Order id that owns the quote; the handle for confirm and cancel"
+          },
+          "river_rfq_id": {
+            "type": "string",
+            "title": "River Rfq Id",
+            "description": "RFQ this quote answers"
+          },
+          "river_id": {
+            "type": "integer",
+            "title": "River Id",
+            "description": "Instrument (combo market) quoted"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "pending | open | accepted | confirmed"
+          },
+          "bid": {
+            "type": "number",
+            "title": "Bid",
+            "description": "YES-space price to buy YES"
+          },
+          "ask": {
+            "type": "number",
+            "title": "Ask",
+            "description": "YES-space price to sell YES"
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty"
+          },
+          "accepted_side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Side",
+            "description": "Side of our quote the taker hit, once accepted"
+          },
+          "confirm_deadline_ts": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirm Deadline Ts",
+            "description": "Confirm by this time (UTC) or the exchange cancels the quote"
+          },
+          "auto_confirm": {
+            "type": "boolean",
+            "title": "Auto Confirm"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id",
+          "river_rfq_id",
+          "river_id",
+          "exchange",
+          "status",
+          "bid",
+          "ask",
+          "qty",
+          "auto_confirm",
+          "created_at"
+        ],
+        "title": "MakerQuoteResponse",
+        "description": "One of our live maker quotes. Same shape as the `quote` frame on\n/v1/ws/rfqs, so a client can hydrate from here after a reconnect and then\nkeep following the socket."
+      },
       "MarketLookupResponse": {
         "properties": {
           "results": {
@@ -6175,9 +6519,16 @@
             "description": "Limit price (null for market orders)"
           },
           "buy_flag": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Buy Flag",
-            "description": "Order direction: true=buy, false=sell"
+            "description": "Order direction: true=buy, false=sell. Null on a two-sided RFQ_MAKER quote until the taker picks a side, at which point the executed side is stamped."
           },
           "post_only": {
             "type": "boolean",
@@ -6365,7 +6716,6 @@
           "order_type",
           "time_in_force",
           "qty",
-          "buy_flag",
           "status",
           "subaccount_id",
           "created_at",
@@ -6582,9 +6932,16 @@
             "description": "Limit price (null for market orders)"
           },
           "buy_flag": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Buy Flag",
-            "description": "Order direction: true=buy, false=sell"
+            "description": "Order direction: true=buy, false=sell. Null on a two-sided RFQ_MAKER quote until the taker picks a side, at which point the executed side is stamped."
           },
           "post_only": {
             "type": "boolean",
@@ -6763,7 +7120,6 @@
           "order_type",
           "time_in_force",
           "qty",
-          "buy_flag",
           "status",
           "subaccount_id",
           "created_at",
