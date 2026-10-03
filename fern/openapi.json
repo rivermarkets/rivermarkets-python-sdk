@@ -2154,10 +2154,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by order type: LIMIT, MARKET, or RFQ_TAKER.",
+              "description": "Filter by order type: LIMIT, MARKET, RFQ_TAKER or RFQ_MAKER.",
               "title": "Order Type"
             },
-            "description": "Filter by order type: LIMIT, MARKET, or RFQ_TAKER."
+            "description": "Filter by order type: LIMIT, MARKET, RFQ_TAKER or RFQ_MAKER."
           },
           {
             "name": "created_after",
