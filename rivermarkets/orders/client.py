@@ -101,7 +101,7 @@ class OrdersClient:
             Filter by direction: true=buys, false=sells
 
         order_type : typing.Optional[str]
-            Filter by order type: LIMIT, MARKET, or RFQ_TAKER.
+            Filter by order type: LIMIT, MARKET, RFQ_TAKER or RFQ_MAKER.
 
         created_after : typing.Optional[dt.datetime]
             Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
@@ -820,7 +820,7 @@ class AsyncOrdersClient:
             Filter by direction: true=buys, false=sells
 
         order_type : typing.Optional[str]
-            Filter by order type: LIMIT, MARKET, or RFQ_TAKER.
+            Filter by order type: LIMIT, MARKET, RFQ_TAKER or RFQ_MAKER.
 
         created_after : typing.Optional[dt.datetime]
             Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
