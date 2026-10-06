@@ -15,7 +15,7 @@ class ComboLeg(UniversalBaseModel):
     ticker: str
     leg_qty: int = pydantic.Field()
     """
-    +1 = yes side, -1 = no side.
+    +1 = yes/buy side, -1 = no/sell side.
     """
 
     market: typing.Optional[MarketSearchResult] = None
