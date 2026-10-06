@@ -266,7 +266,7 @@ class MarketsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ResolveCombosResponse:
         """
-        Resolve Kalshi combo markets into their constituent legs.
+        Resolve combo markets (Kalshi MVE, Polymarket US ``caoc-``) into their constituent legs.
 
         Legs come back hydrated with the full market row when the leg is in the
         universe. River_ids that are not combos (or whose legs have not been
@@ -726,7 +726,7 @@ class AsyncMarketsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ResolveCombosResponse:
         """
-        Resolve Kalshi combo markets into their constituent legs.
+        Resolve combo markets (Kalshi MVE, Polymarket US ``caoc-``) into their constituent legs.
 
         Legs come back hydrated with the full market row when the leg is in the
         universe. River_ids that are not combos (or whose legs have not been
