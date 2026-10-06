@@ -56,6 +56,10 @@ class RiverMarkets:
     private_key : str
         Base64-encoded Ed25519 private key shown once at key creation.
 
+    org_id : typing.Optional[str]
+        Your organization id, sent as X-River-Org-Id on every request. Fetched
+        once from GET /v1/rate-limit when omitted.
+
     base_url : typing.Optional[str]
         Override for the API base URL. Defaults to environment.value.
 
@@ -86,6 +90,7 @@ class RiverMarkets:
         *,
         key_id: str,
         private_key: str,
+        org_id: typing.Optional[str] = None,
         base_url: typing.Optional[str] = None,
         environment: RiverMarketsEnvironment = RiverMarketsEnvironment.DEFAULT,
         timeout: typing.Optional[float] = None,
@@ -95,7 +100,7 @@ class RiverMarkets:
         _defaulted_timeout = (
             timeout if timeout is not None else 60 if httpx_client is None else None
         )
-        signer = RiverMarketsSigner(key_id=key_id, private_key=private_key)
+        signer = RiverMarketsSigner(key_id=key_id, private_key=private_key, org_id=org_id)
         if httpx_client is not None:
             httpx_client.auth = signer
             client = httpx_client
@@ -181,6 +186,7 @@ class AsyncRiverMarkets:
         *,
         key_id: str,
         private_key: str,
+        org_id: typing.Optional[str] = None,
         base_url: typing.Optional[str] = None,
         environment: RiverMarketsEnvironment = RiverMarketsEnvironment.DEFAULT,
         timeout: typing.Optional[float] = None,
@@ -190,7 +196,7 @@ class AsyncRiverMarkets:
         _defaulted_timeout = (
             timeout if timeout is not None else 60 if httpx_client is None else None
         )
-        signer = RiverMarketsSigner(key_id=key_id, private_key=private_key)
+        signer = RiverMarketsSigner(key_id=key_id, private_key=private_key, org_id=org_id)
         if httpx_client is not None:
             httpx_client.auth = signer
             client = httpx_client

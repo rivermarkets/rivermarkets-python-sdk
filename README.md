@@ -14,7 +14,14 @@ The SDK authenticates with Ed25519 request signing. Create an API key in
 Settings → API Keys; you'll get a **Key ID** (UUID) and a **base64-encoded
 private key** (shown once at creation). Pass both to the client — every
 request is signed transparently via `X-River-Key-Id`, `X-River-Timestamp`,
-and `X-River-Signature` headers.
+and `X-River-Signature` headers, plus `X-River-Org-Id`, which the client
+fetches once from `GET /v1/rate-limit` (pass `org_id=` to skip that call).
+
+API-key requests are rate limited per organization, across keys and IP
+addresses; `GET /v1/rate-limit` returns your current `limit_per_minute`. Over
+the limit, requests get `429` with `Retry-After`, which the client honours
+before retrying. WebSocket streams are not counted, so prefer `client.realtime`
+over polling.
 
 ## Usage
 
