@@ -2,4 +2,6 @@
 
 import typing
 
-FeeModel = typing.Union[typing.Literal["price_shape_v1"], typing.Any]
+FeeModel = typing.Union[
+    typing.Literal["price_shape_v1", "price_shape_combo_v1"], typing.Any
+]

@@ -2,7 +2,6 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
-import datetime as dt
 import pydantic
 
 
@@ -15,7 +14,7 @@ class TradeprintEvent(UniversalBaseModel):
     from this flag.
     """
 
-    exchange_timestamp: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    exchange_timestamp: typing.Optional[str] = pydantic.Field(default=None)
     """
     Exchange-reported trade timestamp (UTC)
     """

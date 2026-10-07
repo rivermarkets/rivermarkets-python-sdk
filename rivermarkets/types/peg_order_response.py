@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
-import datetime as dt
 from .peg_leg_response import PegLegResponse
 
 
@@ -50,7 +49,7 @@ class PegOrderResponse(UniversalBaseModel):
     total_qty - executed_qty
     """
 
-    expiry_ts_utc: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    expiry_ts_utc: typing.Optional[str] = pydantic.Field(default=None)
     """
     Expiry timestamp in UTC, if set. The child is submitted as GTD with this expiry.
     """

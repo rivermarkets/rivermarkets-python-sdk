@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
 import typing
-import datetime as dt
 
 
 class MakerQuoteResponse(UniversalBaseModel):
@@ -50,13 +49,13 @@ class MakerQuoteResponse(UniversalBaseModel):
     Side of our quote the taker hit, once accepted
     """
 
-    confirm_deadline_ts: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    confirm_deadline_ts: typing.Optional[str] = pydantic.Field(default=None)
     """
     Confirm by this time (UTC) or the exchange cancels the quote
     """
 
     auto_confirm: bool
-    created_at: dt.datetime
+    created_at: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

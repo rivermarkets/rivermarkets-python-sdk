@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
-import datetime as dt
 from .generic_event_response import GenericEventResponse
 import typing_extensions
 from ..core.serialization import FieldMetadata
@@ -50,7 +49,7 @@ class GenericAssetResponse(UniversalBaseModel):
     description: typing.Optional[str] = None
     category: typing.Optional[str] = None
     subcategory: typing.Optional[str] = None
-    resolves_at: typing.Optional[dt.datetime] = None
+    resolves_at: typing.Optional[str] = None
     start_datetime: typing.Optional[str] = pydantic.Field(default=None)
     """
     Underlying event start (e.g. first pitch), for calendar views

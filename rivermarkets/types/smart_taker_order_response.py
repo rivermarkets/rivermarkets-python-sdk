@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
-import datetime as dt
 
 
 class SmartTakerOrderResponse(UniversalBaseModel):
@@ -44,7 +43,7 @@ class SmartTakerOrderResponse(UniversalBaseModel):
     total_qty - executed_qty
     """
 
-    expiry_ts_utc: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    expiry_ts_utc: typing.Optional[str] = pydantic.Field(default=None)
     """
     Expiry timestamp in UTC, if set.
     """
