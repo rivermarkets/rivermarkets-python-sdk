@@ -4436,10 +4436,11 @@
       "FeeModel": {
         "type": "string",
         "enum": [
-          "price_shape_v1"
+          "price_shape_v1",
+          "price_shape_combo_v1"
         ],
         "title": "FeeModel",
-        "description": "Formula applied before a fee rule's rounding step.\n\n``PRICE_SHAPE_V1`` computes\n``quantity * coefficient * price * (1 - price)``."
+        "description": "Formula applied before a fee rule's rounding step.\n\n``PRICE_SHAPE_V1`` computes\n``quantity * coefficient * price * (1 - price)``.\n\n``PRICE_SHAPE_COMBO_V1`` computes\n``quantity * price * (coefficient * (1 - price) + tail_coefficient * (1 - price) ** 4)``,\nthe Polymarket US combo taker curve: the tail term steepens fees at extreme prices."
       },
       "FeeRounding": {
         "type": "string",
@@ -4471,6 +4472,18 @@
             ],
             "title": "Pre Ceiling Cent Decimals",
             "description": "Decimal places used to stabilize fee \u00d7 100 before applying ceil_cent."
+          },
+          "tail_coefficient": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tail Coefficient",
+            "description": "price_shape_combo_v1 only: fee = quantity \u00d7 price \u00d7 (coefficient \u00d7 (1 - price) + tail \u00d7 (1 - price)^4)."
           }
         },
         "type": "object",
@@ -4825,8 +4838,7 @@
           "resolves_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5108,8 +5120,7 @@
           "resolves_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5588,8 +5599,7 @@
           "expiry_ts_utc": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5719,8 +5729,7 @@
           "confirm_deadline_ts": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5735,7 +5744,6 @@
           },
           "created_at": {
             "type": "string",
-            "format": "date-time",
             "title": "Created At"
           }
         },
@@ -7193,8 +7201,7 @@
           "exchange_timestamp": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -7494,8 +7501,7 @@
           "expiry_ts_utc": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -7983,8 +7989,7 @@
           "expiry_ts_utc": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -8156,8 +8161,7 @@
           "exchange_timestamp": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
