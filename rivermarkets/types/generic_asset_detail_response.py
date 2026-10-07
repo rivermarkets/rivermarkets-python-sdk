@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
-import datetime as dt
 from .market_search_result import MarketSearchResult
 from .generic_event_response import GenericEventResponse
 
@@ -49,7 +48,7 @@ class GenericAssetDetailResponse(UniversalBaseModel):
     description: typing.Optional[str] = None
     category: typing.Optional[str] = None
     subcategory: typing.Optional[str] = None
-    resolves_at: typing.Optional[dt.datetime] = None
+    resolves_at: typing.Optional[str] = None
     start_datetime: typing.Optional[str] = None
     status: typing.Optional[str] = None
     match_type: typing.Optional[str] = None

@@ -18,6 +18,11 @@ class FeeRuleResponse(UniversalBaseModel):
     Decimal places used to stabilize fee × 100 before applying ceil_cent.
     """
 
+    tail_coefficient: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    price_shape_combo_v1 only: fee = quantity × price × (coefficient × (1 - price) + tail × (1 - price)^4).
+    """
+
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
     )  # type: ignore # Pydantic v2

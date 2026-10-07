@@ -3,7 +3,6 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 from .price_level_response import PriceLevelResponse
-import datetime as dt
 import pydantic
 
 
@@ -14,7 +13,7 @@ class OrderbookData(UniversalBaseModel):
     asks: typing.List[PriceLevelResponse]
     best_bid_price: typing.Optional[float] = None
     best_ask_price: typing.Optional[float] = None
-    exchange_timestamp: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    exchange_timestamp: typing.Optional[str] = pydantic.Field(default=None)
     """
     Exchange orderbook timestamp (UTC)
     """
