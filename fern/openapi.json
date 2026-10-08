@@ -2773,7 +2773,7 @@
           "rfqs"
         ],
         "summary": "Create Maker Quote",
-        "description": "Quote an RFQ from the /v1/ws/rfqs stream as a maker.",
+        "description": "Quote an RFQ from the /v1/ws/rfqs stream as a maker. The RFQ's exchange comes from\nthe stream's store; the request is the same on every exchange.",
         "operationId": "create_maker_quote_v1_rfqs__river_rfq_id__quotes_post",
         "parameters": [
           {
