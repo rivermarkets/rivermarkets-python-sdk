@@ -17,6 +17,11 @@ Usage::
     async with rt.orders(subaccount_id="sub_abc") as stream:
         async for msg in stream:
             ...
+
+    async with rt.rfqs(subaccount_id="sub_abc", filters={"exchanges": ["kalshi"]}) as stream:
+        async for msg in stream:
+            if msg.type == "rfq":
+                ...
 """
 
 from __future__ import annotations
@@ -41,6 +46,7 @@ _PATH_ORDERBOOKS = "/v1/ws/orderbooks"
 _PATH_ORDERS = "/v1/ws/orders"
 _PATH_TRADEPRINTS = "/v1/ws/tradeprints"
 _PATH_FILLS = "/v1/ws/fills"
+_PATH_RFQS = "/v1/ws/rfqs"
 
 
 class Subscription(AbstractAsyncContextManager):
@@ -58,11 +64,15 @@ class Subscription(AbstractAsyncContextManager):
         path: str,
         extra_query: typing.Optional[typing.Dict[str, str]] = None,
         active_river_ids: typing.Optional[typing.Iterable[int]] = None,
+        filters: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ):
         self._client = client
         self._path = path
         self._extra_query = dict(extra_query or {})
         self._river_ids: typing.Set[int] = set(active_river_ids or ())
+        self._filters: typing.Optional[typing.Dict[str, typing.Any]] = (
+            dict(filters) if filters is not None else None
+        )
         self._ws: typing.Optional[typing.Any] = None
         self._closed = False
 
@@ -76,7 +86,11 @@ class Subscription(AbstractAsyncContextManager):
     async def _open(self) -> None:
         url = self._client._sign(path=self._path, extra_query=self._extra_query)
         self._ws = await websockets.connect(url)
-        if self._river_ids:
+        if self._filters is not None:
+            await self._ws.send(
+                json.dumps({"action": "subscribe", "filters": self._filters})
+            )
+        elif self._river_ids:
             await self._ws.send(
                 json.dumps(
                     {
@@ -136,6 +150,15 @@ class Subscription(AbstractAsyncContextManager):
         if self._ws is not None:
             await self._ws.send(
                 json.dumps({"action": "unsubscribe", "river_ids": ids})
+            )
+
+    async def set_filters(self, filters: typing.Dict[str, typing.Any]) -> None:
+        """Replace the RFQ filter set (rfqs stream only). The server swaps the
+        filters atomically; an empty dict matches every RFQ."""
+        self._filters = dict(filters)
+        if self._ws is not None:
+            await self._ws.send(
+                json.dumps({"action": "subscribe", "filters": self._filters})
             )
 
 
@@ -226,4 +249,25 @@ class RealtimeClient:
             client=self,
             path=_PATH_FILLS,
             extra_query={"subaccount_id": subaccount_id},
+        )
+
+    def rfqs(
+        self,
+        *,
+        subaccount_id: str,
+        filters: typing.Optional[typing.Dict[str, typing.Any]] = None,
+    ) -> Subscription:
+        """Stream live RFQs (filtered server-side) plus this subaccount's own
+        maker-quote updates.
+
+        `filters` is sent as the first subscribe frame and re-sent on reconnect;
+        `None` matches every RFQ. Keys: `exchanges`, `min_legs`, `max_legs`,
+        `river_ids`, `min_notional`, `subcategories`. Replace it mid-stream with
+        `Subscription.set_filters`.
+        """
+        return Subscription(
+            client=self,
+            path=_PATH_RFQS,
+            extra_query={"subaccount_id": subaccount_id},
+            filters=filters if filters is not None else {},
         )
