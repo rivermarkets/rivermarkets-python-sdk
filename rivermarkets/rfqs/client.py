@@ -96,7 +96,8 @@ class RfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateMakerQuoteResponse:
         """
-        Quote an RFQ from the /v1/ws/rfqs stream as a maker.
+        Quote an RFQ from the /v1/ws/rfqs stream as a maker. The RFQ's exchange comes from
+        the stream's store; the request is the same on every exchange.
 
         Parameters
         ----------
@@ -374,7 +375,8 @@ class AsyncRfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateMakerQuoteResponse:
         """
-        Quote an RFQ from the /v1/ws/rfqs stream as a maker.
+        Quote an RFQ from the /v1/ws/rfqs stream as a maker. The RFQ's exchange comes from
+        the stream's store; the request is the same on every exchange.
 
         Parameters
         ----------
