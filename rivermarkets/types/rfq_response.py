@@ -13,13 +13,26 @@ class RfqResponse(UniversalBaseModel):
     single market being one YES leg. creator_user_id is only set on your own RFQs.
     """
 
-    id: str
+    river_rfq_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    River's id for the RFQ; absent on an RFQ that was not posted through River
+    """
+
+    exchange_rfq_id: str = pydantic.Field()
+    """
+    The exchange's own id for the same RFQ
+    """
+
     exchange: typing.Optional[str] = pydantic.Field(default=None)
     """
     kalshi or polymarket_us
     """
 
-    market_ticker: str
+    river_id: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The RFQ's market; absent when it is not in the catalogue
+    """
+
     status: str = pydantic.Field()
     """
     open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses

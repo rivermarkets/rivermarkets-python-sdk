@@ -78,22 +78,17 @@ combo = client.parlays.build_parlay(
     ],
 )
 
-rfq = client.rfqs.create_rfq(
-    subaccount_id=subaccount_id,
-    exchange="POLYMARKET_US",
-    market_ticker=combo.market_ticker,
-    contracts=10,
-)
+# An RFQ is posted on a River market; the exchange follows from it.
+rfq = client.rfqs.create_rfq(subaccount_id=subaccount_id, river_id=combo.river_id, contracts=10)
 
 # Quotes are YES-space: buy YES at 1 - no_bid_dollars, sell YES at yes_bid_dollars.
-quotes = client.rfqs.list_quotes_for_rfq(rfq.id, subaccount_id=subaccount_id, exchange="POLYMARKET_US")
+quotes = client.rfqs.list_quotes_for_rfq(rfq.river_rfq_id, subaccount_id=subaccount_id)
 best = next(q for q in quotes.quotes if q.status == "open" and q.no_bid_dollars is not None)
 
 accepted = client.rfqs.accept_quote(
-    rfq.id,
-    best.id,
+    rfq.river_rfq_id,
+    best.exchange_quote_id,
     subaccount_id=subaccount_id,
-    exchange="POLYMARKET_US",
     buy_flag=True,
     price=round(1 - best.no_bid_dollars, 6),
     contracts=best.no_contracts_fp,
