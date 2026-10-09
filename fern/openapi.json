@@ -2860,6 +2860,106 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "List Quotes For Rfq",
+        "description": "The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.\nOn Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key\n10 requests per 10 seconds across all RFQ endpoints.",
+        "operationId": "list_quotes_for_rfq_v1_rfqs__river_rfq_id__quotes_get",
+        "parameters": [
+          {
+            "name": "river_rfq_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "River Rfq Id"
+            }
+          },
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Non-custodial subaccount to query under",
+              "title": "Subaccount Id"
+            },
+            "description": "Non-custodial subaccount to query under"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by quote status",
+              "title": "Status"
+            },
+            "description": "Filter by quote status"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/rfqs/quotes/{river_order_id}/confirm": {
@@ -2941,22 +3041,23 @@
         }
       }
     },
-    "/v1/rfqs/{exchange_rfq_id}": {
+    "/v1/rfqs/{river_rfq_id}": {
       "get": {
         "tags": [
           "rfqs"
         ],
         "summary": "Get Rfq",
-        "description": "One of your RFQs by its exchange id: status, size, market and legs, and its id on the\nmaker stream while the stream holds it.",
-        "operationId": "get_rfq_v1_rfqs__exchange_rfq_id__get",
+        "description": "One of your RFQs by its River id: status, size, market and legs.",
+        "operationId": "get_rfq_v1_rfqs__river_rfq_id__get",
         "parameters": [
           {
-            "name": "exchange_rfq_id",
+            "name": "river_rfq_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Exchange Rfq Id"
+              "format": "uuid",
+              "title": "River Rfq Id"
             }
           },
           {
@@ -2970,18 +3071,6 @@
               "title": "Subaccount Id"
             },
             "description": "Non-custodial subaccount to query under"
-          },
-          {
-            "name": "exchange",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "KALSHI or POLYMARKET_US",
-              "default": "KALSHI",
-              "title": "Exchange"
-            },
-            "description": "KALSHI or POLYMARKET_US"
           }
         ],
         "responses": {
@@ -3013,15 +3102,16 @@
         ],
         "summary": "Cancel Rfq",
         "description": "Withdraw your RFQ before accepting a quote. Open quotes on it die with it.",
-        "operationId": "cancel_rfq_v1_rfqs__exchange_rfq_id__delete",
+        "operationId": "cancel_rfq_v1_rfqs__river_rfq_id__delete",
         "parameters": [
           {
-            "name": "exchange_rfq_id",
+            "name": "river_rfq_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Exchange Rfq Id"
+              "format": "uuid",
+              "title": "River Rfq Id"
             }
           },
           {
@@ -3035,18 +3125,6 @@
               "title": "Subaccount Id"
             },
             "description": "Subaccount that owns the RFQ"
-          },
-          {
-            "name": "exchange",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "KALSHI or POLYMARKET_US",
-              "default": "KALSHI",
-              "title": "Exchange"
-            },
-            "description": "KALSHI or POLYMARKET_US"
           }
         ],
         "responses": {
@@ -3072,7 +3150,7 @@
           "rfqs"
         ],
         "summary": "Create Rfq",
-        "description": "Post an RFQ on a River market and get its id. Makers answer with quotes; nothing trades\nuntil you accept one. Kalshi RFQs are sized in contracts with an optional target cost;\nPolymarket US RFQs in contracts or in dollars. Combos come from POST /v1/parlays/build.",
+        "description": "Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.\nMakers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in\ncontracts with an optional target cost; Polymarket US RFQs in contracts or in dollars.\nCombos come from POST /v1/parlays/build.",
         "operationId": "create_rfq_v1_rfqs_post",
         "requestBody": {
           "content": {
@@ -3108,22 +3186,23 @@
         }
       }
     },
-    "/v1/rfqs/{exchange_rfq_id}/quotes/{exchange_quote_id}/accept": {
+    "/v1/rfqs/{river_rfq_id}/quotes/{exchange_quote_id}/accept": {
       "post": {
         "tags": [
           "rfqs"
         ],
         "summary": "Accept Quote",
         "description": "Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you\ntrack like any other (resting while the maker confirms, then executed or cancelled). Pass\nthe price and size you saw so a replaced quote answers 409 instead of trading at a price\nyou never saw. The maker has a short window to confirm; if it lapses the order is cancelled.",
-        "operationId": "accept_quote_v1_rfqs__exchange_rfq_id__quotes__exchange_quote_id__accept_post",
+        "operationId": "accept_quote_v1_rfqs__river_rfq_id__quotes__exchange_quote_id__accept_post",
         "parameters": [
           {
-            "name": "exchange_rfq_id",
+            "name": "river_rfq_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Exchange Rfq Id"
+              "format": "uuid",
+              "title": "River Rfq Id"
             }
           },
           {
@@ -3153,119 +3232,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AcceptQuoteResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/rfqs/{exchange_rfq_id}/quotes": {
-      "get": {
-        "tags": [
-          "rfqs"
-        ],
-        "summary": "List Quotes For Rfq",
-        "description": "The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.\nOn Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key\n10 requests per 10 seconds across all RFQ endpoints.",
-        "operationId": "list_quotes_for_rfq_v1_rfqs__exchange_rfq_id__quotes_get",
-        "parameters": [
-          {
-            "name": "exchange_rfq_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Exchange Rfq Id"
-            }
-          },
-          {
-            "name": "subaccount_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "Non-custodial subaccount to query under",
-              "title": "Subaccount Id"
-            },
-            "description": "Non-custodial subaccount to query under"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by quote status",
-              "title": "Status"
-            },
-            "description": "Filter by quote status"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 500,
-              "minimum": 1,
-              "default": 500,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Cursor"
-            }
-          },
-          {
-            "name": "exchange",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "KALSHI or POLYMARKET_US",
-              "default": "KALSHI",
-              "title": "Exchange"
-            },
-            "description": "KALSHI or POLYMARKET_US"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuoteListResponse"
                 }
               }
             }
@@ -3926,12 +3892,6 @@
             "format": "uuid",
             "title": "Subaccount Id",
             "description": "Non-custodial subaccount that owns the RFQ"
-          },
-          "exchange": {
-            "type": "string",
-            "title": "Exchange",
-            "description": "KALSHI or POLYMARKET_US",
-            "default": "KALSHI"
           },
           "buy_flag": {
             "type": "boolean",
@@ -4825,14 +4785,21 @@
       },
       "CreateRfqResponse": {
         "properties": {
+          "river_rfq_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Rfq Id",
+            "description": "River's id for the RFQ; the handle for get, quotes, accept and cancel"
+          },
           "exchange_rfq_id": {
             "type": "string",
             "title": "Exchange Rfq Id",
-            "description": "The exchange's RFQ id; the handle for get, quotes, accept and cancel"
+            "description": "The exchange's own id for the same RFQ"
           }
         },
         "type": "object",
         "required": [
+          "river_rfq_id",
           "exchange_rfq_id"
         ],
         "title": "CreateRfqResponse"
@@ -8773,10 +8740,23 @@
       },
       "RfqResponse": {
         "properties": {
+          "river_rfq_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Rfq Id",
+            "description": "River's id for the RFQ; absent on an RFQ that was not posted through River"
+          },
           "exchange_rfq_id": {
             "type": "string",
             "title": "Exchange Rfq Id",
-            "description": "The exchange's RFQ id; the handle for get, quotes, accept and cancel"
+            "description": "The exchange's own id for the same RFQ"
           },
           "exchange": {
             "anyOf": [
@@ -8801,18 +8781,6 @@
             ],
             "title": "River Id",
             "description": "The RFQ's market; absent when it is not in the catalogue"
-          },
-          "river_rfq_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "River Rfq Id",
-            "description": "River's id for this RFQ on the maker stream and the maker routes, while the stream holds it (about two minutes after creation); absent otherwise"
           },
           "status": {
             "type": "string",
