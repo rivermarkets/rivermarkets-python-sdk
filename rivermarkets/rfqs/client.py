@@ -437,8 +437,7 @@ class RfqsClient:
         self,
         *,
         subaccount_id: str,
-        market_ticker: str,
-        exchange: typing.Optional[str] = OMIT,
+        river_id: int,
         contracts: typing.Optional[int] = OMIT,
         contracts_fp: typing.Optional[CreateRfqRequestContractsFp] = OMIT,
         target_cost_dollars: typing.Optional[CreateRfqRequestTargetCostDollars] = OMIT,
@@ -446,20 +445,17 @@ class RfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateRfqResponse:
         """
-        Post an RFQ and get its id. Makers answer with quotes; nothing trades until you accept
-        one. Kalshi RFQs are sized in contracts with an optional target cost; Polymarket US RFQs in
-        contracts or in dollars. Build a Polymarket US combo first with POST /v1/parlays/build.
+        Post an RFQ on a River market and get its id. Makers answer with quotes; nothing trades
+        until you accept one. Kalshi RFQs are sized in contracts with an optional target cost;
+        Polymarket US RFQs in contracts or in dollars. Combos come from POST /v1/parlays/build.
 
         Parameters
         ----------
         subaccount_id : str
             Non-custodial subaccount to post the RFQ under
 
-        market_ticker : str
-            Kalshi market ticker (single market or parlay), or a Polymarket US combo symbol from POST /v1/parlays/build
-
-        exchange : typing.Optional[str]
-            KALSHI or POLYMARKET_US
+        river_id : int
+            The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market.
 
         contracts : typing.Optional[int]
             Whole-contract size. Provide either contracts or contracts_fp.
@@ -488,7 +484,7 @@ class RfqsClient:
         client = RiverMarkets()
         client.rfqs.create_rfq(
             subaccount_id="subaccount_id",
-            market_ticker="market_ticker",
+            river_id=1,
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -496,8 +492,7 @@ class RfqsClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
-                "exchange": exchange,
-                "market_ticker": market_ticker,
+                "river_id": river_id,
                 "contracts": contracts,
                 "contracts_fp": convert_and_respect_annotation_metadata(
                     object_=contracts_fp,
@@ -1183,8 +1178,7 @@ class AsyncRfqsClient:
         self,
         *,
         subaccount_id: str,
-        market_ticker: str,
-        exchange: typing.Optional[str] = OMIT,
+        river_id: int,
         contracts: typing.Optional[int] = OMIT,
         contracts_fp: typing.Optional[CreateRfqRequestContractsFp] = OMIT,
         target_cost_dollars: typing.Optional[CreateRfqRequestTargetCostDollars] = OMIT,
@@ -1192,20 +1186,17 @@ class AsyncRfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateRfqResponse:
         """
-        Post an RFQ and get its id. Makers answer with quotes; nothing trades until you accept
-        one. Kalshi RFQs are sized in contracts with an optional target cost; Polymarket US RFQs in
-        contracts or in dollars. Build a Polymarket US combo first with POST /v1/parlays/build.
+        Post an RFQ on a River market and get its id. Makers answer with quotes; nothing trades
+        until you accept one. Kalshi RFQs are sized in contracts with an optional target cost;
+        Polymarket US RFQs in contracts or in dollars. Combos come from POST /v1/parlays/build.
 
         Parameters
         ----------
         subaccount_id : str
             Non-custodial subaccount to post the RFQ under
 
-        market_ticker : str
-            Kalshi market ticker (single market or parlay), or a Polymarket US combo symbol from POST /v1/parlays/build
-
-        exchange : typing.Optional[str]
-            KALSHI or POLYMARKET_US
+        river_id : int
+            The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market.
 
         contracts : typing.Optional[int]
             Whole-contract size. Provide either contracts or contracts_fp.
@@ -1239,7 +1230,7 @@ class AsyncRfqsClient:
         async def main() -> None:
             await client.rfqs.create_rfq(
                 subaccount_id="subaccount_id",
-                market_ticker="market_ticker",
+                river_id=1,
             )
 
 
@@ -1250,8 +1241,7 @@ class AsyncRfqsClient:
             method="POST",
             json={
                 "subaccount_id": subaccount_id,
-                "exchange": exchange,
-                "market_ticker": market_ticker,
+                "river_id": river_id,
                 "contracts": contracts,
                 "contracts_fp": convert_and_respect_annotation_metadata(
                     object_=contracts_fp,

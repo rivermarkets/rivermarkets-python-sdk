@@ -2634,7 +2634,7 @@
           "parlays"
         ],
         "summary": "Build Parlay",
-        "description": "Turn 2 or more legs, each a River market id with the side it must resolve to, into a\ntradable combo market and return its market_ticker for POST /v1/rfqs. Polymarket US creates\n(or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a\ncollection that admits every leg and materializes the parlay there. Either way the combo\npays out only if every leg resolves to its side.\n\nStrategy:\n  1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`\n     to enumerate every collection containing that leg's event.\n  2. Intersect the collection sets across all legs \u2014 these are the collections\n     that can host the parlay.\n  3. Drop collections that don't admit the requested leg count\n     (`size_min <= len(legs) <= size_max`), and any closed collections.\n  4. Pick the narrowest surviving collection (smallest `associated_events`\n     count) \u2014 narrower collections usually have denser quoter coverage.\n  5. Materialize the combo market in that collection and return the new\n     `market_ticker` plus the chosen `collection_ticker`.\n\n422 if no collection covers all legs \u2014 response includes the per-leg\ncollection lists so the caller can show the user where the legs DO live.",
+        "description": "Turn 2 or more legs, each a River market id with the side it must resolve to, into a\ntradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates\n(or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a\ncollection that admits every leg and materializes the parlay there. Either way the combo\npays out only if every leg resolves to its side.\n\nStrategy:\n  1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`\n     to enumerate every collection containing that leg's event.\n  2. Intersect the collection sets across all legs \u2014 these are the collections\n     that can host the parlay.\n  3. Drop collections that don't admit the requested leg count\n     (`size_min <= len(legs) <= size_max`), and any closed collections.\n  4. Pick the narrowest surviving collection (smallest `associated_events`\n     count) \u2014 narrower collections usually have denser quoter coverage.\n  5. Materialize the combo market in that collection and return the new\n     `market_ticker` plus the chosen `collection_ticker`.\n\n422 if no collection covers all legs \u2014 response includes the per-leg\ncollection lists so the caller can show the user where the legs DO live.",
         "operationId": "build_parlay_v1_parlays_build_post",
         "requestBody": {
           "content": {
@@ -3072,7 +3072,7 @@
           "rfqs"
         ],
         "summary": "Create Rfq",
-        "description": "Post an RFQ and get its id. Makers answer with quotes; nothing trades until you accept\none. Kalshi RFQs are sized in contracts with an optional target cost; Polymarket US RFQs in\ncontracts or in dollars. Build a Polymarket US combo first with POST /v1/parlays/build.",
+        "description": "Post an RFQ on a River market and get its id. Makers answer with quotes; nothing trades\nuntil you accept one. Kalshi RFQs are sized in contracts with an optional target cost;\nPolymarket US RFQs in contracts or in dollars. Combos come from POST /v1/parlays/build.",
         "operationId": "create_rfq_v1_rfqs_post",
         "requestBody": {
           "content": {
@@ -4037,81 +4037,17 @@
       },
       "BuildParlayResponse": {
         "properties": {
-          "market_ticker": {
-            "type": "string",
-            "title": "Market Ticker",
-            "description": "Kalshi parlay ticker or Polymarket US combo symbol"
-          },
           "river_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "River Id",
-            "description": "River id of the combo, Polymarket US only"
-          },
-          "event_ticker": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Event Ticker",
-            "description": "Kalshi only"
-          },
-          "collection_ticker": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Collection Ticker",
-            "description": "Kalshi only: the collection used"
-          },
-          "collection_title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Collection Title",
-            "description": "Kalshi only"
-          },
-          "candidate_collections": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Candidate Collections",
-            "description": "Kalshi only"
+            "type": "integer",
+            "title": "River Id"
           }
         },
         "type": "object",
         "required": [
-          "market_ticker"
+          "river_id"
         ],
         "title": "BuildParlayResponse",
-        "description": "The tradable combo market for the legs: pass market_ticker to POST /v1/rfqs."
+        "description": "The combo as a River market: pass river_id to POST /v1/rfqs, or trade it like any market."
       },
       "CancelAllComplexOrdersRequest": {
         "properties": {
@@ -4821,16 +4757,10 @@
             "title": "Subaccount Id",
             "description": "Non-custodial subaccount to post the RFQ under"
           },
-          "exchange": {
-            "type": "string",
-            "title": "Exchange",
-            "description": "KALSHI or POLYMARKET_US",
-            "default": "KALSHI"
-          },
-          "market_ticker": {
-            "type": "string",
-            "title": "Market Ticker",
-            "description": "Kalshi market ticker (single market or parlay), or a Polymarket US combo symbol from POST /v1/parlays/build"
+          "river_id": {
+            "type": "integer",
+            "title": "River Id",
+            "description": "The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market."
           },
           "contracts": {
             "anyOf": [
@@ -4889,7 +4819,7 @@
         "type": "object",
         "required": [
           "subaccount_id",
-          "market_ticker"
+          "river_id"
         ],
         "title": "CreateRfqRequest"
       },
@@ -8858,9 +8788,17 @@
             "title": "Exchange",
             "description": "kalshi or polymarket_us"
           },
-          "market_ticker": {
-            "type": "string",
-            "title": "Market Ticker"
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "The RFQ's market; absent when it is not in the catalogue"
           },
           "status": {
             "type": "string",
@@ -8985,7 +8923,6 @@
         "type": "object",
         "required": [
           "id",
-          "market_ticker",
           "status"
         ],
         "title": "RfqResponse",

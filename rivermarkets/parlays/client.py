@@ -31,7 +31,7 @@ class ParlaysClient:
     ) -> BuildParlayResponse:
         """
         Turn 2 or more legs, each a River market id with the side it must resolve to, into a
-        tradable combo market and return its market_ticker for POST /v1/rfqs. Polymarket US creates
+        tradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates
         (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a
         collection that admits every leg and materializes the parlay there. Either way the combo
         pays out only if every leg resolves to its side.
@@ -140,7 +140,7 @@ class AsyncParlaysClient:
     ) -> BuildParlayResponse:
         """
         Turn 2 or more legs, each a River market id with the side it must resolve to, into a
-        tradable combo market and return its market_ticker for POST /v1/rfqs. Polymarket US creates
+        tradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates
         (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a
         collection that admits every leg and materializes the parlay there. Either way the combo
         pays out only if every leg resolves to its side.

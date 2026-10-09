@@ -19,7 +19,11 @@ class RfqResponse(UniversalBaseModel):
     kalshi or polymarket_us
     """
 
-    market_ticker: str
+    river_id: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The RFQ's market; absent when it is not in the catalogue
+    """
+
     status: str = pydantic.Field()
     """
     open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses
