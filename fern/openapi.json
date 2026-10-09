@@ -2634,7 +2634,7 @@
           "parlays"
         ],
         "summary": "Build Parlay",
-        "description": "Turn 2 or more legs into a tradable combo market and return its market_ticker for\nPOST /v1/rfqs. Polymarket US creates (or fetches) the combo instrument under your\ncredentials, up to 15 legs. Kalshi finds a collection that admits every leg and\nmaterializes the parlay there; the parlay pays out only if every leg resolves to its side.\n\nStrategy:\n  1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`\n     to enumerate every collection containing that leg's event.\n  2. Intersect the collection sets across all legs \u2014 these are the collections\n     that can host the parlay.\n  3. Drop collections that don't admit the requested leg count\n     (`size_min <= len(legs) <= size_max`), and any closed collections.\n  4. Pick the narrowest surviving collection (smallest `associated_events`\n     count) \u2014 narrower collections usually have denser quoter coverage.\n  5. Materialize the combo market in that collection and return the new\n     `market_ticker` plus the chosen `collection_ticker`.\n\n422 if no collection covers all legs \u2014 response includes the per-leg\ncollection lists so the caller can show the user where the legs DO live.",
+        "description": "Turn 2 or more legs, each a River market id with the side it must resolve to, into a\ntradable combo market and return its market_ticker for POST /v1/rfqs. Polymarket US creates\n(or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a\ncollection that admits every leg and materializes the parlay there. Either way the combo\npays out only if every leg resolves to its side.\n\nStrategy:\n  1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`\n     to enumerate every collection containing that leg's event.\n  2. Intersect the collection sets across all legs \u2014 these are the collections\n     that can host the parlay.\n  3. Drop collections that don't admit the requested leg count\n     (`size_min <= len(legs) <= size_max`), and any closed collections.\n  4. Pick the narrowest surviving collection (smallest `associated_events`\n     count) \u2014 narrower collections usually have denser quoter coverage.\n  5. Materialize the combo market in that collection and return the new\n     `market_ticker` plus the chosen `collection_ticker`.\n\n422 if no collection covers all legs \u2014 response includes the per-leg\ncollection lists so the caller can show the user where the legs DO live.",
         "operationId": "build_parlay_v1_parlays_build_post",
         "requestBody": {
           "content": {
@@ -3986,40 +3986,23 @@
       },
       "BuildLeg": {
         "properties": {
-          "market_ticker": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^\\S+$",
-            "title": "Market Ticker",
-            "description": "Kalshi ticker or Polymarket US slug"
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
           },
-          "event_ticker": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1,
-                "pattern": "^\\S+$"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Event Ticker",
-            "description": "Kalshi only"
-          },
-          "side": {
-            "type": "string",
-            "pattern": "^(yes|no)$",
-            "title": "Side",
-            "description": "yes: the combo pays when this leg resolves YES"
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "True: the combo pays when this market resolves YES; False: when it resolves NO"
           }
         },
         "type": "object",
         "required": [
-          "market_ticker",
-          "side"
+          "river_id",
+          "buy_flag"
         ],
-        "title": "BuildLeg"
+        "title": "BuildLeg",
+        "description": "A leg in River's vocabulary, the same shape the RFQ stream and orders use."
       },
       "BuildParlayRequest": {
         "properties": {
@@ -4039,9 +4022,9 @@
               "$ref": "#/components/schemas/BuildLeg"
             },
             "type": "array",
-            "minItems": 1,
+            "minItems": 2,
             "title": "Legs",
-            "description": "Legs to combine"
+            "description": "Legs to combine, all on the chosen exchange"
           }
         },
         "type": "object",
@@ -8601,17 +8584,17 @@
             ],
             "title": "Contracts Fp"
           },
-          "accepted_side": {
+          "accepted_buy_flag": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "boolean"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Accepted Side",
-            "description": "yes or no: the side of the quote you hit"
+            "title": "Accepted Buy Flag",
+            "description": "Once accepted: True if you bought YES on this quote, False if you sold"
           },
           "accepted_ts": {
             "anyOf": [
@@ -8859,6 +8842,26 @@
         "title": "RfqComboLeg",
         "description": "One leg of a Polymarket US combo RFQ."
       },
+      "RfqLeg": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "True: the combo pays when this market resolves YES; False: when it resolves NO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "buy_flag"
+        ],
+        "title": "RfqLeg",
+        "description": "A leg in River's vocabulary, the same shape the RFQ stream and POST /v1/parlays/build use."
+      },
       "RfqMveLeg": {
         "properties": {
           "event_ticker": {
@@ -9021,6 +9024,21 @@
             ],
             "title": "Cancelled Ts"
           },
+          "legs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RfqLeg"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legs",
+            "description": "The combo's legs as River markets; absent when a leg is not in the catalogue"
+          },
           "mve_collection_ticker": {
             "anyOf": [
               {
@@ -9031,7 +9049,7 @@
               }
             ],
             "title": "Mve Collection Ticker",
-            "description": "Kalshi parlays only"
+            "description": "Kalshi detail: the parlay's collection"
           },
           "mve_selected_legs": {
             "anyOf": [
@@ -9046,7 +9064,7 @@
               }
             ],
             "title": "Mve Selected Legs",
-            "description": "Kalshi parlays only"
+            "description": "Kalshi detail: legs as tickers"
           },
           "combo_legs": {
             "anyOf": [
@@ -9061,7 +9079,7 @@
               }
             ],
             "title": "Combo Legs",
-            "description": "Polymarket US combos only"
+            "description": "Polymarket US detail: legs as slugs"
           }
         },
         "additionalProperties": true,
@@ -9072,7 +9090,7 @@
           "status"
         ],
         "title": "RfqResponse",
-        "description": "An RFQ in one shape for both exchanges. Sizes are contracts (contracts_fp) or dollars\n(target_cost_dollars). creator_user_id is only set on your own RFQs."
+        "description": "An RFQ in one shape for both exchanges. Sizes are contracts (contracts_fp) or dollars\n(target_cost_dollars); legs are River market ids with the side each must resolve to, a\nsingle market being one YES leg. creator_user_id is only set on your own RFQs."
       },
       "SmartTakerOrderParams": {
         "properties": {

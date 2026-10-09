@@ -5,9 +5,9 @@ import pydantic
 import typing
 
 
-class BuildLeg(UniversalBaseModel):
+class RfqLeg(UniversalBaseModel):
     """
-    A leg in River's vocabulary, the same shape the RFQ stream and orders use.
+    A leg in River's vocabulary, the same shape the RFQ stream and POST /v1/parlays/build use.
     """
 
     river_id: int

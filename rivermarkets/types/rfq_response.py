@@ -3,6 +3,7 @@
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
+from .rfq_leg import RfqLeg
 from .rfq_mve_leg import RfqMveLeg
 from .rfq_combo_leg import RfqComboLeg
 
@@ -10,7 +11,8 @@ from .rfq_combo_leg import RfqComboLeg
 class RfqResponse(UniversalBaseModel):
     """
     An RFQ in one shape for both exchanges. Sizes are contracts (contracts_fp) or dollars
-    (target_cost_dollars). creator_user_id is only set on your own RFQs.
+    (target_cost_dollars); legs are River market ids with the side each must resolve to, a
+    single market being one YES leg. creator_user_id is only set on your own RFQs.
     """
 
     id: str
@@ -34,21 +36,26 @@ class RfqResponse(UniversalBaseModel):
     updated_ts: typing.Optional[str] = None
     cancellation_reason: typing.Optional[str] = None
     cancelled_ts: typing.Optional[str] = None
+    legs: typing.Optional[typing.List[RfqLeg]] = pydantic.Field(default=None)
+    """
+    The combo's legs as River markets; absent when a leg is not in the catalogue
+    """
+
     mve_collection_ticker: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Kalshi parlays only
+    Kalshi detail: the parlay's collection
     """
 
     mve_selected_legs: typing.Optional[typing.List[RfqMveLeg]] = pydantic.Field(
         default=None
     )
     """
-    Kalshi parlays only
+    Kalshi detail: legs as tickers
     """
 
     combo_legs: typing.Optional[typing.List[RfqComboLeg]] = pydantic.Field(default=None)
     """
-    Polymarket US combos only
+    Polymarket US detail: legs as slugs
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

@@ -77,6 +77,7 @@ from .quote_response import QuoteResponse
 from .resolve_combos_response import ResolveCombosResponse
 from .resolve_combos_result import ResolveCombosResult
 from .rfq_combo_leg import RfqComboLeg
+from .rfq_leg import RfqLeg
 from .rfq_mve_leg import RfqMveLeg
 from .rfq_response import RfqResponse
 from .smart_taker_order_params import SmartTakerOrderParams
@@ -180,6 +181,7 @@ __all__ = [
     "ResolveCombosResponse",
     "ResolveCombosResult",
     "RfqComboLeg",
+    "RfqLeg",
     "RfqMveLeg",
     "RfqResponse",
     "SmartTakerOrderParams",
