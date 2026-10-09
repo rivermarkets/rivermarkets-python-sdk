@@ -6,9 +6,9 @@ import typing
 
 
 class CreateRfqResponse(UniversalBaseModel):
-    id: str = pydantic.Field()
+    exchange_rfq_id: str = pydantic.Field()
     """
-    The exchange's RFQ id; the handle for quotes, accept and cancel
+    The exchange's RFQ id; the handle for get, quotes, accept and cancel
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
