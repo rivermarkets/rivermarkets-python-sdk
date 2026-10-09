@@ -24,6 +24,11 @@ class RfqResponse(UniversalBaseModel):
     The RFQ's market; absent when it is not in the catalogue
     """
 
+    river_rfq_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    River's id for this RFQ on the maker stream and the maker routes, while the stream holds it (about two minutes after creation); absent otherwise
+    """
+
     status: str = pydantic.Field()
     """
     open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses

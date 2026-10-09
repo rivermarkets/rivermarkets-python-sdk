@@ -305,7 +305,8 @@ class RfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RfqResponse:
         """
-        One of your RFQs by its exchange id, with its status and any quotes' size basis.
+        One of your RFQs by its exchange id: status, size, market and legs, and its id on the
+        maker stream while the stream holds it.
 
         Parameters
         ----------
@@ -1030,7 +1031,8 @@ class AsyncRfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RfqResponse:
         """
-        One of your RFQs by its exchange id, with its status and any quotes' size basis.
+        One of your RFQs by its exchange id: status, size, market and legs, and its id on the
+        maker stream while the stream holds it.
 
         Parameters
         ----------
