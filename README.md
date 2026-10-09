@@ -56,6 +56,53 @@ client = AsyncRiverMarkets(
 results = await client.markets.search_markets(q="bitcoin")
 ```
 
+## RFQs
+
+Request quotes on a market or a combo, read the quotes makers post, and hit one
+side. The same calls work on Kalshi and Polymarket US; pass `exchange` to pick.
+
+```python
+from rivermarkets import RiverMarkets
+
+client = RiverMarkets(key_id="YOUR_KEY_ID", private_key="YOUR_BASE64_PRIVATE_KEY")
+subaccount_id = "YOUR_SUBACCOUNT_ID"
+
+# A combo first (Polymarket US combo or Kalshi parlay); single markets skip this.
+combo = client.parlays.build_parlay(
+    subaccount_id=subaccount_id,
+    exchange="POLYMARKET_US",
+    legs=[
+        {"market_ticker": "<market slug>", "side": "yes"},
+        {"market_ticker": "<market slug>", "side": "no"},
+    ],
+)
+
+rfq = client.rfqs.create_rfq(
+    subaccount_id=subaccount_id,
+    exchange="POLYMARKET_US",
+    market_ticker=combo.market_ticker,
+    contracts=10,
+)
+
+# Quotes are YES-space: buy YES at 1 - no_bid_dollars, sell YES at yes_bid_dollars.
+quotes = client.rfqs.list_quotes_for_rfq(rfq.id, subaccount_id=subaccount_id, exchange="POLYMARKET_US")
+best = next(q for q in quotes.quotes if q.status == "open" and q.no_bid_dollars is not None)
+
+accepted = client.rfqs.accept_quote(
+    rfq.id,
+    best.id,
+    subaccount_id=subaccount_id,
+    exchange="POLYMARKET_US",
+    buy_flag=True,
+    price=round(1 - best.no_bid_dollars, 6),
+    contracts=best.no_contracts_fp,
+)
+# accepted.river_order_id is a River order: track it with client.orders.get_order(...)
+```
+
+Makers stream RFQs with `client.realtime.rfqs(...)` and answer them with
+`client.rfqs.create_maker_quote(...)`, then confirm or cancel by `river_order_id`.
+
 ## Local fee calculations
 
 The client fetches each market's live fee schedule once and caches it for the

@@ -21,6 +21,7 @@ from .markets.client import MarketsClient
 from .orderbooks.client import OrderbooksClient
 from .orders.client import OrdersClient
 from .positions.client import PositionsClient
+from .parlays.client import ParlaysClient
 from .prices.client import PricesClient
 from .rfqs.client import RfqsClient
 from .subaccounts.client import SubaccountsClient
@@ -37,6 +38,7 @@ from .markets.client import AsyncMarketsClient
 from .orderbooks.client import AsyncOrderbooksClient
 from .orders.client import AsyncOrdersClient
 from .positions.client import AsyncPositionsClient
+from .parlays.client import AsyncParlaysClient
 from .prices.client import AsyncPricesClient
 from .rfqs.client import AsyncRfqsClient
 from .subaccounts.client import AsyncSubaccountsClient
@@ -122,6 +124,7 @@ class RiverMarkets:
         self.orderbooks = OrderbooksClient(client_wrapper=self._client_wrapper)
         self.orders = OrdersClient(client_wrapper=self._client_wrapper)
         self.positions = PositionsClient(client_wrapper=self._client_wrapper)
+        self.parlays = ParlaysClient(client_wrapper=self._client_wrapper)
         self.prices = PricesClient(client_wrapper=self._client_wrapper)
         self.rfqs = RfqsClient(client_wrapper=self._client_wrapper)
         self.subaccounts = SubaccountsClient(client_wrapper=self._client_wrapper)
@@ -226,6 +229,7 @@ class AsyncRiverMarkets:
         self.orderbooks = AsyncOrderbooksClient(client_wrapper=self._client_wrapper)
         self.orders = AsyncOrdersClient(client_wrapper=self._client_wrapper)
         self.positions = AsyncPositionsClient(client_wrapper=self._client_wrapper)
+        self.parlays = AsyncParlaysClient(client_wrapper=self._client_wrapper)
         self.prices = AsyncPricesClient(client_wrapper=self._client_wrapper)
         self.rfqs = AsyncRfqsClient(client_wrapper=self._client_wrapper)
         self.subaccounts = AsyncSubaccountsClient(client_wrapper=self._client_wrapper)
