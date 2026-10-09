@@ -64,7 +64,14 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/positions", "get"),
     # prices
     ("/v1/prices/{river_id}", "get"),
+    # parlays
+    ("/v1/parlays/build", "post"),
     # rfqs
+    ("/v1/rfqs", "post"),
+    ("/v1/rfqs/{rfq_id}", "get"),
+    ("/v1/rfqs/{rfq_id}", "delete"),
+    ("/v1/rfqs/{rfq_id}/quotes", "get"),
+    ("/v1/rfqs/{rfq_id}/quotes/{quote_id}/accept", "post"),
     ("/v1/rfqs/quotes", "get"),
     ("/v1/rfqs/{river_rfq_id}/quotes", "post"),
     ("/v1/rfqs/quotes/{river_order_id}/confirm", "post"),

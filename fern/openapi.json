@@ -2628,6 +2628,48 @@
         }
       }
     },
+    "/v1/parlays/build": {
+      "post": {
+        "tags": [
+          "parlays"
+        ],
+        "summary": "Build Parlay",
+        "description": "Turn 2 or more legs into a tradable combo market and return its market_ticker for\nPOST /v1/rfqs. Polymarket US creates (or fetches) the combo instrument under your\ncredentials, up to 15 legs. Kalshi finds a collection that admits every leg and\nmaterializes the parlay there; the parlay pays out only if every leg resolves to its side.\n\nStrategy:\n  1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`\n     to enumerate every collection containing that leg's event.\n  2. Intersect the collection sets across all legs \u2014 these are the collections\n     that can host the parlay.\n  3. Drop collections that don't admit the requested leg count\n     (`size_min <= len(legs) <= size_max`), and any closed collections.\n  4. Pick the narrowest surviving collection (smallest `associated_events`\n     count) \u2014 narrower collections usually have denser quoter coverage.\n  5. Materialize the combo market in that collection and return the new\n     `market_ticker` plus the chosen `collection_ticker`.\n\n422 if no collection covers all legs \u2014 response includes the per-leg\ncollection lists so the caller can show the user where the legs DO live.",
+        "operationId": "build_parlay_v1_parlays_build_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuildParlayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildParlayResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/prices/{river_id}": {
       "get": {
         "tags": [
@@ -2773,7 +2815,7 @@
           "rfqs"
         ],
         "summary": "Create Maker Quote",
-        "description": "Quote an RFQ from the /v1/ws/rfqs stream as a maker.",
+        "description": "Quote an RFQ from the /v1/ws/rfqs stream as a maker. The RFQ's exchange comes from\nthe stream's store; the request is the same on every exchange.",
         "operationId": "create_maker_quote_v1_rfqs__river_rfq_id__quotes_post",
         "parameters": [
           {
@@ -2885,6 +2927,348 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs/{rfq_id}": {
+      "get": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Get Rfq",
+        "description": "One of your RFQs by its exchange id, with its status and any quotes' size basis.",
+        "operationId": "get_rfq_v1_rfqs__rfq_id__get",
+        "parameters": [
+          {
+            "name": "rfq_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rfq Id"
+            }
+          },
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Non-custodial subaccount to query under",
+              "title": "Subaccount Id"
+            },
+            "description": "Non-custodial subaccount to query under"
+          },
+          {
+            "name": "exchange",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "KALSHI or POLYMARKET_US",
+              "default": "KALSHI",
+              "title": "Exchange"
+            },
+            "description": "KALSHI or POLYMARKET_US"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RfqResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Cancel Rfq",
+        "description": "Withdraw your RFQ before accepting a quote. Open quotes on it die with it.",
+        "operationId": "cancel_rfq_v1_rfqs__rfq_id__delete",
+        "parameters": [
+          {
+            "name": "rfq_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rfq Id"
+            }
+          },
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Subaccount that owns the RFQ",
+              "title": "Subaccount Id"
+            },
+            "description": "Subaccount that owns the RFQ"
+          },
+          {
+            "name": "exchange",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "KALSHI or POLYMARKET_US",
+              "default": "KALSHI",
+              "title": "Exchange"
+            },
+            "description": "KALSHI or POLYMARKET_US"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs": {
+      "post": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Create Rfq",
+        "description": "Post an RFQ and get its id. Makers answer with quotes; nothing trades until you accept\none. Kalshi RFQs are sized in contracts with an optional target cost; Polymarket US RFQs in\ncontracts or in dollars. Build a Polymarket US combo first with POST /v1/parlays/build.",
+        "operationId": "create_rfq_v1_rfqs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRfqRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRfqResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs/{rfq_id}/quotes/{quote_id}/accept": {
+      "post": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "Accept Quote",
+        "description": "Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you\ntrack like any other (resting while the maker confirms, then executed or cancelled). Pass\nthe price and size you saw so a replaced quote answers 409 instead of trading at a price\nyou never saw. The maker has a short window to confirm; if it lapses the order is cancelled.",
+        "operationId": "accept_quote_v1_rfqs__rfq_id__quotes__quote_id__accept_post",
+        "parameters": [
+          {
+            "name": "rfq_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rfq Id"
+            }
+          },
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptQuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptQuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rfqs/{rfq_id}/quotes": {
+      "get": {
+        "tags": [
+          "rfqs"
+        ],
+        "summary": "List Quotes For Rfq",
+        "description": "The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.\nOn Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key\n10 requests per 10 seconds across all RFQ endpoints.",
+        "operationId": "list_quotes_for_rfq_v1_rfqs__rfq_id__quotes_get",
+        "parameters": [
+          {
+            "name": "rfq_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rfq Id"
+            }
+          },
+          {
+            "name": "subaccount_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Non-custodial subaccount to query under",
+              "title": "Subaccount Id"
+            },
+            "description": "Non-custodial subaccount to query under"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by quote status",
+              "title": "Status"
+            },
+            "description": "Filter by quote status"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "exchange",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "KALSHI or POLYMARKET_US",
+              "default": "KALSHI",
+              "title": "Exchange"
+            },
+            "description": "KALSHI or POLYMARKET_US"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteListResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -3535,6 +3919,62 @@
   },
   "components": {
     "schemas": {
+      "AcceptQuoteRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Non-custodial subaccount that owns the RFQ"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange",
+            "description": "KALSHI or POLYMARKET_US",
+            "default": "KALSHI"
+          },
+          "buy_flag": {
+            "type": "boolean",
+            "title": "Buy Flag",
+            "description": "True = buy YES (accepts the maker's no_bid), False = sell YES (accepts the yes_bid)"
+          },
+          "price": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Price",
+            "description": "Pinned yes-space price shown at click time"
+          },
+          "contracts": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Contracts",
+            "description": "Pinned contract size shown at click time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "buy_flag",
+          "price",
+          "contracts"
+        ],
+        "title": "AcceptQuoteRequest"
+      },
+      "AcceptQuoteResponse": {
+        "properties": {
+          "river_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "River Order Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_id"
+        ],
+        "title": "AcceptQuoteResponse"
+      },
       "AccountType": {
         "type": "string",
         "enum": [
@@ -3543,6 +3983,152 @@
         ],
         "title": "AccountType",
         "description": "Type of trading subaccount."
+      },
+      "BuildLeg": {
+        "properties": {
+          "market_ticker": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "title": "Market Ticker",
+            "description": "Kalshi ticker or Polymarket US slug"
+          },
+          "event_ticker": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^\\S+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Ticker",
+            "description": "Kalshi only"
+          },
+          "side": {
+            "type": "string",
+            "pattern": "^(yes|no)$",
+            "title": "Side",
+            "description": "yes: the combo pays when this leg resolves YES"
+          }
+        },
+        "type": "object",
+        "required": [
+          "market_ticker",
+          "side"
+        ],
+        "title": "BuildLeg"
+      },
+      "BuildParlayRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Subaccount to build under"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange",
+            "description": "KALSHI or POLYMARKET_US"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/BuildLeg"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Legs",
+            "description": "Legs to combine"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "exchange",
+          "legs"
+        ],
+        "title": "BuildParlayRequest"
+      },
+      "BuildParlayResponse": {
+        "properties": {
+          "market_ticker": {
+            "type": "string",
+            "title": "Market Ticker",
+            "description": "Kalshi parlay ticker or Polymarket US combo symbol"
+          },
+          "river_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "River Id",
+            "description": "River id of the combo, Polymarket US only"
+          },
+          "event_ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Ticker",
+            "description": "Kalshi only"
+          },
+          "collection_ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Ticker",
+            "description": "Kalshi only: the collection used"
+          },
+          "collection_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Title",
+            "description": "Kalshi only"
+          },
+          "candidate_collections": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Collections",
+            "description": "Kalshi only"
+          }
+        },
+        "type": "object",
+        "required": [
+          "market_ticker"
+        ],
+        "title": "BuildParlayResponse",
+        "description": "The tradable combo market for the legs: pass market_ticker to POST /v1/rfqs."
       },
       "CancelAllComplexOrdersRequest": {
         "properties": {
@@ -4243,6 +4829,100 @@
           "river_order_id"
         ],
         "title": "CreateMakerQuoteResponse"
+      },
+      "CreateRfqRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Non-custodial subaccount to post the RFQ under"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange",
+            "description": "KALSHI or POLYMARKET_US",
+            "default": "KALSHI"
+          },
+          "market_ticker": {
+            "type": "string",
+            "title": "Market Ticker",
+            "description": "Kalshi market ticker (single market or parlay), or a Polymarket US combo symbol from POST /v1/parlays/build"
+          },
+          "contracts": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contracts",
+            "description": "Whole-contract size. Provide either contracts or contracts_fp."
+          },
+          "contracts_fp": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contracts Fp",
+            "description": "Fixed-point contract size for fractional sizing."
+          },
+          "target_cost_dollars": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Cost Dollars",
+            "description": "Total target cost in USD. Kalshi: optional alongside contracts. Polymarket US: the size itself, instead of contracts."
+          },
+          "obscure_creator_id": {
+            "type": "boolean",
+            "title": "Obscure Creator Id",
+            "description": "Kalshi only: hide your creator ID from makers until a quote executes.",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "market_ticker"
+        ],
+        "title": "CreateRfqRequest"
+      },
+      "CreateRfqResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The exchange's RFQ id; the handle for quotes, accept and cancel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "CreateRfqResponse"
       },
       "ExchangeBalance": {
         "properties": {
@@ -7805,6 +8485,302 @@
         "title": "PriceResponse",
         "description": "Response for price queries."
       },
+      "QuoteListResponse": {
+        "properties": {
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteResponse"
+            },
+            "type": "array",
+            "title": "Quotes"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor",
+            "description": "Kalshi pagination cursor; absent on Polymarket US"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quotes"
+        ],
+        "title": "QuoteListResponse"
+      },
+      "QuoteResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rfq_id": {
+            "type": "string",
+            "title": "Rfq Id"
+          },
+          "exchange": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange",
+            "description": "kalshi or polymarket_us"
+          },
+          "market_ticker": {
+            "type": "string",
+            "title": "Market Ticker"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "open, accepted, confirmed, executed or cancelled"
+          },
+          "yes_bid_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yes Bid Dollars"
+          },
+          "no_bid_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Bid Dollars"
+          },
+          "yes_contracts_fp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yes Contracts Fp",
+            "description": "Size available at the yes bid"
+          },
+          "no_contracts_fp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Contracts Fp",
+            "description": "Size available at the no bid"
+          },
+          "contracts_fp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contracts Fp"
+          },
+          "accepted_side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Side",
+            "description": "yes or no: the side of the quote you hit"
+          },
+          "accepted_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Ts"
+          },
+          "confirmed_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed Ts"
+          },
+          "executed_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executed Ts"
+          },
+          "cancelled_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled Ts"
+          },
+          "created_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created Ts"
+          },
+          "updated_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Ts"
+          },
+          "rest_remainder": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rest Remainder"
+          },
+          "post_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Only"
+          },
+          "cancellation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Reason"
+          },
+          "creator_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator Id"
+          },
+          "creator_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator User Id"
+          },
+          "rfq_creator_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfq Creator User Id"
+          },
+          "rfq_creator_order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfq Creator Order Id",
+            "description": "Your paired order id once executed"
+          },
+          "creator_order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator Order Id",
+            "description": "The maker's paired order id once executed"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "rfq_id",
+          "market_ticker",
+          "status"
+        ],
+        "title": "QuoteResponse",
+        "description": "A maker's quote on your RFQ, in YES space on both exchanges: yes_bid_dollars is the\nmaker's bid to buy YES (you sell at it), no_bid_dollars the maker's bid to buy NO (you buy\nYES at 1 - no_bid_dollars)."
+      },
       "ResolveCombosRequest": {
         "properties": {
           "river_ids": {
@@ -7861,6 +8837,242 @@
           "legs"
         ],
         "title": "ResolveCombosResult"
+      },
+      "RfqComboLeg": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "The leg's market slug"
+          },
+          "side": {
+            "type": "string",
+            "title": "Side",
+            "description": "SIDE_BUY: the combo pays when the leg resolves YES; SIDE_SELL: when it resolves NO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "side"
+        ],
+        "title": "RfqComboLeg",
+        "description": "One leg of a Polymarket US combo RFQ."
+      },
+      "RfqMveLeg": {
+        "properties": {
+          "event_ticker": {
+            "type": "string",
+            "title": "Event Ticker"
+          },
+          "market_ticker": {
+            "type": "string",
+            "title": "Market Ticker"
+          },
+          "side": {
+            "type": "string",
+            "title": "Side",
+            "description": "yes or no"
+          },
+          "yes_settlement_value_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yes Settlement Value Dollars"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_ticker",
+          "market_ticker",
+          "side"
+        ],
+        "title": "RfqMveLeg",
+        "description": "One leg of a Kalshi parlay RFQ."
+      },
+      "RfqResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "exchange": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange",
+            "description": "kalshi or polymarket_us"
+          },
+          "market_ticker": {
+            "type": "string",
+            "title": "Market Ticker"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses"
+          },
+          "contracts_fp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contracts Fp"
+          },
+          "target_cost_dollars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Cost Dollars"
+          },
+          "creator_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator Id"
+          },
+          "creator_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator User Id"
+          },
+          "rest_remainder": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rest Remainder"
+          },
+          "created_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created Ts"
+          },
+          "updated_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Ts"
+          },
+          "cancellation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Reason"
+          },
+          "cancelled_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled Ts"
+          },
+          "mve_collection_ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mve Collection Ticker",
+            "description": "Kalshi parlays only"
+          },
+          "mve_selected_legs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RfqMveLeg"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mve Selected Legs",
+            "description": "Kalshi parlays only"
+          },
+          "combo_legs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RfqComboLeg"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combo Legs",
+            "description": "Polymarket US combos only"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "market_ticker",
+          "status"
+        ],
+        "title": "RfqResponse",
+        "description": "An RFQ in one shape for both exchanges. Sizes are contracts (contracts_fp) or dollars\n(target_cost_dollars). creator_user_id is only set on your own RFQs."
       },
       "SmartTakerOrderParams": {
         "properties": {

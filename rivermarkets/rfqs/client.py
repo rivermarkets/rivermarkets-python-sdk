@@ -11,6 +11,15 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.create_maker_quote_response import CreateMakerQuoteResponse
 from ..core.jsonable_encoder import jsonable_encoder
+from ..types.rfq_response import RfqResponse
+from .types.create_rfq_request_contracts_fp import CreateRfqRequestContractsFp
+from .types.create_rfq_request_target_cost_dollars import (
+    CreateRfqRequestTargetCostDollars,
+)
+from ..types.create_rfq_response import CreateRfqResponse
+from ..core.serialization import convert_and_respect_annotation_metadata
+from ..types.accept_quote_response import AcceptQuoteResponse
+from ..types.quote_list_response import QuoteListResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -96,7 +105,8 @@ class RfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateMakerQuoteResponse:
         """
-        Quote an RFQ from the /v1/ws/rfqs stream as a maker.
+        Quote an RFQ from the /v1/ws/rfqs stream as a maker. The RFQ's exchange comes from
+        the stream's store; the request is the same on every exchange.
 
         Parameters
         ----------
@@ -286,6 +296,433 @@ class RfqsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    def get_rfq(
+        self,
+        rfq_id: str,
+        *,
+        subaccount_id: str,
+        exchange: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RfqResponse:
+        """
+        One of your RFQs by its exchange id, with its status and any quotes' size basis.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        subaccount_id : str
+            Non-custodial subaccount to query under
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RfqResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.rfqs.get_rfq(
+            rfq_id="rfq_id",
+            subaccount_id="subaccount_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}",
+            method="GET",
+            params={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    RfqResponse,
+                    parse_obj_as(
+                        type_=RfqResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def cancel_rfq(
+        self,
+        rfq_id: str,
+        *,
+        subaccount_id: str,
+        exchange: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> None:
+        """
+        Withdraw your RFQ before accepting a quote. Open quotes on it die with it.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        subaccount_id : str
+            Subaccount that owns the RFQ
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.rfqs.cancel_rfq(
+            rfq_id="rfq_id",
+            subaccount_id="subaccount_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}",
+            method="DELETE",
+            params={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def create_rfq(
+        self,
+        *,
+        subaccount_id: str,
+        market_ticker: str,
+        exchange: typing.Optional[str] = OMIT,
+        contracts: typing.Optional[int] = OMIT,
+        contracts_fp: typing.Optional[CreateRfqRequestContractsFp] = OMIT,
+        target_cost_dollars: typing.Optional[CreateRfqRequestTargetCostDollars] = OMIT,
+        obscure_creator_id: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> CreateRfqResponse:
+        """
+        Post an RFQ and get its id. Makers answer with quotes; nothing trades until you accept
+        one. Kalshi RFQs are sized in contracts with an optional target cost; Polymarket US RFQs in
+        contracts or in dollars. Build a Polymarket US combo first with POST /v1/parlays/build.
+
+        Parameters
+        ----------
+        subaccount_id : str
+            Non-custodial subaccount to post the RFQ under
+
+        market_ticker : str
+            Kalshi market ticker (single market or parlay), or a Polymarket US combo symbol from POST /v1/parlays/build
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        contracts : typing.Optional[int]
+            Whole-contract size. Provide either contracts or contracts_fp.
+
+        contracts_fp : typing.Optional[CreateRfqRequestContractsFp]
+            Fixed-point contract size for fractional sizing.
+
+        target_cost_dollars : typing.Optional[CreateRfqRequestTargetCostDollars]
+            Total target cost in USD. Kalshi: optional alongside contracts. Polymarket US: the size itself, instead of contracts.
+
+        obscure_creator_id : typing.Optional[bool]
+            Kalshi only: hide your creator ID from makers until a quote executes.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        CreateRfqResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.rfqs.create_rfq(
+            subaccount_id="subaccount_id",
+            market_ticker="market_ticker",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/rfqs",
+            method="POST",
+            json={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+                "market_ticker": market_ticker,
+                "contracts": contracts,
+                "contracts_fp": convert_and_respect_annotation_metadata(
+                    object_=contracts_fp,
+                    annotation=CreateRfqRequestContractsFp,
+                    direction="write",
+                ),
+                "target_cost_dollars": convert_and_respect_annotation_metadata(
+                    object_=target_cost_dollars,
+                    annotation=CreateRfqRequestTargetCostDollars,
+                    direction="write",
+                ),
+                "obscure_creator_id": obscure_creator_id,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    CreateRfqResponse,
+                    parse_obj_as(
+                        type_=CreateRfqResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def accept_quote(
+        self,
+        rfq_id: str,
+        quote_id: str,
+        *,
+        subaccount_id: str,
+        buy_flag: bool,
+        price: float,
+        contracts: float,
+        exchange: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AcceptQuoteResponse:
+        """
+        Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you
+        track like any other (resting while the maker confirms, then executed or cancelled). Pass
+        the price and size you saw so a replaced quote answers 409 instead of trading at a price
+        you never saw. The maker has a short window to confirm; if it lapses the order is cancelled.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        quote_id : str
+
+        subaccount_id : str
+            Non-custodial subaccount that owns the RFQ
+
+        buy_flag : bool
+            True = buy YES (accepts the maker's no_bid), False = sell YES (accepts the yes_bid)
+
+        price : float
+            Pinned yes-space price shown at click time
+
+        contracts : float
+            Pinned contract size shown at click time
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AcceptQuoteResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.rfqs.accept_quote(
+            rfq_id="rfq_id",
+            quote_id="quote_id",
+            subaccount_id="subaccount_id",
+            buy_flag=True,
+            price=1.1,
+            contracts=1.1,
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}/quotes/{jsonable_encoder(quote_id)}/accept",
+            method="POST",
+            json={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+                "buy_flag": buy_flag,
+                "price": price,
+                "contracts": contracts,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    AcceptQuoteResponse,
+                    parse_obj_as(
+                        type_=AcceptQuoteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def list_quotes_for_rfq(
+        self,
+        rfq_id: str,
+        *,
+        subaccount_id: str,
+        status: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
+        exchange: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> QuoteListResponse:
+        """
+        The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.
+        On Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key
+        10 requests per 10 seconds across all RFQ endpoints.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        subaccount_id : str
+            Non-custodial subaccount to query under
+
+        status : typing.Optional[str]
+            Filter by quote status
+
+        limit : typing.Optional[int]
+
+        cursor : typing.Optional[str]
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        QuoteListResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.rfqs.list_quotes_for_rfq(
+            rfq_id="rfq_id",
+            subaccount_id="subaccount_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}/quotes",
+            method="GET",
+            params={
+                "subaccount_id": subaccount_id,
+                "status": status,
+                "limit": limit,
+                "cursor": cursor,
+                "exchange": exchange,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    QuoteListResponse,
+                    parse_obj_as(
+                        type_=QuoteListResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
 
 class AsyncRfqsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -374,7 +811,8 @@ class AsyncRfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateMakerQuoteResponse:
         """
-        Quote an RFQ from the /v1/ws/rfqs stream as a maker.
+        Quote an RFQ from the /v1/ws/rfqs stream as a maker. The RFQ's exchange comes from
+        the stream's store; the request is the same on every exchange.
 
         Parameters
         ----------
@@ -573,6 +1011,473 @@ class AsyncRfqsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def get_rfq(
+        self,
+        rfq_id: str,
+        *,
+        subaccount_id: str,
+        exchange: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RfqResponse:
+        """
+        One of your RFQs by its exchange id, with its status and any quotes' size basis.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        subaccount_id : str
+            Non-custodial subaccount to query under
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RfqResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.rfqs.get_rfq(
+                rfq_id="rfq_id",
+                subaccount_id="subaccount_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}",
+            method="GET",
+            params={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    RfqResponse,
+                    parse_obj_as(
+                        type_=RfqResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def cancel_rfq(
+        self,
+        rfq_id: str,
+        *,
+        subaccount_id: str,
+        exchange: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> None:
+        """
+        Withdraw your RFQ before accepting a quote. Open quotes on it die with it.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        subaccount_id : str
+            Subaccount that owns the RFQ
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.rfqs.cancel_rfq(
+                rfq_id="rfq_id",
+                subaccount_id="subaccount_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}",
+            method="DELETE",
+            params={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def create_rfq(
+        self,
+        *,
+        subaccount_id: str,
+        market_ticker: str,
+        exchange: typing.Optional[str] = OMIT,
+        contracts: typing.Optional[int] = OMIT,
+        contracts_fp: typing.Optional[CreateRfqRequestContractsFp] = OMIT,
+        target_cost_dollars: typing.Optional[CreateRfqRequestTargetCostDollars] = OMIT,
+        obscure_creator_id: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> CreateRfqResponse:
+        """
+        Post an RFQ and get its id. Makers answer with quotes; nothing trades until you accept
+        one. Kalshi RFQs are sized in contracts with an optional target cost; Polymarket US RFQs in
+        contracts or in dollars. Build a Polymarket US combo first with POST /v1/parlays/build.
+
+        Parameters
+        ----------
+        subaccount_id : str
+            Non-custodial subaccount to post the RFQ under
+
+        market_ticker : str
+            Kalshi market ticker (single market or parlay), or a Polymarket US combo symbol from POST /v1/parlays/build
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        contracts : typing.Optional[int]
+            Whole-contract size. Provide either contracts or contracts_fp.
+
+        contracts_fp : typing.Optional[CreateRfqRequestContractsFp]
+            Fixed-point contract size for fractional sizing.
+
+        target_cost_dollars : typing.Optional[CreateRfqRequestTargetCostDollars]
+            Total target cost in USD. Kalshi: optional alongside contracts. Polymarket US: the size itself, instead of contracts.
+
+        obscure_creator_id : typing.Optional[bool]
+            Kalshi only: hide your creator ID from makers until a quote executes.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        CreateRfqResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.rfqs.create_rfq(
+                subaccount_id="subaccount_id",
+                market_ticker="market_ticker",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/rfqs",
+            method="POST",
+            json={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+                "market_ticker": market_ticker,
+                "contracts": contracts,
+                "contracts_fp": convert_and_respect_annotation_metadata(
+                    object_=contracts_fp,
+                    annotation=CreateRfqRequestContractsFp,
+                    direction="write",
+                ),
+                "target_cost_dollars": convert_and_respect_annotation_metadata(
+                    object_=target_cost_dollars,
+                    annotation=CreateRfqRequestTargetCostDollars,
+                    direction="write",
+                ),
+                "obscure_creator_id": obscure_creator_id,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    CreateRfqResponse,
+                    parse_obj_as(
+                        type_=CreateRfqResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def accept_quote(
+        self,
+        rfq_id: str,
+        quote_id: str,
+        *,
+        subaccount_id: str,
+        buy_flag: bool,
+        price: float,
+        contracts: float,
+        exchange: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AcceptQuoteResponse:
+        """
+        Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you
+        track like any other (resting while the maker confirms, then executed or cancelled). Pass
+        the price and size you saw so a replaced quote answers 409 instead of trading at a price
+        you never saw. The maker has a short window to confirm; if it lapses the order is cancelled.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        quote_id : str
+
+        subaccount_id : str
+            Non-custodial subaccount that owns the RFQ
+
+        buy_flag : bool
+            True = buy YES (accepts the maker's no_bid), False = sell YES (accepts the yes_bid)
+
+        price : float
+            Pinned yes-space price shown at click time
+
+        contracts : float
+            Pinned contract size shown at click time
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AcceptQuoteResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.rfqs.accept_quote(
+                rfq_id="rfq_id",
+                quote_id="quote_id",
+                subaccount_id="subaccount_id",
+                buy_flag=True,
+                price=1.1,
+                contracts=1.1,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}/quotes/{jsonable_encoder(quote_id)}/accept",
+            method="POST",
+            json={
+                "subaccount_id": subaccount_id,
+                "exchange": exchange,
+                "buy_flag": buy_flag,
+                "price": price,
+                "contracts": contracts,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    AcceptQuoteResponse,
+                    parse_obj_as(
+                        type_=AcceptQuoteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def list_quotes_for_rfq(
+        self,
+        rfq_id: str,
+        *,
+        subaccount_id: str,
+        status: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
+        exchange: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> QuoteListResponse:
+        """
+        The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.
+        On Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key
+        10 requests per 10 seconds across all RFQ endpoints.
+
+        Parameters
+        ----------
+        rfq_id : str
+
+        subaccount_id : str
+            Non-custodial subaccount to query under
+
+        status : typing.Optional[str]
+            Filter by quote status
+
+        limit : typing.Optional[int]
+
+        cursor : typing.Optional[str]
+
+        exchange : typing.Optional[str]
+            KALSHI or POLYMARKET_US
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        QuoteListResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.rfqs.list_quotes_for_rfq(
+                rfq_id="rfq_id",
+                subaccount_id="subaccount_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/rfqs/{jsonable_encoder(rfq_id)}/quotes",
+            method="GET",
+            params={
+                "subaccount_id": subaccount_id,
+                "status": status,
+                "limit": limit,
+                "cursor": cursor,
+                "exchange": exchange,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    QuoteListResponse,
+                    parse_obj_as(
+                        type_=QuoteListResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
