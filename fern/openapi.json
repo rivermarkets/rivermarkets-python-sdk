@@ -8753,7 +8753,6 @@
             "description": "The maker's paired order id once executed"
           }
         },
-        "additionalProperties": true,
         "type": "object",
         "required": [
           "id",
@@ -8821,27 +8820,6 @@
         ],
         "title": "ResolveCombosResult"
       },
-      "RfqComboLeg": {
-        "properties": {
-          "symbol": {
-            "type": "string",
-            "title": "Symbol",
-            "description": "The leg's market slug"
-          },
-          "side": {
-            "type": "string",
-            "title": "Side",
-            "description": "SIDE_BUY: the combo pays when the leg resolves YES; SIDE_SELL: when it resolves NO"
-          }
-        },
-        "type": "object",
-        "required": [
-          "symbol",
-          "side"
-        ],
-        "title": "RfqComboLeg",
-        "description": "One leg of a Polymarket US combo RFQ."
-      },
       "RfqLeg": {
         "properties": {
           "river_id": {
@@ -8861,42 +8839,6 @@
         ],
         "title": "RfqLeg",
         "description": "A leg in River's vocabulary, the same shape the RFQ stream and POST /v1/parlays/build use."
-      },
-      "RfqMveLeg": {
-        "properties": {
-          "event_ticker": {
-            "type": "string",
-            "title": "Event Ticker"
-          },
-          "market_ticker": {
-            "type": "string",
-            "title": "Market Ticker"
-          },
-          "side": {
-            "type": "string",
-            "title": "Side",
-            "description": "yes or no"
-          },
-          "yes_settlement_value_dollars": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Yes Settlement Value Dollars"
-          }
-        },
-        "type": "object",
-        "required": [
-          "event_ticker",
-          "market_ticker",
-          "side"
-        ],
-        "title": "RfqMveLeg",
-        "description": "One leg of a Kalshi parlay RFQ."
       },
       "RfqResponse": {
         "properties": {
@@ -9037,52 +8979,9 @@
               }
             ],
             "title": "Legs",
-            "description": "The combo's legs as River markets; absent when a leg is not in the catalogue"
-          },
-          "mve_collection_ticker": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mve Collection Ticker",
-            "description": "Kalshi detail: the parlay's collection"
-          },
-          "mve_selected_legs": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/RfqMveLeg"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mve Selected Legs",
-            "description": "Kalshi detail: legs as tickers"
-          },
-          "combo_legs": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/RfqComboLeg"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Combo Legs",
-            "description": "Polymarket US detail: legs as slugs"
+            "description": "The RFQ's legs as River markets; absent when a leg is not in the catalogue"
           }
         },
-        "additionalProperties": true,
         "type": "object",
         "required": [
           "id",

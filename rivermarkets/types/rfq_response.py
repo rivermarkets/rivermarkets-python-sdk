@@ -4,8 +4,6 @@ from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 import pydantic
 from .rfq_leg import RfqLeg
-from .rfq_mve_leg import RfqMveLeg
-from .rfq_combo_leg import RfqComboLeg
 
 
 class RfqResponse(UniversalBaseModel):
@@ -38,24 +36,7 @@ class RfqResponse(UniversalBaseModel):
     cancelled_ts: typing.Optional[str] = None
     legs: typing.Optional[typing.List[RfqLeg]] = pydantic.Field(default=None)
     """
-    The combo's legs as River markets; absent when a leg is not in the catalogue
-    """
-
-    mve_collection_ticker: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Kalshi detail: the parlay's collection
-    """
-
-    mve_selected_legs: typing.Optional[typing.List[RfqMveLeg]] = pydantic.Field(
-        default=None
-    )
-    """
-    Kalshi detail: legs as tickers
-    """
-
-    combo_legs: typing.Optional[typing.List[RfqComboLeg]] = pydantic.Field(default=None)
-    """
-    Polymarket US detail: legs as slugs
+    The RFQ's legs as River markets; absent when a leg is not in the catalogue
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
