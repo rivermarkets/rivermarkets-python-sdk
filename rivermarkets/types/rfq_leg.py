@@ -5,19 +5,15 @@ import pydantic
 import typing
 
 
-class RfqComboLeg(UniversalBaseModel):
+class RfqLeg(UniversalBaseModel):
     """
-    One leg of a Polymarket US combo RFQ.
-    """
-
-    symbol: str = pydantic.Field()
-    """
-    The leg's market slug
+    A leg in River's vocabulary, the same shape the RFQ stream and POST /v1/parlays/build use.
     """
 
-    side: str = pydantic.Field()
+    river_id: int
+    buy_flag: bool = pydantic.Field()
     """
-    SIDE_BUY: the combo pays when the leg resolves YES; SIDE_SELL: when it resolves NO
+    True: the combo pays when this market resolves YES; False: when it resolves NO
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

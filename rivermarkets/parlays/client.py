@@ -30,10 +30,11 @@ class ParlaysClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BuildParlayResponse:
         """
-        Turn 2 or more legs into a tradable combo market and return its market_ticker for
-        POST /v1/rfqs. Polymarket US creates (or fetches) the combo instrument under your
-        credentials, up to 15 legs. Kalshi finds a collection that admits every leg and
-        materializes the parlay there; the parlay pays out only if every leg resolves to its side.
+        Turn 2 or more legs, each a River market id with the side it must resolve to, into a
+        tradable combo market and return its market_ticker for POST /v1/rfqs. Polymarket US creates
+        (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a
+        collection that admits every leg and materializes the parlay there. Either way the combo
+        pays out only if every leg resolves to its side.
 
         Strategy:
           1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`
@@ -59,7 +60,7 @@ class ParlaysClient:
             KALSHI or POLYMARKET_US
 
         legs : typing.Sequence[BuildLeg]
-            Legs to combine
+            Legs to combine, all on the chosen exchange
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -79,8 +80,8 @@ class ParlaysClient:
             exchange="exchange",
             legs=[
                 BuildLeg(
-                    market_ticker="market_ticker",
-                    side="side",
+                    river_id=1,
+                    buy_flag=True,
                 )
             ],
         )
@@ -138,10 +139,11 @@ class AsyncParlaysClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BuildParlayResponse:
         """
-        Turn 2 or more legs into a tradable combo market and return its market_ticker for
-        POST /v1/rfqs. Polymarket US creates (or fetches) the combo instrument under your
-        credentials, up to 15 legs. Kalshi finds a collection that admits every leg and
-        materializes the parlay there; the parlay pays out only if every leg resolves to its side.
+        Turn 2 or more legs, each a River market id with the side it must resolve to, into a
+        tradable combo market and return its market_ticker for POST /v1/rfqs. Polymarket US creates
+        (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a
+        collection that admits every leg and materializes the parlay there. Either way the combo
+        pays out only if every leg resolves to its side.
 
         Strategy:
           1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`
@@ -167,7 +169,7 @@ class AsyncParlaysClient:
             KALSHI or POLYMARKET_US
 
         legs : typing.Sequence[BuildLeg]
-            Legs to combine
+            Legs to combine, all on the chosen exchange
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -192,8 +194,8 @@ class AsyncParlaysClient:
                 exchange="exchange",
                 legs=[
                     BuildLeg(
-                        market_ticker="market_ticker",
-                        side="side",
+                        river_id=1,
+                        buy_flag=True,
                     )
                 ],
             )

@@ -6,19 +6,14 @@ import typing
 
 
 class BuildLeg(UniversalBaseModel):
-    market_ticker: str = pydantic.Field()
     """
-    Kalshi ticker or Polymarket US slug
-    """
-
-    event_ticker: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Kalshi only
+    A leg in River's vocabulary, the same shape the RFQ stream and orders use.
     """
 
-    side: str = pydantic.Field()
+    river_id: int
+    buy_flag: bool = pydantic.Field()
     """
-    yes: the combo pays when this leg resolves YES
+    True: the combo pays when this market resolves YES; False: when it resolves NO
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

@@ -38,9 +38,9 @@ class QuoteResponse(UniversalBaseModel):
     """
 
     contracts_fp: typing.Optional[float] = None
-    accepted_side: typing.Optional[str] = pydantic.Field(default=None)
+    accepted_buy_flag: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    yes or no: the side of the quote you hit
+    Once accepted: True if you bought YES on this quote, False if you sold
     """
 
     accepted_ts: typing.Optional[str] = None

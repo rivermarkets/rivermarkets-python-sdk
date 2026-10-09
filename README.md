@@ -68,12 +68,13 @@ client = RiverMarkets(key_id="YOUR_KEY_ID", private_key="YOUR_BASE64_PRIVATE_KEY
 subaccount_id = "YOUR_SUBACCOUNT_ID"
 
 # A combo first (Polymarket US combo or Kalshi parlay); single markets skip this.
+# Legs are River markets with the side each must resolve to for the combo to pay.
 combo = client.parlays.build_parlay(
     subaccount_id=subaccount_id,
     exchange="POLYMARKET_US",
     legs=[
-        {"market_ticker": "<market slug>", "side": "yes"},
-        {"market_ticker": "<market slug>", "side": "no"},
+        {"river_id": 18340012, "buy_flag": True},
+        {"river_id": 18340013, "buy_flag": False},
     ],
 )
 
