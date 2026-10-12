@@ -34,6 +34,8 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/fills", "get"),
     # fees
     ("/v1/fees/schedules/lookup", "post"),
+    # rate-limit
+    ("/v1/rate-limit", "get"),
     # generic-assets
     ("/v1/generic-assets", "get"),
     ("/v1/generic-assets", "post"),
