@@ -9772,6 +9772,10 @@
     {
       "name": "complex-orders",
       "description": "Manage complex orders: conditional orders (take-profit and stop-loss), TWAP, and other advanced order types."
+    },
+    {
+      "name": "rate-limit",
+      "description": "Your organization's API rate limit and the org id to send as X-River-Org-Id on signed requests."
     }
   ],
   "servers": [
