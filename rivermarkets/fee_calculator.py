@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import math
 import typing
-from decimal import ROUND_HALF_EVEN, Decimal
+from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
 
 from .types.fee_schedule_lookup_response import FeeScheduleLookupResponse
 from .types.fee_schedule_response import FeeScheduleResponse
@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
 
 
 _CENT = Decimal("0.01")
+_MILLICENT = Decimal("0.001")
 _MAX_LOOKUP_SIZE = 1000
 
 
@@ -58,6 +59,8 @@ def compute_fee_from_schedule(
         return math.ceil(stabilized_cents) / 100
     if rule.rounding == "half_even_cent":
         return float(Decimal(repr(raw_fee)).quantize(_CENT, rounding=ROUND_HALF_EVEN))
+    if rule.rounding == "half_up_millicent":
+        return float(Decimal(repr(raw_fee)).quantize(_MILLICENT, rounding=ROUND_HALF_UP))
     raise UnsupportedFeeScheduleError(f"Unsupported fee rounding: {rule.rounding}")
 
 
