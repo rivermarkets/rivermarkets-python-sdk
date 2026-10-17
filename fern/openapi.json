@@ -5007,7 +5007,8 @@
         "enum": [
           "none",
           "ceil_cent",
-          "half_even_cent"
+          "half_even_cent",
+          "half_up_millicent"
         ],
         "title": "FeeRounding"
       },
