@@ -3,5 +3,6 @@
 import typing
 
 FeeRounding = typing.Union[
-    typing.Literal["none", "ceil_cent", "half_even_cent"], typing.Any
+    typing.Literal["none", "ceil_cent", "half_even_cent", "half_up_millicent"],
+    typing.Any,
 ]
