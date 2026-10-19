@@ -37,6 +37,9 @@ class TradeprintsClient:
           - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`
             (the NO leg is flipped into YES-price terms)
           - Polymarket US: always River's own capture (no public API)
+          - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's
+            outcome, so a NO-outcome print is a YES purchase at 1 - price and a YES-outcome print
+            a YES sale)
 
         Trades are sorted newest-first within each market. Prices are normalised to 0-1.
 
@@ -125,6 +128,9 @@ class AsyncTradeprintsClient:
           - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`
             (the NO leg is flipped into YES-price terms)
           - Polymarket US: always River's own capture (no public API)
+          - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's
+            outcome, so a NO-outcome print is a YES purchase at 1 - price and a YES-outcome print
+            a YES sale)
 
         Trades are sorted newest-first within each market. Prices are normalised to 0-1.
 
