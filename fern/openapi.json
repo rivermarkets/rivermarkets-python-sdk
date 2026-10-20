@@ -1949,7 +1949,7 @@
           "orders"
         ],
         "summary": "Create Order",
-        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\nSee  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).\nGeneric asset orders are `LIMIT` only \u2014 the system routes IOC limit orders to each\nunderlying instrument at optimal prices. `price` bounds the fills (max for buys, min\nfor sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.\n\n**Response:**\nReturns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
+        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\nSee  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).\nGeneric asset orders are `LIMIT` only and route to every member exchange where the\nsubaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order\ntakes the best prices across those members: `price` bounds the fills (max for buys,\nmin for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.\nWith `GTC` or `GTD` the order takes what crosses, then rests the remainder at `price`.\n\n**Response:**\nReturns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
         "operationId": "create_order_v1_orders_post",
         "requestBody": {
           "required": true,
@@ -2122,6 +2122,25 @@
               "title": "Parent Smart Taker Order Id"
             },
             "description": "Filter to IOC children of a specific smart-taker parent."
+          },
+          {
+            "name": "parent_generic_order_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to the per-exchange children of a specific generic resting order.",
+              "title": "Parent Generic Order Id"
+            },
+            "description": "Filter to the per-exchange children of a specific generic resting order."
           },
           {
             "name": "buy_flag",
@@ -2411,7 +2430,7 @@
           "orders"
         ],
         "summary": "Edit Order",
-        "description": "Edit (amend) a resting simple limit order.\n\nOnly `qty` and `price` are editable. `qty` is the new TOTAL quantity (not remaining).\nThe order must be RESTING, a simple order (no iceberg/peg parent), a single-instrument\nLIMIT order. Returns 202 Accepted; final status is delivered via the orders WS.",
+        "description": "Edit (amend) a resting limit order.\n\nOnly `qty` and `price` are editable. `qty` is the new TOTAL quantity (not remaining).\nThe order must be RESTING, Returns 202 Accepted; final status is delivered via the orders WS.",
         "operationId": "edit_order_v1_orders__order_id__patch",
         "parameters": [
           {
@@ -2509,7 +2528,7 @@
           "orders"
         ],
         "summary": "Cancel All Orders",
-        "description": "Cancel all open orders for a subaccount.\n\nIf `river_ids` is set, only orders on those instruments are cancelled;\nit must be omitted/null or non-empty. Cancellation is processed\nasynchronously by the order consumer.",
+        "description": "Cancel all open orders for a subaccount.\n\nIf `river_ids` is set, only orders on those instruments are cancelled.\nIf `generic_ids` is set, every open generic-asset parent order on those\nassets is cancelled whole. Both filters are either omitted/null or\nnon-empty, and compose as an OR. Omitting both cancels every open order\non the subaccount.\nCancellation is processed asynchronously by the order consumer.",
         "operationId": "cancel_all_orders_v1_orders_cancel_all_post",
         "requestBody": {
           "content": {
@@ -3449,7 +3468,7 @@
           "tradeprints"
         ],
         "summary": "Get Tradeprints",
-        "description": "Return the most recent trades for one or more markets. Markets whose trade\nhistory River has fully captured are served from River's own data; the rest\nare fetched from the exchange (concurrently, under a small semaphore so a long\ninput list never fans out into a thundering herd) while a backfill of their\nhistory is queued. The result list preserves the input order. A failure on\nany single market becomes a `not_found` row with a message \u2014 the call as a\nwhole does not 500.\n\nExchange lookup paths:\n  - Kalshi: `GET /markets/trades?ticker=...&limit=...`\n  - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`\n    (the NO leg is flipped into YES-price terms)\n  - Polymarket US: always River's own capture (no public API)\n\nTrades are sorted newest-first within each market. Prices are normalised to 0-1.\n\nUse this together with the `/v1/ws/tradeprints` WebSocket: hit this endpoint to\nbackfill the tape on page load, then dedup live WS events by `exchange_trade_id`.",
+        "description": "Return the most recent trades for one or more markets. Markets whose trade\nhistory River has fully captured are served from River's own data; the rest\nare fetched from the exchange (concurrently, under a small semaphore so a long\ninput list never fans out into a thundering herd) while a backfill of their\nhistory is queued. The result list preserves the input order. A failure on\nany single market becomes a `not_found` row with a message \u2014 the call as a\nwhole does not 500.\n\nExchange lookup paths:\n  - Kalshi: `GET /markets/trades?ticker=...&limit=...`\n  - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`\n    (the NO leg is flipped into YES-price terms)\n  - Polymarket US: always River's own capture (no public API)\n  - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's\n    outcome, so a NO-outcome print is a YES purchase at 1 - price and a YES-outcome print\n    a YES sale)\n\nTrades are sorted newest-first within each market. Prices are normalised to 0-1.\n\nUse this together with the `/v1/ws/tradeprints` WebSocket: hit this endpoint to\nbackfill the tape on page load, then dedup live WS events by `exchange_trade_id`.",
         "operationId": "get_tradeprints_v1_tradeprints_get",
         "parameters": [
           {
@@ -4061,6 +4080,22 @@
             ],
             "title": "River Ids",
             "description": "If set, only cancel open orders for these instruments; otherwise cancel all open orders on the subaccount. Must be either omitted/null or a non-empty list."
+          },
+          "generic_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generic Ids",
+            "description": "If set, also cancel all open orders on these generic assets. Must be either omitted/null or a non-empty list."
           }
         },
         "type": "object",
@@ -7269,6 +7304,19 @@
             "title": "Parent Generic Peg Order Id",
             "description": "If this order rests under a leg of a generic-asset peg, that peg's id; otherwise null."
           },
+          "parent_generic_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Generic Order Id",
+            "description": "If this order is a child of a generic-asset limit order, the parent's id; otherwise null."
+          },
           "fills": {
             "items": {
               "$ref": "#/components/schemas/OrderFillResponse"
@@ -7681,6 +7729,19 @@
             ],
             "title": "Parent Generic Peg Order Id",
             "description": "If this order rests under a leg of a generic-asset peg, that peg's id; otherwise null."
+          },
+          "parent_generic_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Generic Order Id",
+            "description": "If this order is a child of a generic-asset limit order, the parent's id; otherwise null."
           }
         },
         "type": "object",
