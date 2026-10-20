@@ -43,6 +43,7 @@ class OrdersClient:
         parent_iceberg_order_id: typing.Optional[str] = None,
         parent_peg_order_id: typing.Optional[str] = None,
         parent_smart_taker_order_id: typing.Optional[str] = None,
+        parent_generic_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
         order_type: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
@@ -97,6 +98,9 @@ class OrdersClient:
         parent_smart_taker_order_id : typing.Optional[str]
             Filter to IOC children of a specific smart-taker parent.
 
+        parent_generic_order_id : typing.Optional[str]
+            Filter to the per-exchange children of a specific generic resting order.
+
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
 
@@ -147,6 +151,7 @@ class OrdersClient:
                 "parent_iceberg_order_id": parent_iceberg_order_id,
                 "parent_peg_order_id": parent_peg_order_id,
                 "parent_smart_taker_order_id": parent_smart_taker_order_id,
+                "parent_generic_order_id": parent_generic_order_id,
                 "buy_flag": buy_flag,
                 "order_type": order_type,
                 "created_after": serialize_datetime(created_after)
@@ -216,9 +221,11 @@ class OrdersClient:
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
-        Generic asset orders are `LIMIT` only — the system routes IOC limit orders to each
-        underlying instrument at optimal prices. `price` bounds the fills (max for buys, min
-        for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.
+        Generic asset orders are `LIMIT` only and route to every member exchange where the
+        subaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order
+        takes the best prices across those members: `price` bounds the fills (max for buys,
+        min for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.
+        With `GTC` or `GTD` the order takes what crosses, then rests the remainder at `price`.
 
         **Response:**
         Returns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).
@@ -550,11 +557,10 @@ class OrdersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderEditResponse:
         """
-        Edit (amend) a resting simple limit order.
+        Edit (amend) a resting limit order.
 
         Only `qty` and `price` are editable. `qty` is the new TOTAL quantity (not remaining).
-        The order must be RESTING, a simple order (no iceberg/peg parent), a single-instrument
-        LIMIT order. Returns 202 Accepted; final status is delivered via the orders WS.
+        The order must be RESTING, Returns 202 Accepted; final status is delivered via the orders WS.
 
         Parameters
         ----------
@@ -680,14 +686,18 @@ class OrdersClient:
         *,
         subaccount_id: str,
         river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
+        generic_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelOrderResponse:
         """
         Cancel all open orders for a subaccount.
 
-        If `river_ids` is set, only orders on those instruments are cancelled;
-        it must be omitted/null or non-empty. Cancellation is processed
-        asynchronously by the order consumer.
+        If `river_ids` is set, only orders on those instruments are cancelled.
+        If `generic_ids` is set, every open generic-asset parent order on those
+        assets is cancelled whole. Both filters are either omitted/null or
+        non-empty, and compose as an OR. Omitting both cancels every open order
+        on the subaccount.
+        Cancellation is processed asynchronously by the order consumer.
 
         Parameters
         ----------
@@ -695,6 +705,9 @@ class OrdersClient:
 
         river_ids : typing.Optional[typing.Sequence[int]]
             If set, only cancel open orders for these instruments; otherwise cancel all open orders on the subaccount. Must be either omitted/null or a non-empty list.
+
+        generic_ids : typing.Optional[typing.Sequence[str]]
+            If set, also cancel all open orders on these generic assets. Must be either omitted/null or a non-empty list.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -719,6 +732,7 @@ class OrdersClient:
             json={
                 "subaccount_id": subaccount_id,
                 "river_ids": river_ids,
+                "generic_ids": generic_ids,
             },
             request_options=request_options,
             omit=OMIT,
@@ -762,6 +776,7 @@ class AsyncOrdersClient:
         parent_iceberg_order_id: typing.Optional[str] = None,
         parent_peg_order_id: typing.Optional[str] = None,
         parent_smart_taker_order_id: typing.Optional[str] = None,
+        parent_generic_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
         order_type: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
@@ -815,6 +830,9 @@ class AsyncOrdersClient:
 
         parent_smart_taker_order_id : typing.Optional[str]
             Filter to IOC children of a specific smart-taker parent.
+
+        parent_generic_order_id : typing.Optional[str]
+            Filter to the per-exchange children of a specific generic resting order.
 
         buy_flag : typing.Optional[bool]
             Filter by direction: true=buys, false=sells
@@ -874,6 +892,7 @@ class AsyncOrdersClient:
                 "parent_iceberg_order_id": parent_iceberg_order_id,
                 "parent_peg_order_id": parent_peg_order_id,
                 "parent_smart_taker_order_id": parent_smart_taker_order_id,
+                "parent_generic_order_id": parent_generic_order_id,
                 "buy_flag": buy_flag,
                 "order_type": order_type,
                 "created_after": serialize_datetime(created_after)
@@ -943,9 +962,11 @@ class AsyncOrdersClient:
 
         **Asset Selection:**
         Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
-        Generic asset orders are `LIMIT` only — the system routes IOC limit orders to each
-        underlying instrument at optimal prices. `price` bounds the fills (max for buys, min
-        for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.
+        Generic asset orders are `LIMIT` only and route to every member exchange where the
+        subaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order
+        takes the best prices across those members: `price` bounds the fills (max for buys,
+        min for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.
+        With `GTC` or `GTD` the order takes what crosses, then rests the remainder at `price`.
 
         **Response:**
         Returns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).
@@ -1309,11 +1330,10 @@ class AsyncOrdersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderEditResponse:
         """
-        Edit (amend) a resting simple limit order.
+        Edit (amend) a resting limit order.
 
         Only `qty` and `price` are editable. `qty` is the new TOTAL quantity (not remaining).
-        The order must be RESTING, a simple order (no iceberg/peg parent), a single-instrument
-        LIMIT order. Returns 202 Accepted; final status is delivered via the orders WS.
+        The order must be RESTING, Returns 202 Accepted; final status is delivered via the orders WS.
 
         Parameters
         ----------
@@ -1455,14 +1475,18 @@ class AsyncOrdersClient:
         *,
         subaccount_id: str,
         river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
+        generic_ids: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CancelOrderResponse:
         """
         Cancel all open orders for a subaccount.
 
-        If `river_ids` is set, only orders on those instruments are cancelled;
-        it must be omitted/null or non-empty. Cancellation is processed
-        asynchronously by the order consumer.
+        If `river_ids` is set, only orders on those instruments are cancelled.
+        If `generic_ids` is set, every open generic-asset parent order on those
+        assets is cancelled whole. Both filters are either omitted/null or
+        non-empty, and compose as an OR. Omitting both cancels every open order
+        on the subaccount.
+        Cancellation is processed asynchronously by the order consumer.
 
         Parameters
         ----------
@@ -1470,6 +1494,9 @@ class AsyncOrdersClient:
 
         river_ids : typing.Optional[typing.Sequence[int]]
             If set, only cancel open orders for these instruments; otherwise cancel all open orders on the subaccount. Must be either omitted/null or a non-empty list.
+
+        generic_ids : typing.Optional[typing.Sequence[str]]
+            If set, also cancel all open orders on these generic assets. Must be either omitted/null or a non-empty list.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1502,6 +1529,7 @@ class AsyncOrdersClient:
             json={
                 "subaccount_id": subaccount_id,
                 "river_ids": river_ids,
+                "generic_ids": generic_ids,
             },
             request_options=request_options,
             omit=OMIT,
