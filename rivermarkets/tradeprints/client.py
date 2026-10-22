@@ -34,7 +34,7 @@ class TradeprintsClient:
 
         Exchange lookup paths:
           - Kalshi: `GET /markets/trades?ticker=...&limit=...`
-          - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`
+          - Polymarket: `GET https://data-api.polymarket.com/v2/trades?condition=<condition_id>&limit=...`
             (the NO leg is flipped into YES-price terms)
           - Polymarket US: always River's own capture (no public API)
           - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's
@@ -125,7 +125,7 @@ class AsyncTradeprintsClient:
 
         Exchange lookup paths:
           - Kalshi: `GET /markets/trades?ticker=...&limit=...`
-          - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`
+          - Polymarket: `GET https://data-api.polymarket.com/v2/trades?condition=<condition_id>&limit=...`
             (the NO leg is flipped into YES-price terms)
           - Polymarket US: always River's own capture (no public API)
           - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's
