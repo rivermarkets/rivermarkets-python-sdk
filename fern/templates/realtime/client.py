@@ -262,9 +262,9 @@ class RealtimeClient:
 
         `filters` is sent as the first subscribe frame and re-sent on reconnect;
         `None` matches every RFQ. Keys: `exchanges`, `min_legs`, `max_legs`,
-        `river_ids`, `min_notional`, `topics`. A topic is a sport (`"hockey"`) or a
-        category (`"politics"`) and matches a leg on its subcategory or its
-        category. Replace it mid-stream with `Subscription.set_filters`.
+        `river_ids`, `min_notional`, `topics`. Each leg carries one `topic`: its
+        sport for a sports market (`"hockey"`), its category otherwise
+        (`"politics"`). Replace it mid-stream with `Subscription.set_filters`.
         """
         return Subscription(
             client=self,
