@@ -8,7 +8,7 @@ from .rfq_leg import RfqLeg
 
 class RfqResponse(UniversalBaseModel):
     """
-    An RFQ in one shape for both exchanges. Sizes are contracts (contracts_fp) or dollars
+    An RFQ in one shape for both exchanges. Sizes are contracts (qty) or dollars
     (target_cost_dollars); legs are River market ids with the side each must resolve to, a
     single market being one YES leg. creator_user_id is only set on your own RFQs.
     """
@@ -38,7 +38,11 @@ class RfqResponse(UniversalBaseModel):
     open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses
     """
 
-    contracts_fp: typing.Optional[float] = None
+    qty: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Size in contracts
+    """
+
     target_cost_dollars: typing.Optional[float] = None
     creator_id: typing.Optional[str] = None
     creator_user_id: typing.Optional[str] = None

@@ -13,7 +13,6 @@ from ..types.quote_list_response import QuoteListResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..types.create_maker_quote_response import CreateMakerQuoteResponse
 from ..types.rfq_response import RfqResponse
-from .types.create_rfq_request_contracts_fp import CreateRfqRequestContractsFp
 from .types.create_rfq_request_target_cost_dollars import (
     CreateRfqRequestTargetCostDollars,
 )
@@ -510,8 +509,7 @@ class RfqsClient:
         *,
         subaccount_id: str,
         river_id: int,
-        contracts: typing.Optional[int] = OMIT,
-        contracts_fp: typing.Optional[CreateRfqRequestContractsFp] = OMIT,
+        qty: typing.Optional[float] = OMIT,
         target_cost_dollars: typing.Optional[CreateRfqRequestTargetCostDollars] = OMIT,
         obscure_creator_id: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -519,7 +517,7 @@ class RfqsClient:
         """
         Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.
         Makers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in
-        contracts with an optional target cost; Polymarket US RFQs in contracts or in dollars.
+        contracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars.
         Combos come from POST /v1/parlays/build.
 
         Parameters
@@ -530,14 +528,11 @@ class RfqsClient:
         river_id : int
             The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market.
 
-        contracts : typing.Optional[int]
-            Whole-contract size. Provide either contracts or contracts_fp.
-
-        contracts_fp : typing.Optional[CreateRfqRequestContractsFp]
-            Fixed-point contract size for fractional sizing.
+        qty : typing.Optional[float]
+            Size in contracts
 
         target_cost_dollars : typing.Optional[CreateRfqRequestTargetCostDollars]
-            Total target cost in USD. Kalshi: optional alongside contracts. Polymarket US: the size itself, instead of contracts.
+            Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty.
 
         obscure_creator_id : typing.Optional[bool]
             Kalshi only: hide your creator ID from makers until a quote executes.
@@ -566,12 +561,7 @@ class RfqsClient:
             json={
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
-                "contracts": contracts,
-                "contracts_fp": convert_and_respect_annotation_metadata(
-                    object_=contracts_fp,
-                    annotation=CreateRfqRequestContractsFp,
-                    direction="write",
-                ),
+                "qty": qty,
                 "target_cost_dollars": convert_and_respect_annotation_metadata(
                     object_=target_cost_dollars,
                     annotation=CreateRfqRequestTargetCostDollars,
@@ -614,7 +604,7 @@ class RfqsClient:
         subaccount_id: str,
         buy_flag: bool,
         price: float,
-        contracts: float,
+        qty: float,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AcceptQuoteResponse:
         """
@@ -638,8 +628,8 @@ class RfqsClient:
         price : float
             Pinned yes-space price shown at click time
 
-        contracts : float
-            Pinned contract size shown at click time
+        qty : float
+            Pinned size in contracts shown at click time
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -660,7 +650,7 @@ class RfqsClient:
             subaccount_id="subaccount_id",
             buy_flag=True,
             price=1.1,
-            contracts=1.1,
+            qty=1.1,
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -670,7 +660,7 @@ class RfqsClient:
                 "subaccount_id": subaccount_id,
                 "buy_flag": buy_flag,
                 "price": price,
-                "contracts": contracts,
+                "qty": qty,
             },
             request_options=request_options,
             omit=OMIT,
@@ -1240,8 +1230,7 @@ class AsyncRfqsClient:
         *,
         subaccount_id: str,
         river_id: int,
-        contracts: typing.Optional[int] = OMIT,
-        contracts_fp: typing.Optional[CreateRfqRequestContractsFp] = OMIT,
+        qty: typing.Optional[float] = OMIT,
         target_cost_dollars: typing.Optional[CreateRfqRequestTargetCostDollars] = OMIT,
         obscure_creator_id: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -1249,7 +1238,7 @@ class AsyncRfqsClient:
         """
         Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.
         Makers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in
-        contracts with an optional target cost; Polymarket US RFQs in contracts or in dollars.
+        contracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars.
         Combos come from POST /v1/parlays/build.
 
         Parameters
@@ -1260,14 +1249,11 @@ class AsyncRfqsClient:
         river_id : int
             The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market.
 
-        contracts : typing.Optional[int]
-            Whole-contract size. Provide either contracts or contracts_fp.
-
-        contracts_fp : typing.Optional[CreateRfqRequestContractsFp]
-            Fixed-point contract size for fractional sizing.
+        qty : typing.Optional[float]
+            Size in contracts
 
         target_cost_dollars : typing.Optional[CreateRfqRequestTargetCostDollars]
-            Total target cost in USD. Kalshi: optional alongside contracts. Polymarket US: the size itself, instead of contracts.
+            Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty.
 
         obscure_creator_id : typing.Optional[bool]
             Kalshi only: hide your creator ID from makers until a quote executes.
@@ -1304,12 +1290,7 @@ class AsyncRfqsClient:
             json={
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
-                "contracts": contracts,
-                "contracts_fp": convert_and_respect_annotation_metadata(
-                    object_=contracts_fp,
-                    annotation=CreateRfqRequestContractsFp,
-                    direction="write",
-                ),
+                "qty": qty,
                 "target_cost_dollars": convert_and_respect_annotation_metadata(
                     object_=target_cost_dollars,
                     annotation=CreateRfqRequestTargetCostDollars,
@@ -1352,7 +1333,7 @@ class AsyncRfqsClient:
         subaccount_id: str,
         buy_flag: bool,
         price: float,
-        contracts: float,
+        qty: float,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AcceptQuoteResponse:
         """
@@ -1376,8 +1357,8 @@ class AsyncRfqsClient:
         price : float
             Pinned yes-space price shown at click time
 
-        contracts : float
-            Pinned contract size shown at click time
+        qty : float
+            Pinned size in contracts shown at click time
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1403,7 +1384,7 @@ class AsyncRfqsClient:
                 subaccount_id="subaccount_id",
                 buy_flag=True,
                 price=1.1,
-                contracts=1.1,
+                qty=1.1,
             )
 
 
@@ -1416,7 +1397,7 @@ class AsyncRfqsClient:
                 "subaccount_id": subaccount_id,
                 "buy_flag": buy_flag,
                 "price": price,
-                "contracts": contracts,
+                "qty": qty,
             },
             request_options=request_options,
             omit=OMIT,
