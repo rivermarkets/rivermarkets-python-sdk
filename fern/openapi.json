@@ -3169,7 +3169,7 @@
           "rfqs"
         ],
         "summary": "Create Rfq",
-        "description": "Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.\nMakers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in\ncontracts with an optional target cost; Polymarket US RFQs in contracts or in dollars.\nCombos come from POST /v1/parlays/build.",
+        "description": "Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.\nMakers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in\ncontracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars.\nCombos come from POST /v1/parlays/build.",
         "operationId": "create_rfq_v1_rfqs_post",
         "requestBody": {
           "content": {
@@ -3468,7 +3468,7 @@
           "tradeprints"
         ],
         "summary": "Get Tradeprints",
-        "description": "Return the most recent trades for one or more markets. Markets whose trade\nhistory River has fully captured are served from River's own data; the rest\nare fetched from the exchange (concurrently, under a small semaphore so a long\ninput list never fans out into a thundering herd) while a backfill of their\nhistory is queued. The result list preserves the input order. A failure on\nany single market becomes a `not_found` row with a message \u2014 the call as a\nwhole does not 500.\n\nExchange lookup paths:\n  - Kalshi: `GET /markets/trades?ticker=...&limit=...`\n  - Polymarket: `GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=...`\n    (the NO leg is flipped into YES-price terms)\n  - Polymarket US: always River's own capture (no public API)\n  - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's\n    outcome, so a NO-outcome print is a YES purchase at 1 - price and a YES-outcome print\n    a YES sale)\n\nTrades are sorted newest-first within each market. Prices are normalised to 0-1.\n\nUse this together with the `/v1/ws/tradeprints` WebSocket: hit this endpoint to\nbackfill the tape on page load, then dedup live WS events by `exchange_trade_id`.",
+        "description": "Return the most recent trades for one or more markets. Markets whose trade\nhistory River has fully captured are served from River's own data; the rest\nare fetched from the exchange (concurrently, under a small semaphore so a long\ninput list never fans out into a thundering herd) while a backfill of their\nhistory is queued. The result list preserves the input order. A failure on\nany single market becomes a `not_found` row with a message \u2014 the call as a\nwhole does not 500.\n\nExchange lookup paths:\n  - Kalshi: `GET /markets/trades?ticker=...&limit=...`\n  - Polymarket: `GET https://data-api.polymarket.com/v2/trades?condition=<condition_id>&limit=...`\n    (the NO leg is flipped into YES-price terms)\n  - Polymarket US: always River's own capture (no public API)\n  - Novig: `GET /v3/catalog/markets/{id}/trades` (signed; the print names the maker's\n    outcome, so a NO-outcome print is a YES purchase at 1 - price and a YES-outcome print\n    a YES sale)\n\nTrades are sorted newest-first within each market. Prices are normalised to 0-1.\n\nUse this together with the `/v1/ws/tradeprints` WebSocket: hit this endpoint to\nbackfill the tape on page load, then dedup live WS events by `exchange_trade_id`.",
         "operationId": "get_tradeprints_v1_tradeprints_get",
         "parameters": [
           {
@@ -3924,11 +3924,11 @@
             "title": "Price",
             "description": "Pinned yes-space price shown at click time"
           },
-          "contracts": {
+          "qty": {
             "type": "number",
             "exclusiveMinimum": 0.0,
-            "title": "Contracts",
-            "description": "Pinned contract size shown at click time"
+            "title": "Qty",
+            "description": "Pinned size in contracts shown at click time"
           }
         },
         "type": "object",
@@ -3936,7 +3936,7 @@
           "subaccount_id",
           "buy_flag",
           "price",
-          "contracts"
+          "qty"
         ],
         "title": "AcceptQuoteRequest"
       },
@@ -4757,35 +4757,18 @@
             "title": "River Id",
             "description": "The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market."
           },
-          "contracts": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Contracts",
-            "description": "Whole-contract size. Provide either contracts or contracts_fp."
-          },
-          "contracts_fp": {
+          "qty": {
             "anyOf": [
               {
                 "type": "number",
                 "exclusiveMinimum": 0.0
               },
               {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              {
                 "type": "null"
               }
             ],
-            "title": "Contracts Fp",
-            "description": "Fixed-point contract size for fractional sizing."
+            "title": "Qty",
+            "description": "Size in contracts"
           },
           "target_cost_dollars": {
             "anyOf": [
@@ -4802,7 +4785,7 @@
               }
             ],
             "title": "Target Cost Dollars",
-            "description": "Total target cost in USD. Kalshi: optional alongside contracts. Polymarket US: the size itself, instead of contracts."
+            "description": "Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty."
           },
           "obscure_creator_id": {
             "type": "boolean",
@@ -5551,6 +5534,7 @@
               "type": "integer"
             },
             "type": "array",
+            "maxItems": 1000,
             "minItems": 1,
             "title": "River Ids"
           }
@@ -8509,7 +8493,7 @@
             ],
             "title": "No Bid Dollars"
           },
-          "yes_contracts_fp": {
+          "yes_qty": {
             "anyOf": [
               {
                 "type": "number"
@@ -8518,10 +8502,10 @@
                 "type": "null"
               }
             ],
-            "title": "Yes Contracts Fp",
-            "description": "Size available at the yes bid"
+            "title": "Yes Qty",
+            "description": "Size in contracts available at the yes bid"
           },
-          "no_contracts_fp": {
+          "no_qty": {
             "anyOf": [
               {
                 "type": "number"
@@ -8530,10 +8514,10 @@
                 "type": "null"
               }
             ],
-            "title": "No Contracts Fp",
-            "description": "Size available at the no bid"
+            "title": "No Qty",
+            "description": "Size in contracts available at the no bid"
           },
-          "contracts_fp": {
+          "qty": {
             "anyOf": [
               {
                 "type": "number"
@@ -8542,7 +8526,8 @@
                 "type": "null"
               }
             ],
-            "title": "Contracts Fp"
+            "title": "Qty",
+            "description": "Size in contracts"
           },
           "accepted_buy_flag": {
             "anyOf": [
@@ -8849,7 +8834,7 @@
             "title": "Status",
             "description": "open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses"
           },
-          "contracts_fp": {
+          "qty": {
             "anyOf": [
               {
                 "type": "number"
@@ -8858,7 +8843,8 @@
                 "type": "null"
               }
             ],
-            "title": "Contracts Fp"
+            "title": "Qty",
+            "description": "Size in contracts"
           },
           "target_cost_dollars": {
             "anyOf": [
@@ -8970,7 +8956,7 @@
           "status"
         ],
         "title": "RfqResponse",
-        "description": "An RFQ in one shape for both exchanges. Sizes are contracts (contracts_fp) or dollars\n(target_cost_dollars); legs are River market ids with the side each must resolve to, a\nsingle market being one YES leg. creator_user_id is only set on your own RFQs."
+        "description": "An RFQ in one shape for both exchanges. Sizes are contracts (qty) or dollars\n(target_cost_dollars); legs are River market ids with the side each must resolve to, a\nsingle market being one YES leg. creator_user_id is only set on your own RFQs."
       },
       "SmartTakerOrderParams": {
         "properties": {
