@@ -31,17 +31,21 @@ class QuoteResponse(UniversalBaseModel):
 
     yes_bid_dollars: typing.Optional[float] = None
     no_bid_dollars: typing.Optional[float] = None
-    yes_contracts_fp: typing.Optional[float] = pydantic.Field(default=None)
+    yes_qty: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Size available at the yes bid
-    """
-
-    no_contracts_fp: typing.Optional[float] = pydantic.Field(default=None)
-    """
-    Size available at the no bid
+    Size in contracts available at the yes bid
     """
 
-    contracts_fp: typing.Optional[float] = None
+    no_qty: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Size in contracts available at the no bid
+    """
+
+    qty: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Size in contracts
+    """
+
     accepted_buy_flag: typing.Optional[bool] = pydantic.Field(default=None)
     """
     Once accepted: True if you bought YES on this quote, False if you sold

@@ -126,7 +126,7 @@ from .prices import (
     GetPricesV1PricesRiverIdGetRequestInterval,
     GetPricesV1PricesRiverIdGetRequestType,
 )
-from .rfqs import CreateRfqRequestContractsFp, CreateRfqRequestTargetCostDollars
+from .rfqs import CreateRfqRequestTargetCostDollars
 
 __all__ = [
     "AcceptQuoteResponse",
@@ -144,7 +144,6 @@ __all__ = [
     "ConditionalOrderCreateConditionalOrderType",
     "ConditionalOrderResponse",
     "CreateMakerQuoteResponse",
-    "CreateRfqRequestContractsFp",
     "CreateRfqRequestTargetCostDollars",
     "CreateRfqResponse",
     "ExchangeBalance",
