@@ -1305,7 +1305,7 @@
           "markets"
         ],
         "summary": "Search Markets",
-        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n\nDefaults to status=active; pass status=all to include closed markets.",
+        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n- Keyset pagination with `cursor` / `next_cursor` in every mode\n\nDefaults to status=active; pass status=all to include closed markets.\nExact-identifier queries ignore status.",
         "operationId": "search_markets_v1_markets_search_get",
         "parameters": [
           {
@@ -1390,10 +1390,10 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/InstrumentStatusFilter",
-              "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets.",
+              "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status.",
               "default": "active"
             },
-            "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets."
+            "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status."
           },
           {
             "name": "expiration_date_start",
@@ -1555,16 +1555,16 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/SortMode"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price",
+              "description": "Sort mode: trending, volume, newest, ending-soon, start-time, price. Without it a text search orders events by relevance.",
               "title": "Sort By"
             },
-            "description": "Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price"
+            "description": "Sort mode: trending, volume, newest, ending-soon, start-time, price. Without it a text search orders events by relevance."
           },
           {
             "name": "include_combos",
@@ -1597,12 +1597,13 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 10000,
               "minimum": 0,
-              "description": "Offset for pagination",
+              "description": "Offset for pagination, at most 10000. To enumerate further, page with `cursor`.",
               "default": 0,
               "title": "Offset"
             },
-            "description": "Offset for pagination"
+            "description": "Offset for pagination, at most 10000. To enumerate further, page with `cursor`."
           },
           {
             "name": "event_limit",
@@ -1632,16 +1633,17 @@
               "anyOf": [
                 {
                   "type": "integer",
+                  "maximum": 10000,
                   "minimum": 0
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Event offset for event-based pagination",
+              "description": "Event offset for event-based pagination, at most 10000. To enumerate further, page with `cursor`.",
               "title": "Event Offset"
             },
-            "description": "Event offset for event-based pagination"
+            "description": "Event offset for event-based pagination, at most 10000. To enumerate further, page with `cursor`."
           },
           {
             "name": "markets_per_event",
@@ -1661,6 +1663,24 @@
               "title": "Markets Per Event"
             },
             "description": "With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque cursor from a previous response's `next_cursor`. Send it with the same query and filters, without offset / event_offset, to get the next page. Works in every sort mode.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from a previous response's `next_cursor`. Send it with the same query and filters, without offset / event_offset, to get the next page. Works in every sort mode."
           }
         ],
         "responses": {
@@ -1684,6 +1704,11 @@
               }
             }
           }
+        },
+        "x-fern-pagination": {
+          "cursor": "$request.cursor",
+          "next_cursor": "$response.next_cursor",
+          "results": "$response.results"
         }
       }
     },
@@ -6441,6 +6466,18 @@
               }
             ],
             "title": "Total Events"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Opaque cursor for the next page; pass it back as `cursor` with the same query and filters. Null when this is the last page."
           }
         },
         "type": "object",
@@ -9110,6 +9147,19 @@
         "type": "object",
         "title": "SmartTakerOrderResponse",
         "description": "Smart-taker-specific runtime detail returned alongside a ComplexOrderResponse.\n\nSourced from `view_smart_taker_orders` so it includes derived fields\n(executed_qty, remaining_qty)."
+      },
+      "SortMode": {
+        "type": "string",
+        "enum": [
+          "trending",
+          "volume",
+          "newest",
+          "ending-soon",
+          "start-time",
+          "price"
+        ],
+        "title": "SortMode",
+        "description": "``sort_by`` values for ``/v1/markets/search``, in flat and event mode alike."
       },
       "SubaccountCreate": {
         "properties": {
