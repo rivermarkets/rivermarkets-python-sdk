@@ -80,6 +80,7 @@ from .rfq_leg import RfqLeg
 from .rfq_response import RfqResponse
 from .smart_taker_order_params import SmartTakerOrderParams
 from .smart_taker_order_response import SmartTakerOrderResponse
+from .sort_mode import SortMode
 from .subaccount_response import SubaccountResponse
 from .subcategory_count import SubcategoryCount
 from .tradeprint_event import TradeprintEvent
@@ -182,6 +183,7 @@ __all__ = [
     "RfqResponse",
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
+    "SortMode",
     "SubaccountResponse",
     "SubcategoryCount",
     "TradeprintEvent",

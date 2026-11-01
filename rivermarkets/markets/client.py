@@ -4,6 +4,7 @@ import typing
 from ..core.client_wrapper import SyncClientWrapper
 from ..types.instrument_status_filter import InstrumentStatusFilter
 import datetime as dt
+from ..types.sort_mode import SortMode
 from ..types.include_combos import IncludeCombos
 from ..core.request_options import RequestOptions
 from ..types.market_search_response import MarketSearchResponse
@@ -43,13 +44,14 @@ class MarketsClient:
         last_price_min: typing.Optional[float] = None,
         last_price_max: typing.Optional[float] = None,
         volume_min: typing.Optional[int] = None,
-        sort_by: typing.Optional[str] = None,
+        sort_by: typing.Optional[SortMode] = None,
         include_combos: typing.Optional[IncludeCombos] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         event_limit: typing.Optional[int] = None,
         event_offset: typing.Optional[int] = None,
         markets_per_event: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
@@ -60,8 +62,10 @@ class MarketsClient:
         - Full-text search on name, description, tags
         - Browse by filters (no query required)
         - Results ranked by relevance
+        - Keyset pagination with `cursor` / `next_cursor` in every mode
 
         Defaults to status=active; pass status=all to include closed markets.
+        Exact-identifier queries ignore status.
 
         Parameters
         ----------
@@ -78,7 +82,7 @@ class MarketsClient:
             Filter by subcategory (e.g. Basketball, Football)
 
         status : typing.Optional[InstrumentStatusFilter]
-            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets.
+            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status.
 
         expiration_date_start : typing.Optional[dt.datetime]
             Start of expiration date range (inclusive, ISO 8601)
@@ -104,8 +108,8 @@ class MarketsClient:
         volume_min : typing.Optional[int]
             Filter to events whose total summed volume >= this value.
 
-        sort_by : typing.Optional[str]
-            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price
+        sort_by : typing.Optional[SortMode]
+            Sort mode: trending, volume, newest, ending-soon, start-time, price. Without it a text search orders events by relevance.
 
         include_combos : typing.Optional[IncludeCombos]
             How to treat parlays: 'exclude' (default), 'include' alongside standard markets, or 'only' combos.
@@ -114,16 +118,19 @@ class MarketsClient:
             Maximum number of results
 
         offset : typing.Optional[int]
-            Offset for pagination
+            Offset for pagination, at most 10000. To enumerate further, page with `cursor`.
 
         event_limit : typing.Optional[int]
             Paginate by events instead of markets. Up to 200 by default; values above that require start_datetime_after or start_datetime_before.
 
         event_offset : typing.Optional[int]
-            Event offset for event-based pagination
+            Event offset for event-based pagination, at most 10000. To enumerate further, page with `cursor`.
 
         markets_per_event : typing.Optional[int]
             With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest.
+
+        cursor : typing.Optional[str]
+            Opaque cursor from a previous response's `next_cursor`. Send it with the same query and filters, without offset / event_offset, to get the next page. Works in every sort mode.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -172,6 +179,7 @@ class MarketsClient:
                 "event_limit": event_limit,
                 "event_offset": event_offset,
                 "markets_per_event": markets_per_event,
+                "cursor": cursor,
             },
             request_options=request_options,
         )
@@ -487,13 +495,14 @@ class AsyncMarketsClient:
         last_price_min: typing.Optional[float] = None,
         last_price_max: typing.Optional[float] = None,
         volume_min: typing.Optional[int] = None,
-        sort_by: typing.Optional[str] = None,
+        sort_by: typing.Optional[SortMode] = None,
         include_combos: typing.Optional[IncludeCombos] = None,
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         event_limit: typing.Optional[int] = None,
         event_offset: typing.Optional[int] = None,
         markets_per_event: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> MarketSearchResponse:
         """
@@ -504,8 +513,10 @@ class AsyncMarketsClient:
         - Full-text search on name, description, tags
         - Browse by filters (no query required)
         - Results ranked by relevance
+        - Keyset pagination with `cursor` / `next_cursor` in every mode
 
         Defaults to status=active; pass status=all to include closed markets.
+        Exact-identifier queries ignore status.
 
         Parameters
         ----------
@@ -522,7 +533,7 @@ class AsyncMarketsClient:
             Filter by subcategory (e.g. Basketball, Football)
 
         status : typing.Optional[InstrumentStatusFilter]
-            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets.
+            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status.
 
         expiration_date_start : typing.Optional[dt.datetime]
             Start of expiration date range (inclusive, ISO 8601)
@@ -548,8 +559,8 @@ class AsyncMarketsClient:
         volume_min : typing.Optional[int]
             Filter to events whose total summed volume >= this value.
 
-        sort_by : typing.Optional[str]
-            Sort mode for event-based pagination: trending, volume, newest, ending-soon, start-time, price
+        sort_by : typing.Optional[SortMode]
+            Sort mode: trending, volume, newest, ending-soon, start-time, price. Without it a text search orders events by relevance.
 
         include_combos : typing.Optional[IncludeCombos]
             How to treat parlays: 'exclude' (default), 'include' alongside standard markets, or 'only' combos.
@@ -558,16 +569,19 @@ class AsyncMarketsClient:
             Maximum number of results
 
         offset : typing.Optional[int]
-            Offset for pagination
+            Offset for pagination, at most 10000. To enumerate further, page with `cursor`.
 
         event_limit : typing.Optional[int]
             Paginate by events instead of markets. Up to 200 by default; values above that require start_datetime_after or start_datetime_before.
 
         event_offset : typing.Optional[int]
-            Event offset for event-based pagination
+            Event offset for event-based pagination, at most 10000. To enumerate further, page with `cursor`.
 
         markets_per_event : typing.Optional[int]
             With event pagination, cap the markets returned per event to the top N by volume (query-matched markets always survive the cap). Each row's event_market_count carries the event's full market count so clients can lazy-load the rest.
+
+        cursor : typing.Optional[str]
+            Opaque cursor from a previous response's `next_cursor`. Send it with the same query and filters, without offset / event_offset, to get the next page. Works in every sort mode.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -624,6 +638,7 @@ class AsyncMarketsClient:
                 "event_limit": event_limit,
                 "event_offset": event_offset,
                 "markets_per_event": markets_per_event,
+                "cursor": cursor,
             },
             request_options=request_options,
         )

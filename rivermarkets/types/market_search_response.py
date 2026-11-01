@@ -15,6 +15,10 @@ class MarketSearchResponse(UniversalBaseModel):
     results: typing.List[MarketSearchResult]
     total: int
     total_events: typing.Optional[int] = None
+    next_cursor: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Opaque cursor for the next page; pass it back as `cursor` with the same query and filters. Null when this is the last page.
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
