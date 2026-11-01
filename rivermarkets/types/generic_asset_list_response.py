@@ -11,14 +11,19 @@ class GenericAssetListResponse(UniversalBaseModel):
     assets: typing.List[GenericAssetResponse]
     total_events: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Total event groups matching the filters (event-paginated requests only)
+    Total event groups matching the filters
     """
 
     subcategories: typing.Optional[typing.List[SubcategoryCount]] = pydantic.Field(
         default=None
     )
     """
-    Event counts per subcategory for the chip row (event-paginated requests only)
+    Event counts per subcategory within the requested categories, ignoring the subcategory and start window filters
+    """
+
+    categories: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Categories with matching assets, ignoring the category, subcategory and start window filters
     """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(

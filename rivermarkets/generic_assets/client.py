@@ -32,19 +32,23 @@ class GenericAssetsClient:
         subcategory: typing.Optional[str] = None,
         owner: typing.Optional[str] = None,
         status: typing.Optional[str] = None,
+        event_id: typing.Optional[str] = None,
         start_after: typing.Optional[dt.datetime] = None,
         start_before: typing.Optional[dt.datetime] = None,
+        include_undated: typing.Optional[bool] = None,
         sort_by: typing.Optional[str] = None,
         event_limit: typing.Optional[int] = None,
         event_offset: typing.Optional[int] = None,
         assets_per_event: typing.Optional[int] = None,
+        include_members: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetListResponse:
         """
-        List generic assets visible to the caller (their own + platform-curated approved).
+        List generic assets visible to the caller (their own + platform-curated approved), one page of events.
 
-        Event-paginated (``event_limit``) requests group assets by generic event, order events by
-        ``sort_by``, order assets within an event winner-first then by line, and hydrate members.
+        Groups assets by generic event, orders events by ``sort_by``, orders assets within an event
+        winner-first then by line, and hydrates members (or only river_ids). There is no unpaginated
+        form: the whole catalog through the view runs for minutes.
 
         Parameters
         ----------
@@ -63,23 +67,32 @@ class GenericAssetsClient:
         status : typing.Optional[str]
             'approved' (default), 'expired', 'pending', 'rejected' or 'all'
 
+        event_id : typing.Optional[str]
+            Only the assets of this generic event
+
         start_after : typing.Optional[dt.datetime]
             Event start at or after (UTC)
 
         start_before : typing.Optional[dt.datetime]
             Event start before (UTC)
 
+        include_undated : typing.Optional[bool]
+            With start_after / start_before, also return assets that have no event start
+
         sort_by : typing.Optional[str]
             start-time (default), ending-soon, volume, trending
 
         event_limit : typing.Optional[int]
-            Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members).
+            Page size in events (games): each event comes with all its assets and their members. Max 200, or 2000 with a start window.
 
         event_offset : typing.Optional[int]
             Event offset for event pagination
 
         assets_per_event : typing.Optional[int]
             Cap assets returned per event
+
+        include_members : typing.Optional[bool]
+            False returns each asset's river_ids without the member market details
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -105,16 +118,19 @@ class GenericAssetsClient:
                 "subcategory": subcategory,
                 "owner": owner,
                 "status": status,
+                "event_id": event_id,
                 "start_after": serialize_datetime(start_after)
                 if start_after is not None
                 else None,
                 "start_before": serialize_datetime(start_before)
                 if start_before is not None
                 else None,
+                "include_undated": include_undated,
                 "sort_by": sort_by,
                 "event_limit": event_limit,
                 "event_offset": event_offset,
                 "assets_per_event": assets_per_event,
+                "include_members": include_members,
             },
             request_options=request_options,
         )
@@ -597,19 +613,23 @@ class AsyncGenericAssetsClient:
         subcategory: typing.Optional[str] = None,
         owner: typing.Optional[str] = None,
         status: typing.Optional[str] = None,
+        event_id: typing.Optional[str] = None,
         start_after: typing.Optional[dt.datetime] = None,
         start_before: typing.Optional[dt.datetime] = None,
+        include_undated: typing.Optional[bool] = None,
         sort_by: typing.Optional[str] = None,
         event_limit: typing.Optional[int] = None,
         event_offset: typing.Optional[int] = None,
         assets_per_event: typing.Optional[int] = None,
+        include_members: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetListResponse:
         """
-        List generic assets visible to the caller (their own + platform-curated approved).
+        List generic assets visible to the caller (their own + platform-curated approved), one page of events.
 
-        Event-paginated (``event_limit``) requests group assets by generic event, order events by
-        ``sort_by``, order assets within an event winner-first then by line, and hydrate members.
+        Groups assets by generic event, orders events by ``sort_by``, orders assets within an event
+        winner-first then by line, and hydrates members (or only river_ids). There is no unpaginated
+        form: the whole catalog through the view runs for minutes.
 
         Parameters
         ----------
@@ -628,23 +648,32 @@ class AsyncGenericAssetsClient:
         status : typing.Optional[str]
             'approved' (default), 'expired', 'pending', 'rejected' or 'all'
 
+        event_id : typing.Optional[str]
+            Only the assets of this generic event
+
         start_after : typing.Optional[dt.datetime]
             Event start at or after (UTC)
 
         start_before : typing.Optional[dt.datetime]
             Event start before (UTC)
 
+        include_undated : typing.Optional[bool]
+            With start_after / start_before, also return assets that have no event start
+
         sort_by : typing.Optional[str]
             start-time (default), ending-soon, volume, trending
 
         event_limit : typing.Optional[int]
-            Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members).
+            Page size in events (games): each event comes with all its assets and their members. Max 200, or 2000 with a start window.
 
         event_offset : typing.Optional[int]
             Event offset for event pagination
 
         assets_per_event : typing.Optional[int]
             Cap assets returned per event
+
+        include_members : typing.Optional[bool]
+            False returns each asset's river_ids without the member market details
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -678,16 +707,19 @@ class AsyncGenericAssetsClient:
                 "subcategory": subcategory,
                 "owner": owner,
                 "status": status,
+                "event_id": event_id,
                 "start_after": serialize_datetime(start_after)
                 if start_after is not None
                 else None,
                 "start_before": serialize_datetime(start_before)
                 if start_before is not None
                 else None,
+                "include_undated": include_undated,
                 "sort_by": sort_by,
                 "event_limit": event_limit,
                 "event_offset": event_offset,
                 "assets_per_event": assets_per_event,
+                "include_members": include_members,
             },
             request_options=request_options,
         )

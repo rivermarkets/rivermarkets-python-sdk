@@ -634,6 +634,23 @@
             }
           },
           {
+            "name": "min_qty",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Qty"
+            }
+          },
+          {
             "name": "start_time",
             "in": "query",
             "required": false,
@@ -721,7 +738,7 @@
           "generic-assets"
         ],
         "summary": "List Generic Assets",
-        "description": "List generic assets visible to the caller (their own + platform-curated approved).\n\nEvent-paginated (``event_limit``) requests group assets by generic event, order events by\n``sort_by``, order assets within an event winner-first then by line, and hydrate members.",
+        "description": "List generic assets visible to the caller (their own + platform-curated approved), one page of events.\n\nGroups assets by generic event, orders events by ``sort_by``, orders assets within an event\nwinner-first then by line, and hydrates members (or only river_ids). There is no unpaginated\nform: the whole catalog through the view runs for minutes.",
         "operationId": "list_generic_assets_v1_generic_assets_get",
         "parameters": [
           {
@@ -813,6 +830,25 @@
             "description": "'approved' (default), 'expired', 'pending', 'rejected' or 'all'"
           },
           {
+            "name": "event_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the assets of this generic event",
+              "title": "Event Id"
+            },
+            "description": "Only the assets of this generic event"
+          },
+          {
             "name": "start_after",
             "in": "query",
             "required": false,
@@ -851,6 +887,18 @@
             "description": "Event start before (UTC)"
           },
           {
+            "name": "include_undated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "With start_after / start_before, also return assets that have no event start",
+              "default": false,
+              "title": "Include Undated"
+            },
+            "description": "With start_after / start_before, also return assets that have no event start"
+          },
+          {
             "name": "sort_by",
             "in": "query",
             "required": false,
@@ -873,19 +921,13 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members).",
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page size in events (games): each event comes with all its assets and their members. Max 200, or 2000 with a start window.",
+              "default": 50,
               "title": "Event Limit"
             },
-            "description": "Paginate by event (game): return this many events with all their assets, members inline, and total_events. Max 200, or 2000 with a start window. Omit for the flat, unpaginated list (no members)."
+            "description": "Page size in events (games): each event comes with all its assets and their members. Max 200, or 2000 with a start window."
           },
           {
             "name": "event_offset",
@@ -918,6 +960,18 @@
               "title": "Assets Per Event"
             },
             "description": "Cap assets returned per event"
+          },
+          {
+            "name": "include_members",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "False returns each asset's river_ids without the member market details",
+              "default": true,
+              "title": "Include Members"
+            },
+            "description": "False returns each asset's river_ids without the member market details"
           }
         ],
         "responses": {
@@ -1305,7 +1359,7 @@
           "markets"
         ],
         "summary": "Search Markets",
-        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n- Keyset pagination with `cursor` / `next_cursor` in every mode\n\nDefaults to status=active; pass status=all to include closed markets.\nExact-identifier queries ignore status.",
+        "description": "Search and browse markets across all exchanges.\n\nSupports:\n- Exact match on ticker, condition_id, slug, river_id\n- Full-text search on name, description, tags\n- Browse by filters (no query required)\n- Results ranked by relevance\n- Keyset pagination with `cursor` / `next_cursor` in every mode\n\nOnly active markets are searched. An exact identifier (river_id, condition_id, slug,\nKalshi ticker) resolves its market whatever the status.",
         "operationId": "search_markets_v1_markets_search_get",
         "parameters": [
           {
@@ -1383,17 +1437,6 @@
               "title": "Subcategory"
             },
             "description": "Filter by subcategory (e.g. Basketball, Football)"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/InstrumentStatusFilter",
-              "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status.",
-              "default": "active"
-            },
-            "description": "Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status."
           },
           {
             "name": "expiration_date_start",
@@ -4799,7 +4842,7 @@
             "anyOf": [
               {
                 "type": "number",
-                "minimum": 0.0
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "string",
@@ -5323,7 +5366,7 @@
               }
             ],
             "title": "Asset Type",
-            "description": "moneyline | spread | threshold | distance"
+            "description": "moneyline | spread | threshold | distance | btts"
           },
           "period": {
             "anyOf": [
@@ -5535,7 +5578,7 @@
               }
             ],
             "title": "Total Events",
-            "description": "Total event groups matching the filters (event-paginated requests only)"
+            "description": "Total event groups matching the filters"
           },
           "subcategories": {
             "items": {
@@ -5543,7 +5586,15 @@
             },
             "type": "array",
             "title": "Subcategories",
-            "description": "Event counts per subcategory for the chip row (event-paginated requests only)"
+            "description": "Event counts per subcategory within the requested categories, ignoring the subcategory and start window filters"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Categories",
+            "description": "Categories with matching assets, ignoring the category, subcategory and start window filters"
           }
         },
         "type": "object",
@@ -5619,7 +5670,7 @@
               }
             ],
             "title": "Asset Type",
-            "description": "moneyline | spread | threshold | distance"
+            "description": "moneyline | spread | threshold | distance | btts"
           },
           "period": {
             "anyOf": [
@@ -6249,17 +6300,6 @@
         ],
         "title": "InstrumentStatus",
         "description": "Instrument status derived in instruments table from exchange-specific fields.\n\nKalshi: maps from kalshi_markets.status\n    - 'active' -> ACTIVE\n    - everything else (closed, determined, finalized, settled, amended, inactive, initialized) -> CLOSED\n\nPolymarket: maps from polymarket_markets.closed and polymarket_markets.active booleans\n    - closed=true -> CLOSED\n    - active=true (and not closed) -> ACTIVE\n    - else (active=false, closed=false) -> INACTIVE"
-      },
-      "InstrumentStatusFilter": {
-        "type": "string",
-        "enum": [
-          "active",
-          "closed",
-          "inactive",
-          "all"
-        ],
-        "title": "InstrumentStatusFilter",
-        "description": "``status`` query values for market search. ALL matches any status except\ninactive (never-activated exchange junk), which stays opt-in via INACTIVE."
       },
       "MakerQuoteListResponse": {
         "properties": {
