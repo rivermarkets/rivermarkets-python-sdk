@@ -23,6 +23,7 @@ class FillsClient:
         *,
         subaccount_id: typing.Optional[str] = None,
         river_id: typing.Optional[int] = None,
+        min_qty: typing.Optional[float] = None,
         start_time: typing.Optional[dt.datetime] = None,
         end_time: typing.Optional[dt.datetime] = None,
         limit: typing.Optional[int] = None,
@@ -39,6 +40,8 @@ class FillsClient:
         subaccount_id : typing.Optional[str]
 
         river_id : typing.Optional[int]
+
+        min_qty : typing.Optional[float]
 
         start_time : typing.Optional[dt.datetime]
 
@@ -69,6 +72,7 @@ class FillsClient:
             params={
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
+                "min_qty": min_qty,
                 "start_time": serialize_datetime(start_time)
                 if start_time is not None
                 else None,
@@ -114,6 +118,7 @@ class AsyncFillsClient:
         *,
         subaccount_id: typing.Optional[str] = None,
         river_id: typing.Optional[int] = None,
+        min_qty: typing.Optional[float] = None,
         start_time: typing.Optional[dt.datetime] = None,
         end_time: typing.Optional[dt.datetime] = None,
         limit: typing.Optional[int] = None,
@@ -130,6 +135,8 @@ class AsyncFillsClient:
         subaccount_id : typing.Optional[str]
 
         river_id : typing.Optional[int]
+
+        min_qty : typing.Optional[float]
 
         start_time : typing.Optional[dt.datetime]
 
@@ -168,6 +175,7 @@ class AsyncFillsClient:
             params={
                 "subaccount_id": subaccount_id,
                 "river_id": river_id,
+                "min_qty": min_qty,
                 "start_time": serialize_datetime(start_time)
                 if start_time is not None
                 else None,

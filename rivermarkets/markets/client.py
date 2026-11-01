@@ -2,7 +2,6 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
-from ..types.instrument_status_filter import InstrumentStatusFilter
 import datetime as dt
 from ..types.sort_mode import SortMode
 from ..types.include_combos import IncludeCombos
@@ -35,7 +34,6 @@ class MarketsClient:
         exchange_name: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
-        status: typing.Optional[InstrumentStatusFilter] = None,
         expiration_date_start: typing.Optional[dt.datetime] = None,
         expiration_date_end: typing.Optional[dt.datetime] = None,
         start_datetime_after: typing.Optional[dt.datetime] = None,
@@ -64,8 +62,8 @@ class MarketsClient:
         - Results ranked by relevance
         - Keyset pagination with `cursor` / `next_cursor` in every mode
 
-        Defaults to status=active; pass status=all to include closed markets.
-        Exact-identifier queries ignore status.
+        Only active markets are searched. An exact identifier (river_id, condition_id, slug,
+        Kalshi ticker) resolves its market whatever the status.
 
         Parameters
         ----------
@@ -80,9 +78,6 @@ class MarketsClient:
 
         subcategory : typing.Optional[str]
             Filter by subcategory (e.g. Basketball, Football)
-
-        status : typing.Optional[InstrumentStatusFilter]
-            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status.
 
         expiration_date_start : typing.Optional[dt.datetime]
             Start of expiration date range (inclusive, ISO 8601)
@@ -155,7 +150,6 @@ class MarketsClient:
                 "exchange_name": exchange_name,
                 "category": category,
                 "subcategory": subcategory,
-                "status": status,
                 "expiration_date_start": serialize_datetime(expiration_date_start)
                 if expiration_date_start is not None
                 else None,
@@ -486,7 +480,6 @@ class AsyncMarketsClient:
         exchange_name: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
-        status: typing.Optional[InstrumentStatusFilter] = None,
         expiration_date_start: typing.Optional[dt.datetime] = None,
         expiration_date_end: typing.Optional[dt.datetime] = None,
         start_datetime_after: typing.Optional[dt.datetime] = None,
@@ -515,8 +508,8 @@ class AsyncMarketsClient:
         - Results ranked by relevance
         - Keyset pagination with `cursor` / `next_cursor` in every mode
 
-        Defaults to status=active; pass status=all to include closed markets.
-        Exact-identifier queries ignore status.
+        Only active markets are searched. An exact identifier (river_id, condition_id, slug,
+        Kalshi ticker) resolves its market whatever the status.
 
         Parameters
         ----------
@@ -531,9 +524,6 @@ class AsyncMarketsClient:
 
         subcategory : typing.Optional[str]
             Filter by subcategory (e.g. Basketball, Football)
-
-        status : typing.Optional[InstrumentStatusFilter]
-            Filter by instrument status. Defaults to active; pass 'all' for active and closed markets. Ignored when `q` is an exact identifier (river_id, condition_id, slug, Kalshi ticker): those resolve whatever the market's status.
 
         expiration_date_start : typing.Optional[dt.datetime]
             Start of expiration date range (inclusive, ISO 8601)
@@ -614,7 +604,6 @@ class AsyncMarketsClient:
                 "exchange_name": exchange_name,
                 "category": category,
                 "subcategory": subcategory,
-                "status": status,
                 "expiration_date_start": serialize_datetime(expiration_date_start)
                 if expiration_date_start is not None
                 else None,

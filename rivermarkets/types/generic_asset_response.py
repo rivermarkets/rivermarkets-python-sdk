@@ -16,7 +16,7 @@ class GenericAssetResponse(UniversalBaseModel):
 
     asset_type: typing.Optional[str] = pydantic.Field(default=None)
     """
-    moneyline | spread | threshold | distance
+    moneyline | spread | threshold | distance | btts
     """
 
     period: typing.Optional[str] = pydantic.Field(default=None)
