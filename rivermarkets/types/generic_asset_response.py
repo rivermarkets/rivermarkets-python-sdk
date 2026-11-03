@@ -11,7 +11,7 @@ from .market_search_result import MarketSearchResult
 
 class GenericAssetResponse(UniversalBaseModel):
     """
-    A tradeable generic asset (platform-curated or user-owned) with its member river_ids.
+    A tradeable generic asset with its member river_ids.
     """
 
     asset_type: typing.Optional[str] = pydantic.Field(default=None)
@@ -55,11 +55,10 @@ class GenericAssetResponse(UniversalBaseModel):
     Underlying event start (e.g. first pitch), for calendar views
     """
 
-    owner_subaccount_id: typing.Optional[str] = None
     status: typing.Optional[str] = None
     match_type: typing.Optional[str] = pydantic.Field(default=None)
     """
-    'manual' | 'owner' | 'auto_*' — auto-matched assets group by game in the UI
+    'manual' | 'auto_*' — auto-matched assets group by game in the UI
     """
 
     river_ids: typing.List[int]

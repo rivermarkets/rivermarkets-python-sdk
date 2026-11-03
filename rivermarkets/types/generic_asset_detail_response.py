@@ -43,7 +43,6 @@ class GenericAssetDetailResponse(UniversalBaseModel):
     """
 
     generic_asset_id: str
-    owner_subaccount_id: typing.Optional[str] = None
     name: str
     description: typing.Optional[str] = None
     category: typing.Optional[str] = None

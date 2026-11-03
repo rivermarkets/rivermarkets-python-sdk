@@ -34,6 +34,11 @@ class MarketSearchResult(UniversalBaseModel):
     Game/event start datetime (UTC). Populated for sports; null otherwise.
     """
 
+    open_datetime: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    When the exchange opened the market for trading (UTC).
+    """
+
     neg_risk: bool
     neg_risk_id: typing.Optional[str] = None
     condition_id: typing.Optional[str] = None

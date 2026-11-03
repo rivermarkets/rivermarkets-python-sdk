@@ -11,8 +11,8 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.generic_asset_detail_response import GenericAssetDetailResponse
 from ..types.generic_asset_response import GenericAssetResponse
+from ..types.generic_asset_detail_response import GenericAssetDetailResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.client_wrapper import AsyncClientWrapper
 
@@ -30,7 +30,6 @@ class GenericAssetsClient:
         q: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
-        owner: typing.Optional[str] = None,
         status: typing.Optional[str] = None,
         event_id: typing.Optional[str] = None,
         start_after: typing.Optional[dt.datetime] = None,
@@ -44,7 +43,7 @@ class GenericAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetListResponse:
         """
-        List generic assets visible to the caller (their own + platform-curated approved), one page of events.
+        List approved generic assets, one page of events.
 
         Groups assets by generic event, orders events by ``sort_by``, orders assets within an event
         winner-first then by line, and hydrates members (or only river_ids). There is no unpaginated
@@ -60,9 +59,6 @@ class GenericAssetsClient:
 
         subcategory : typing.Optional[str]
             Filter by subcategory
-
-        owner : typing.Optional[str]
-            'me' for own baskets only, 'platform' for public only
 
         status : typing.Optional[str]
             'approved' (default), 'expired', 'pending', 'rejected' or 'all'
@@ -116,7 +112,6 @@ class GenericAssetsClient:
                 "q": q,
                 "category": category,
                 "subcategory": subcategory,
-                "owner": owner,
                 "status": status,
                 "event_id": event_id,
                 "start_after": serialize_datetime(start_after)
@@ -158,82 +153,6 @@ class GenericAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def create_generic_asset(
-        self,
-        *,
-        subaccount_id: str,
-        name: str,
-        description: typing.Optional[str] = OMIT,
-        river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GenericAssetDetailResponse:
-        """
-        Create a new user-owned generic asset (basket).
-
-        Parameters
-        ----------
-        subaccount_id : str
-
-        name : str
-
-        description : typing.Optional[str]
-
-        river_ids : typing.Optional[typing.Sequence[int]]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GenericAssetDetailResponse
-            Successful Response
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets()
-        client.generic_assets.create_generic_asset(
-            subaccount_id="subaccount_id",
-            name="name",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "v1/generic-assets",
-            method="POST",
-            json={
-                "subaccount_id": subaccount_id,
-                "name": name,
-                "description": description,
-                "river_ids": river_ids,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    GenericAssetDetailResponse,
-                    parse_obj_as(
-                        type_=GenericAssetDetailResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
     def lookup_generic_assets(
         self,
         *,
@@ -241,9 +160,9 @@ class GenericAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.Dict[str, GenericAssetResponse]:
         """
-        Map river_ids to the generic asset each belongs to (visible assets only, platform preferred over own baskets).
+        Map river_ids to the generic asset each belongs to (approved assets only).
 
-        River_ids with no visible generic asset are omitted from the response.
+        River_ids with no approved generic asset are omitted from the response.
 
         Parameters
         ----------
@@ -306,7 +225,7 @@ class GenericAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetDetailResponse:
         """
-        Fetch a single generic asset (own or public-approved) with its resolved member markets.
+        Fetch a single approved generic asset with its resolved member markets.
 
         Parameters
         ----------
@@ -358,248 +277,6 @@ class GenericAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete_generic_asset(
-        self,
-        generic_asset_id: str,
-        *,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
-        """
-        Delete a user-owned generic asset (cascades to members).
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets()
-        client.generic_assets.delete_generic_asset(
-            generic_asset_id="generic_asset_id",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
-            method="DELETE",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def update_generic_asset(
-        self,
-        generic_asset_id: str,
-        *,
-        name: typing.Optional[str] = OMIT,
-        description: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GenericAssetResponse:
-        """
-        Update a user-owned generic asset's name or description. Platform-curated assets cannot be edited via this route.
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        name : typing.Optional[str]
-
-        description : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GenericAssetResponse
-            Successful Response
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets()
-        client.generic_assets.update_generic_asset(
-            generic_asset_id="generic_asset_id",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
-            method="PATCH",
-            json={
-                "name": name,
-                "description": description,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    GenericAssetResponse,
-                    parse_obj_as(
-                        type_=GenericAssetResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def add_generic_asset_members(
-        self,
-        generic_asset_id: str,
-        *,
-        river_ids: typing.Sequence[int],
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
-        """
-        Add river_ids to a user-owned generic asset.
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        river_ids : typing.Sequence[int]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets()
-        client.generic_assets.add_generic_asset_members(
-            generic_asset_id="generic_asset_id",
-            river_ids=[1],
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
-            method="POST",
-            json={
-                "river_ids": river_ids,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def remove_generic_asset_members(
-        self,
-        generic_asset_id: str,
-        *,
-        river_ids: typing.Sequence[int],
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
-        """
-        Remove river_ids from a user-owned generic asset.
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        river_ids : typing.Sequence[int]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        from rivermarkets import RiverMarkets
-
-        client = RiverMarkets()
-        client.generic_assets.remove_generic_asset_members(
-            generic_asset_id="generic_asset_id",
-            river_ids=[1],
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
-            method="DELETE",
-            json={
-                "river_ids": river_ids,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
 
 class AsyncGenericAssetsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -611,7 +288,6 @@ class AsyncGenericAssetsClient:
         q: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
-        owner: typing.Optional[str] = None,
         status: typing.Optional[str] = None,
         event_id: typing.Optional[str] = None,
         start_after: typing.Optional[dt.datetime] = None,
@@ -625,7 +301,7 @@ class AsyncGenericAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetListResponse:
         """
-        List generic assets visible to the caller (their own + platform-curated approved), one page of events.
+        List approved generic assets, one page of events.
 
         Groups assets by generic event, orders events by ``sort_by``, orders assets within an event
         winner-first then by line, and hydrates members (or only river_ids). There is no unpaginated
@@ -641,9 +317,6 @@ class AsyncGenericAssetsClient:
 
         subcategory : typing.Optional[str]
             Filter by subcategory
-
-        owner : typing.Optional[str]
-            'me' for own baskets only, 'platform' for public only
 
         status : typing.Optional[str]
             'approved' (default), 'expired', 'pending', 'rejected' or 'all'
@@ -705,7 +378,6 @@ class AsyncGenericAssetsClient:
                 "q": q,
                 "category": category,
                 "subcategory": subcategory,
-                "owner": owner,
                 "status": status,
                 "event_id": event_id,
                 "start_after": serialize_datetime(start_after)
@@ -747,90 +419,6 @@ class AsyncGenericAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def create_generic_asset(
-        self,
-        *,
-        subaccount_id: str,
-        name: str,
-        description: typing.Optional[str] = OMIT,
-        river_ids: typing.Optional[typing.Sequence[int]] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GenericAssetDetailResponse:
-        """
-        Create a new user-owned generic asset (basket).
-
-        Parameters
-        ----------
-        subaccount_id : str
-
-        name : str
-
-        description : typing.Optional[str]
-
-        river_ids : typing.Optional[typing.Sequence[int]]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GenericAssetDetailResponse
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets()
-
-
-        async def main() -> None:
-            await client.generic_assets.create_generic_asset(
-                subaccount_id="subaccount_id",
-                name="name",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "v1/generic-assets",
-            method="POST",
-            json={
-                "subaccount_id": subaccount_id,
-                "name": name,
-                "description": description,
-                "river_ids": river_ids,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    GenericAssetDetailResponse,
-                    parse_obj_as(
-                        type_=GenericAssetDetailResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
     async def lookup_generic_assets(
         self,
         *,
@@ -838,9 +426,9 @@ class AsyncGenericAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.Dict[str, GenericAssetResponse]:
         """
-        Map river_ids to the generic asset each belongs to (visible assets only, platform preferred over own baskets).
+        Map river_ids to the generic asset each belongs to (approved assets only).
 
-        River_ids with no visible generic asset are omitted from the response.
+        River_ids with no approved generic asset are omitted from the response.
 
         Parameters
         ----------
@@ -911,7 +499,7 @@ class AsyncGenericAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> GenericAssetDetailResponse:
         """
-        Fetch a single generic asset (own or public-approved) with its resolved member markets.
+        Fetch a single approved generic asset with its resolved member markets.
 
         Parameters
         ----------
@@ -956,280 +544,6 @@ class AsyncGenericAssetsClient:
                         object_=_response.json(),
                     ),
                 )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def delete_generic_asset(
-        self,
-        generic_asset_id: str,
-        *,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
-        """
-        Delete a user-owned generic asset (cascades to members).
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets()
-
-
-        async def main() -> None:
-            await client.generic_assets.delete_generic_asset(
-                generic_asset_id="generic_asset_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
-            method="DELETE",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def update_generic_asset(
-        self,
-        generic_asset_id: str,
-        *,
-        name: typing.Optional[str] = OMIT,
-        description: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> GenericAssetResponse:
-        """
-        Update a user-owned generic asset's name or description. Platform-curated assets cannot be edited via this route.
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        name : typing.Optional[str]
-
-        description : typing.Optional[str]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        GenericAssetResponse
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets()
-
-
-        async def main() -> None:
-            await client.generic_assets.update_generic_asset(
-                generic_asset_id="generic_asset_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}",
-            method="PATCH",
-            json={
-                "name": name,
-                "description": description,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    GenericAssetResponse,
-                    parse_obj_as(
-                        type_=GenericAssetResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def add_generic_asset_members(
-        self,
-        generic_asset_id: str,
-        *,
-        river_ids: typing.Sequence[int],
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
-        """
-        Add river_ids to a user-owned generic asset.
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        river_ids : typing.Sequence[int]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets()
-
-
-        async def main() -> None:
-            await client.generic_assets.add_generic_asset_members(
-                generic_asset_id="generic_asset_id",
-                river_ids=[1],
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
-            method="POST",
-            json={
-                "river_ids": river_ids,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def remove_generic_asset_members(
-        self,
-        generic_asset_id: str,
-        *,
-        river_ids: typing.Sequence[int],
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> None:
-        """
-        Remove river_ids from a user-owned generic asset.
-
-        Parameters
-        ----------
-        generic_asset_id : str
-
-        river_ids : typing.Sequence[int]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        import asyncio
-
-        from rivermarkets import AsyncRiverMarkets
-
-        client = AsyncRiverMarkets()
-
-
-        async def main() -> None:
-            await client.generic_assets.remove_generic_asset_members(
-                generic_asset_id="generic_asset_id",
-                river_ids=[1],
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"v1/generic-assets/{jsonable_encoder(generic_asset_id)}/members",
-            method="DELETE",
-            json={
-                "river_ids": river_ids,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(

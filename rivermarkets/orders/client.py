@@ -209,6 +209,7 @@ class OrdersClient:
             typing.Sequence[ConditionalOrderCreate]
         ] = OMIT,
         exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
+        split: typing.Optional[typing.Dict[str, typing.Optional[float]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderCreateResponse:
         """
@@ -220,7 +221,7 @@ class OrdersClient:
         See  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.
 
         **Asset Selection:**
-        Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
+        Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (cross-exchange generic asset).
         Generic asset orders are `LIMIT` only and route to every member exchange where the
         subaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order
         takes the best prices across those members: `price` bounds the fills (max for buys,
@@ -272,6 +273,9 @@ class OrdersClient:
         exchanges : typing.Optional[typing.Sequence[str]]
             Generic asset orders only: restrict routing to these exchanges (e.g. ['KALSHI', 'POLYMARKET']). Omit to route across all member venues.
 
+        split : typing.Optional[typing.Dict[str, typing.Optional[float]]]
+            Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -314,6 +318,7 @@ class OrdersClient:
                     direction="write",
                 ),
                 "exchanges": exchanges,
+                "split": split,
             },
             request_options=request_options,
             omit=OMIT,
@@ -950,6 +955,7 @@ class AsyncOrdersClient:
             typing.Sequence[ConditionalOrderCreate]
         ] = OMIT,
         exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
+        split: typing.Optional[typing.Dict[str, typing.Optional[float]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderCreateResponse:
         """
@@ -961,7 +967,7 @@ class AsyncOrdersClient:
         See  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.
 
         **Asset Selection:**
-        Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).
+        Provide exactly one of `river_id` (standard instrument) or `generic_asset_id` (cross-exchange generic asset).
         Generic asset orders are `LIMIT` only and route to every member exchange where the
         subaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order
         takes the best prices across those members: `price` bounds the fills (max for buys,
@@ -1013,6 +1019,9 @@ class AsyncOrdersClient:
         exchanges : typing.Optional[typing.Sequence[str]]
             Generic asset orders only: restrict routing to these exchanges (e.g. ['KALSHI', 'POLYMARKET']). Omit to route across all member venues.
 
+        split : typing.Optional[typing.Dict[str, typing.Optional[float]]]
+            Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -1063,6 +1072,7 @@ class AsyncOrdersClient:
                     direction="write",
                 ),
                 "exchanges": exchanges,
+                "split": split,
             },
             request_options=request_options,
             omit=OMIT,
