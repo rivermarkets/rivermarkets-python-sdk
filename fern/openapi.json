@@ -738,7 +738,7 @@
           "generic-assets"
         ],
         "summary": "List Generic Assets",
-        "description": "List generic assets visible to the caller (their own + platform-curated approved), one page of events.\n\nGroups assets by generic event, orders events by ``sort_by``, orders assets within an event\nwinner-first then by line, and hydrates members (or only river_ids). There is no unpaginated\nform: the whole catalog through the view runs for minutes.",
+        "description": "List approved generic assets, one page of events.\n\nGroups assets by generic event, orders events by ``sort_by``, orders assets within an event\nwinner-first then by line, and hydrates members (or only river_ids). There is no unpaginated\nform: the whole catalog through the view runs for minutes.",
         "operationId": "list_generic_assets_v1_generic_assets_get",
         "parameters": [
           {
@@ -798,24 +798,6 @@
               "title": "Subcategory"
             },
             "description": "Filter by subcategory"
-          },
-          {
-            "name": "owner",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "'me' for own baskets only, 'platform' for public only",
-              "title": "Owner"
-            },
-            "description": "'me' for own baskets only, 'platform' for public only"
           },
           {
             "name": "status",
@@ -996,46 +978,6 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": [
-          "generic-assets"
-        ],
-        "summary": "Create Generic Asset",
-        "description": "Create a new user-owned generic asset (basket).",
-        "operationId": "create_generic_asset_v1_generic_assets_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenericAssetCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenericAssetDetailResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/v1/generic-assets/lookup": {
@@ -1044,7 +986,7 @@
           "generic-assets"
         ],
         "summary": "Lookup Generic Assets",
-        "description": "Map river_ids to the generic asset each belongs to (visible assets only, platform preferred over own baskets).\n\nRiver_ids with no visible generic asset are omitted from the response.",
+        "description": "Map river_ids to the generic asset each belongs to (approved assets only).\n\nRiver_ids with no approved generic asset are omitted from the response.",
         "operationId": "lookup_generic_assets_v1_generic_assets_lookup_post",
         "requestBody": {
           "content": {
@@ -1090,7 +1032,7 @@
           "generic-assets"
         ],
         "summary": "Get Generic Asset",
-        "description": "Fetch a single generic asset (own or public-approved) with its resolved member markets.",
+        "description": "Fetch a single approved generic asset with its resolved member markets.",
         "operationId": "get_generic_asset_v1_generic_assets__generic_asset_id__get",
         "parameters": [
           {
@@ -1114,185 +1056,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "generic-assets"
-        ],
-        "summary": "Update Generic Asset",
-        "description": "Update a user-owned generic asset's name or description. Platform-curated assets cannot be edited via this route.",
-        "operationId": "update_generic_asset_v1_generic_assets__generic_asset_id__patch",
-        "parameters": [
-          {
-            "name": "generic_asset_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Generic Asset Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenericAssetUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenericAssetResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "generic-assets"
-        ],
-        "summary": "Delete Generic Asset",
-        "description": "Delete a user-owned generic asset (cascades to members).",
-        "operationId": "delete_generic_asset_v1_generic_assets__generic_asset_id__delete",
-        "parameters": [
-          {
-            "name": "generic_asset_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Generic Asset Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/generic-assets/{generic_asset_id}/members": {
-      "post": {
-        "tags": [
-          "generic-assets"
-        ],
-        "summary": "Add Generic Asset Members",
-        "description": "Add river_ids to a user-owned generic asset.",
-        "operationId": "add_generic_asset_members_v1_generic_assets__generic_asset_id__members_post",
-        "parameters": [
-          {
-            "name": "generic_asset_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Generic Asset Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenericAssetMemberAdd"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "generic-assets"
-        ],
-        "summary": "Remove Generic Asset Members",
-        "description": "Remove river_ids from a user-owned generic asset.",
-        "operationId": "remove_generic_asset_members_v1_generic_assets__generic_asset_id__members_delete",
-        "parameters": [
-          {
-            "name": "generic_asset_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Generic Asset Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenericAssetMemberRemove"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -2017,7 +1780,7 @@
           "orders"
         ],
         "summary": "Create Order",
-        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\nSee  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `generic_asset_id` (user-defined basket).\nGeneric asset orders are `LIMIT` only and route to every member exchange where the\nsubaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order\ntakes the best prices across those members: `price` bounds the fills (max for buys,\nmin for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.\nWith `GTC` or `GTD` the order takes what crosses, then rests the remainder at `price`.\n\n**Response:**\nReturns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
+        "description": "Place a new order.\n\nSubmits an order for asynchronous processing. The order is persisted immediately\nand queued for execution on the target exchange.\n\nSee  [Orders](https://docs.rivermarkets.com/concepts/orders) and [Order Types](https://docs.rivermarkets.com/concepts/order-types) for more information.\n\n**Asset Selection:**\nProvide exactly one of `river_id` (standard instrument) or `generic_asset_id` (cross-exchange generic asset).\nGeneric asset orders are `LIMIT` only and route to every member exchange where the\nsubaccount holds valid credentials (or to `exchanges` when given). With `IOC` the order\ntakes the best prices across those members: `price` bounds the fills (max for buys,\nmin for sells); liquidity beyond it is not taken and the unfilled remainder is cancelled.\nWith `GTC` or `GTD` the order takes what crosses, then rests the remainder at `price`.\n\n**Response:**\nReturns `202 Accepted` with the order_id and associated complex_orders ids (TP/SL).\nPoll `GET /v1/orders/{order_id}` or use webhooks to track execution.",
         "operationId": "create_order_v1_orders_post",
         "requestBody": {
           "required": true,
@@ -5308,52 +5071,6 @@
         "title": "FillResponse",
         "description": "Schema for fill response."
       },
-      "GenericAssetCreate": {
-        "properties": {
-          "subaccount_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Subaccount Id"
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255,
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "river_ids": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "River Ids"
-          }
-        },
-        "type": "object",
-        "required": [
-          "subaccount_id",
-          "name"
-        ],
-        "title": "GenericAssetCreate",
-        "description": "Request schema for creating a new user-owned generic asset (basket)."
-      },
       "GenericAssetDetailResponse": {
         "properties": {
           "asset_type": {
@@ -5432,18 +5149,6 @@
             "type": "string",
             "format": "uuid",
             "title": "Generic Asset Id"
-          },
-          "owner_subaccount_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owner Subaccount Id"
           },
           "name": {
             "type": "string",
@@ -5622,42 +5327,6 @@
         "title": "GenericAssetLookupRequest",
         "description": "Request schema for resolving river_ids to the generic asset each belongs to."
       },
-      "GenericAssetMemberAdd": {
-        "properties": {
-          "river_ids": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "River Ids"
-          }
-        },
-        "type": "object",
-        "required": [
-          "river_ids"
-        ],
-        "title": "GenericAssetMemberAdd",
-        "description": "Request schema for adding members to a user-owned generic asset."
-      },
-      "GenericAssetMemberRemove": {
-        "properties": {
-          "river_ids": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "River Ids"
-          }
-        },
-        "type": "object",
-        "required": [
-          "river_ids"
-        ],
-        "title": "GenericAssetMemberRemove",
-        "description": "Request schema for removing members from a user-owned generic asset."
-      },
       "GenericAssetResponse": {
         "properties": {
           "asset_type": {
@@ -5796,17 +5465,6 @@
             "title": "Start Datetime",
             "description": "Underlying event start (e.g. first pitch), for calendar views"
           },
-          "owner_subaccount_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owner Subaccount Id"
-          },
           "status": {
             "anyOf": [
               {
@@ -5828,7 +5486,7 @@
               }
             ],
             "title": "Match Type",
-            "description": "'manual' | 'owner' | 'auto_*' \u2014 auto-matched assets group by game in the UI"
+            "description": "'manual' | 'auto_*' \u2014 auto-matched assets group by game in the UI"
           },
           "river_ids": {
             "items": {
@@ -5905,37 +5563,7 @@
           "inserted_at"
         ],
         "title": "GenericAssetResponse",
-        "description": "A tradeable generic asset (platform-curated or user-owned) with its member river_ids."
-      },
-      "GenericAssetUpdate": {
-        "properties": {
-          "name": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 255
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          }
-        },
-        "type": "object",
-        "title": "GenericAssetUpdate",
-        "description": "Request schema for updating a user-owned generic asset."
+        "description": "A tradeable generic asset with its member river_ids."
       },
       "GenericEntity": {
         "properties": {
@@ -6628,6 +6256,18 @@
             "title": "Start Datetime",
             "description": "Game/event start datetime (UTC). Populated for sports; null otherwise."
           },
+          "open_datetime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Datetime",
+            "description": "When the exchange opened the market for trading (UTC)."
+          },
           "neg_risk": {
             "type": "boolean",
             "title": "Neg Risk"
@@ -7106,6 +6746,21 @@
             ],
             "title": "Exchanges",
             "description": "Generic asset orders only: restrict routing to these exchanges (e.g. ['KALSHI', 'POLYMARKET']). Omit to route across all member venues."
+          },
+          "split": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "description": "Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split."
           }
         },
         "type": "object",
