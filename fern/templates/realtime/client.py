@@ -14,6 +14,11 @@ Usage::
             if msg.type == "snapshot":
                 ...
 
+    async with rt.orderbooks(generic_asset_ids=["9f3c..."], exchanges=["KALSHI", "POLYMARKET"]) as stream:
+        async for msg in stream:
+            if msg.type in ("snapshot", "update"):
+                print(msg.generic_asset_id, msg.data["best_bid_price"])
+
     async with rt.orders(subaccount_id="sub_abc") as stream:
         async for msg in stream:
             ...
@@ -49,6 +54,23 @@ _PATH_FILLS = "/v1/ws/fills"
 _PATH_RFQS = "/v1/ws/rfqs"
 
 
+# A merged generic asset book: the asset and its exchange set (None = every member exchange).
+GenericBook = typing.Tuple[str, typing.Optional[typing.Tuple[str, ...]]]
+
+
+def _exchange_set(exchanges: typing.Optional[typing.Iterable[str]]) -> typing.Optional[typing.Tuple[str, ...]]:
+    """The server's normalization: uppercased, deduplicated, sorted; empty means every member exchange."""
+    names = sorted({name.upper() for name in exchanges or ()})
+    return tuple(names) if names else None
+
+
+def _generic_frame(action: str, generic_asset_ids: typing.List[str], exchanges: typing.Optional[typing.Tuple[str, ...]]) -> str:
+    frame: typing.Dict[str, typing.Any] = {"action": action, "generic_asset_ids": generic_asset_ids}
+    if exchanges is not None:
+        frame["exchanges"] = list(exchanges)
+    return json.dumps(frame)
+
+
 class Subscription(AbstractAsyncContextManager):
     """An async-iterable WebSocket subscription with transparent reconnect.
 
@@ -64,12 +86,14 @@ class Subscription(AbstractAsyncContextManager):
         path: str,
         extra_query: typing.Optional[typing.Dict[str, str]] = None,
         active_river_ids: typing.Optional[typing.Iterable[int]] = None,
+        active_generic_books: typing.Optional[typing.Iterable[GenericBook]] = None,
         filters: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ):
         self._client = client
         self._path = path
         self._extra_query = dict(extra_query or {})
         self._river_ids: typing.Set[int] = set(active_river_ids or ())
+        self._generic_books: typing.Set[GenericBook] = set(active_generic_books or ())
         self._filters: typing.Optional[typing.Dict[str, typing.Any]] = (
             dict(filters) if filters is not None else None
         )
@@ -90,7 +114,8 @@ class Subscription(AbstractAsyncContextManager):
             await self._ws.send(
                 json.dumps({"action": "subscribe", "filters": self._filters})
             )
-        elif self._river_ids:
+            return
+        if self._river_ids:
             await self._ws.send(
                 json.dumps(
                     {
@@ -99,6 +124,11 @@ class Subscription(AbstractAsyncContextManager):
                     }
                 )
             )
+        by_exchanges: typing.Dict[typing.Optional[typing.Tuple[str, ...]], typing.List[str]] = {}
+        for generic_asset_id, exchanges in self._generic_books:
+            by_exchanges.setdefault(exchanges, []).append(generic_asset_id)
+        for exchanges, generic_asset_ids in by_exchanges.items():
+            await self._ws.send(_generic_frame("subscribe", generic_asset_ids, exchanges))
 
     async def close(self) -> None:
         self._closed = True
@@ -130,27 +160,52 @@ class Subscription(AbstractAsyncContextManager):
             return parse_message(json.loads(raw))
         raise StopAsyncIteration
 
-    async def subscribe(self, river_ids: typing.Iterable[int]) -> None:
-        """Add `river_ids` to the active subscription set and send a subscribe frame."""
+    async def subscribe(
+        self,
+        river_ids: typing.Iterable[int] = (),
+        *,
+        generic_asset_ids: typing.Iterable[str] = (),
+        exchanges: typing.Optional[typing.Iterable[str]] = None,
+    ) -> None:
+        """Add `river_ids`, and the merged books of `generic_asset_ids` over `exchanges`
+        (orderbooks stream only; omit `exchanges` for every member exchange), to the
+        active subscription set and send the subscribe frames."""
         ids = list(river_ids)
-        if not ids:
-            return
-        self._river_ids.update(ids)
-        if self._ws is not None:
-            await self._ws.send(
-                json.dumps({"action": "subscribe", "river_ids": ids})
-            )
+        if ids:
+            self._river_ids.update(ids)
+            if self._ws is not None:
+                await self._ws.send(
+                    json.dumps({"action": "subscribe", "river_ids": ids})
+                )
+        generic_ids = [str(generic_asset_id) for generic_asset_id in generic_asset_ids]
+        if generic_ids:
+            exchange_set = _exchange_set(exchanges)
+            self._generic_books.update((generic_asset_id, exchange_set) for generic_asset_id in generic_ids)
+            if self._ws is not None:
+                await self._ws.send(_generic_frame("subscribe", generic_ids, exchange_set))
 
-    async def unsubscribe(self, river_ids: typing.Iterable[int]) -> None:
-        """Remove `river_ids` from the active subscription set and send an unsubscribe frame."""
+    async def unsubscribe(
+        self,
+        river_ids: typing.Iterable[int] = (),
+        *,
+        generic_asset_ids: typing.Iterable[str] = (),
+        exchanges: typing.Optional[typing.Iterable[str]] = None,
+    ) -> None:
+        """Remove `river_ids`, and the `generic_asset_ids` books subscribed with the same
+        `exchanges`, from the active subscription set and send the unsubscribe frames."""
         ids = list(river_ids)
-        if not ids:
-            return
-        self._river_ids.difference_update(ids)
-        if self._ws is not None:
-            await self._ws.send(
-                json.dumps({"action": "unsubscribe", "river_ids": ids})
-            )
+        if ids:
+            self._river_ids.difference_update(ids)
+            if self._ws is not None:
+                await self._ws.send(
+                    json.dumps({"action": "unsubscribe", "river_ids": ids})
+                )
+        generic_ids = [str(generic_asset_id) for generic_asset_id in generic_asset_ids]
+        if generic_ids:
+            exchange_set = _exchange_set(exchanges)
+            self._generic_books.difference_update((generic_asset_id, exchange_set) for generic_asset_id in generic_ids)
+            if self._ws is not None:
+                await self._ws.send(_generic_frame("unsubscribe", generic_ids, exchange_set))
 
     async def set_filters(self, filters: typing.Dict[str, typing.Any]) -> None:
         """Replace the RFQ filter set (rfqs stream only). The server swaps the
@@ -211,12 +266,23 @@ class RealtimeClient:
             extra_query=extra_query,
         )
 
-    def orderbooks(self, river_ids: typing.Iterable[int]) -> Subscription:
-        """Subscribe to live orderbook snapshots and updates for one or more markets."""
+    def orderbooks(
+        self,
+        river_ids: typing.Iterable[int] = (),
+        *,
+        generic_asset_ids: typing.Iterable[str] = (),
+        exchanges: typing.Optional[typing.Iterable[str]] = None,
+    ) -> Subscription:
+        """Subscribe to live orderbook snapshots and updates for markets, and to the
+        merged books of generic assets. `exchanges` restricts the generic merge to
+        those exchanges; omit it for every member exchange. Generic frames carry
+        `generic_asset_id` and `exchanges` instead of `river_id`."""
+        exchange_set = _exchange_set(exchanges)
         return Subscription(
             client=self,
             path=_PATH_ORDERBOOKS,
             active_river_ids=river_ids,
+            active_generic_books=[(str(generic_asset_id), exchange_set) for generic_asset_id in generic_asset_ids],
         )
 
     def orders(self, *, subaccount_id: str) -> Subscription:
