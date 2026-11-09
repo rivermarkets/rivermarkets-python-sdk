@@ -99,9 +99,6 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/subaccounts/{subaccount_id}", "get"),
     ("/v1/subaccounts/{subaccount_id}", "patch"),
     ("/v1/subaccounts/{subaccount_id}", "delete"),
-    ("/v1/subaccounts/{subaccount_id}/grants", "get"),
-    ("/v1/subaccounts/{subaccount_id}/grants/{user_id}", "put"),
-    ("/v1/subaccounts/{subaccount_id}/grants/{user_id}", "delete"),
 }
 
 HTTP_METHODS = {"get", "post", "put", "delete", "patch", "options", "head"}
