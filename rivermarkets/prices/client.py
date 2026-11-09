@@ -2,26 +2,174 @@
 
 from ..core.client_wrapper import SyncClientWrapper
 import typing
-from .types.get_prices_v1prices_river_id_get_request_type import (
-    GetPricesV1PricesRiverIdGetRequestType,
-)
-from .types.get_prices_v1prices_river_id_get_request_interval import (
-    GetPricesV1PricesRiverIdGetRequestInterval,
+from .types.get_volume_v1prices_river_id_volume_get_request_window import (
+    GetVolumeV1PricesRiverIdVolumeGetRequestWindow,
 )
 from ..core.request_options import RequestOptions
-from ..types.price_response import PriceResponse
+from ..types.volume_response import VolumeResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
+from .types.get_volume_batch_v1prices_volume_get_request_window import (
+    GetVolumeBatchV1PricesVolumeGetRequestWindow,
+)
+from ..types.batch_volume_response import BatchVolumeResponse
+from .types.get_prices_v1prices_river_id_get_request_type import (
+    GetPricesV1PricesRiverIdGetRequestType,
+)
+from .types.get_prices_v1prices_river_id_get_request_interval import (
+    GetPricesV1PricesRiverIdGetRequestInterval,
+)
+from ..types.price_response import PriceResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 
 class PricesClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    def get_volume(
+        self,
+        river_id: int,
+        *,
+        window: typing.Optional[GetVolumeV1PricesRiverIdVolumeGetRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> VolumeResponse:
+        """
+        Traded volume over a recent window, summed from our captured trade prints
+        (all exchanges write to `trade_prints`). 1 contract traded = $1 of volume.
+        Summed from the raw hypertable rather than the OHLC continuous aggregates
+        so the most recent minutes are always included.
+
+        Parameters
+        ----------
+        river_id : int
+            River market ID
+
+        window : typing.Optional[GetVolumeV1PricesRiverIdVolumeGetRequestWindow]
+            Lookback window
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        VolumeResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.prices.get_volume(
+            river_id=1,
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/prices/{jsonable_encoder(river_id)}/volume",
+            method="GET",
+            params={
+                "window": window,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    VolumeResponse,
+                    parse_obj_as(
+                        type_=VolumeResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def get_volume_batch(
+        self,
+        *,
+        river_ids: str,
+        window: typing.Optional[GetVolumeBatchV1PricesVolumeGetRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BatchVolumeResponse:
+        """
+        Batch variant of the windowed-volume endpoint for grid views (multibook):
+        one grouped scan of `trade_prints` instead of a request per market.
+        Markets with no prints in the window come back with volume 0.
+
+        Parameters
+        ----------
+        river_ids : str
+            Comma-separated list of river IDs
+
+        window : typing.Optional[GetVolumeBatchV1PricesVolumeGetRequestWindow]
+            Lookback window
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BatchVolumeResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.prices.get_volume_batch(
+            river_ids="river_ids",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/prices/volume",
+            method="GET",
+            params={
+                "river_ids": river_ids,
+                "window": window,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    BatchVolumeResponse,
+                    parse_obj_as(
+                        type_=BatchVolumeResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def get_prices(
         self,
@@ -115,6 +263,162 @@ class PricesClient:
 class AsyncPricesClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    async def get_volume(
+        self,
+        river_id: int,
+        *,
+        window: typing.Optional[GetVolumeV1PricesRiverIdVolumeGetRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> VolumeResponse:
+        """
+        Traded volume over a recent window, summed from our captured trade prints
+        (all exchanges write to `trade_prints`). 1 contract traded = $1 of volume.
+        Summed from the raw hypertable rather than the OHLC continuous aggregates
+        so the most recent minutes are always included.
+
+        Parameters
+        ----------
+        river_id : int
+            River market ID
+
+        window : typing.Optional[GetVolumeV1PricesRiverIdVolumeGetRequestWindow]
+            Lookback window
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        VolumeResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.prices.get_volume(
+                river_id=1,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/prices/{jsonable_encoder(river_id)}/volume",
+            method="GET",
+            params={
+                "window": window,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    VolumeResponse,
+                    parse_obj_as(
+                        type_=VolumeResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def get_volume_batch(
+        self,
+        *,
+        river_ids: str,
+        window: typing.Optional[GetVolumeBatchV1PricesVolumeGetRequestWindow] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> BatchVolumeResponse:
+        """
+        Batch variant of the windowed-volume endpoint for grid views (multibook):
+        one grouped scan of `trade_prints` instead of a request per market.
+        Markets with no prints in the window come back with volume 0.
+
+        Parameters
+        ----------
+        river_ids : str
+            Comma-separated list of river IDs
+
+        window : typing.Optional[GetVolumeBatchV1PricesVolumeGetRequestWindow]
+            Lookback window
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        BatchVolumeResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.prices.get_volume_batch(
+                river_ids="river_ids",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/prices/volume",
+            method="GET",
+            params={
+                "river_ids": river_ids,
+                "window": window,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    BatchVolumeResponse,
+                    parse_obj_as(
+                        type_=BatchVolumeResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def get_prices(
         self,

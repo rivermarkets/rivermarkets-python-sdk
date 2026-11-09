@@ -18,6 +18,7 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..types.cancel_complex_order_response import CancelComplexOrderResponse
 from ..types.complex_order_response import ComplexOrderResponse
 from ..core.jsonable_encoder import jsonable_encoder
+from ..types.complex_order_edit_response import ComplexOrderEditResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -432,6 +433,80 @@ class ComplexOrdersClient:
                     CancelComplexOrderResponse,
                     parse_obj_as(
                         type_=CancelComplexOrderResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def edit_complex_order(
+        self,
+        complex_order_id: str,
+        *,
+        total_qty: float,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ComplexOrderEditResponse:
+        """
+        Edit the total quantity of an ACTIVE peg order.
+
+        `total_qty` is the new total, not the remaining. The new total is recorded
+        immediately and the peg consumer resizes the resting child in place (queue
+        position is kept on venues that support in-place decreases). A total at or
+        below the quantity already filled closes the peg as EXECUTED. Returns 202;
+        the outcome is recorded on the returned amendment.
+
+        Parameters
+        ----------
+        complex_order_id : str
+
+        total_qty : float
+            New total quantity (not remaining)
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ComplexOrderEditResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.complex_orders.edit_complex_order(
+            complex_order_id="complex_order_id",
+            total_qty=1.1,
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/complex-orders/{jsonable_encoder(complex_order_id)}",
+            method="PATCH",
+            json={
+                "total_qty": total_qty,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    ComplexOrderEditResponse,
+                    parse_obj_as(
+                        type_=ComplexOrderEditResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -899,6 +974,88 @@ class AsyncComplexOrdersClient:
                     CancelComplexOrderResponse,
                     parse_obj_as(
                         type_=CancelComplexOrderResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def edit_complex_order(
+        self,
+        complex_order_id: str,
+        *,
+        total_qty: float,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ComplexOrderEditResponse:
+        """
+        Edit the total quantity of an ACTIVE peg order.
+
+        `total_qty` is the new total, not the remaining. The new total is recorded
+        immediately and the peg consumer resizes the resting child in place (queue
+        position is kept on venues that support in-place decreases). A total at or
+        below the quantity already filled closes the peg as EXECUTED. Returns 202;
+        the outcome is recorded on the returned amendment.
+
+        Parameters
+        ----------
+        complex_order_id : str
+
+        total_qty : float
+            New total quantity (not remaining)
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ComplexOrderEditResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.complex_orders.edit_complex_order(
+                complex_order_id="complex_order_id",
+                total_qty=1.1,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/complex-orders/{jsonable_encoder(complex_order_id)}",
+            method="PATCH",
+            json={
+                "total_qty": total_qty,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    ComplexOrderEditResponse,
+                    parse_obj_as(
+                        type_=ComplexOrderEditResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

@@ -6,8 +6,16 @@ from .get_prices_v1prices_river_id_get_request_interval import (
 from .get_prices_v1prices_river_id_get_request_type import (
     GetPricesV1PricesRiverIdGetRequestType,
 )
+from .get_volume_batch_v1prices_volume_get_request_window import (
+    GetVolumeBatchV1PricesVolumeGetRequestWindow,
+)
+from .get_volume_v1prices_river_id_volume_get_request_window import (
+    GetVolumeV1PricesRiverIdVolumeGetRequestWindow,
+)
 
 __all__ = [
     "GetPricesV1PricesRiverIdGetRequestInterval",
     "GetPricesV1PricesRiverIdGetRequestType",
+    "GetVolumeBatchV1PricesVolumeGetRequestWindow",
+    "GetVolumeV1PricesRiverIdVolumeGetRequestWindow",
 ]

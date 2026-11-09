@@ -10,6 +10,9 @@ from ..core.api_error import ApiError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from ..core.jsonable_encoder import jsonable_encoder
+from ..types.subaccount_grant_response import SubaccountGrantResponse
+from .types.subaccount_grant_put_request_role import SubaccountGrantPutRequestRole
+from ..types.subaccount_grant_put_response import SubaccountGrantPutResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -314,6 +317,194 @@ class SubaccountsClient:
                         object_=_response.json(),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def list_subaccount_grants(
+        self,
+        subaccount_id: str,
+        *,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[SubaccountGrantResponse]:
+        """
+        Effective access on a subaccount: derived org-admin entries (not editable per
+        subaccount) plus explicit grant rows. Requires user:manage.
+
+        Parameters
+        ----------
+        subaccount_id : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[SubaccountGrantResponse]
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.subaccounts.list_subaccount_grants(
+            subaccount_id="subaccount_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/grants",
+            method="GET",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.List[SubaccountGrantResponse],
+                    parse_obj_as(
+                        type_=typing.List[SubaccountGrantResponse],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def put_subaccount_grant(
+        self,
+        subaccount_id: str,
+        user_id: str,
+        *,
+        role: SubaccountGrantPutRequestRole,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SubaccountGrantPutResponse:
+        """
+        Assign or change a member's role on a subaccount. The role name is expanded to
+        permission strings server-side; audit rows come from the DB trigger.
+
+        Parameters
+        ----------
+        subaccount_id : str
+
+        user_id : str
+
+        role : SubaccountGrantPutRequestRole
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SubaccountGrantPutResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.subaccounts.put_subaccount_grant(
+            subaccount_id="subaccount_id",
+            user_id="user_id",
+            role="admin",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/grants/{jsonable_encoder(user_id)}",
+            method="PUT",
+            json={
+                "role": role,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    SubaccountGrantPutResponse,
+                    parse_obj_as(
+                        type_=SubaccountGrantPutResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def delete_subaccount_grant(
+        self,
+        subaccount_id: str,
+        user_id: str,
+        *,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> None:
+        """
+        Remove a member's grant on a subaccount; audit row comes from the DB trigger.
+
+        Parameters
+        ----------
+        subaccount_id : str
+
+        user_id : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.subaccounts.delete_subaccount_grant(
+            subaccount_id="subaccount_id",
+            user_id="user_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/grants/{jsonable_encoder(user_id)}",
+            method="DELETE",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
@@ -668,6 +859,218 @@ class AsyncSubaccountsClient:
                         object_=_response.json(),
                     ),
                 )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def list_subaccount_grants(
+        self,
+        subaccount_id: str,
+        *,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[SubaccountGrantResponse]:
+        """
+        Effective access on a subaccount: derived org-admin entries (not editable per
+        subaccount) plus explicit grant rows. Requires user:manage.
+
+        Parameters
+        ----------
+        subaccount_id : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[SubaccountGrantResponse]
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.subaccounts.list_subaccount_grants(
+                subaccount_id="subaccount_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/grants",
+            method="GET",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.List[SubaccountGrantResponse],
+                    parse_obj_as(
+                        type_=typing.List[SubaccountGrantResponse],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def put_subaccount_grant(
+        self,
+        subaccount_id: str,
+        user_id: str,
+        *,
+        role: SubaccountGrantPutRequestRole,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SubaccountGrantPutResponse:
+        """
+        Assign or change a member's role on a subaccount. The role name is expanded to
+        permission strings server-side; audit rows come from the DB trigger.
+
+        Parameters
+        ----------
+        subaccount_id : str
+
+        user_id : str
+
+        role : SubaccountGrantPutRequestRole
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SubaccountGrantPutResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.subaccounts.put_subaccount_grant(
+                subaccount_id="subaccount_id",
+                user_id="user_id",
+                role="admin",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/grants/{jsonable_encoder(user_id)}",
+            method="PUT",
+            json={
+                "role": role,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    SubaccountGrantPutResponse,
+                    parse_obj_as(
+                        type_=SubaccountGrantPutResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def delete_subaccount_grant(
+        self,
+        subaccount_id: str,
+        user_id: str,
+        *,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> None:
+        """
+        Remove a member's grant on a subaccount; audit row comes from the DB trigger.
+
+        Parameters
+        ----------
+        subaccount_id : str
+
+        user_id : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.subaccounts.delete_subaccount_grant(
+                subaccount_id="subaccount_id",
+                user_id="user_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/subaccounts/{jsonable_encoder(subaccount_id)}/grants/{jsonable_encoder(user_id)}",
+            method="DELETE",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
