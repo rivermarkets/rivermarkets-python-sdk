@@ -88,6 +88,11 @@ class OrderCreate(UniversalBaseModel):
     Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split.
     """
 
+    client_order_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Optional client-chosen order id, forwarded to the exchange where supported. LIMIT orders on a river_id only. Must be unique per subaccount (409 on reuse); 1-36 characters from [A-Za-z0-9_-]. Editing the order replaces it with a River-generated id.
+    """
+
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True
     )  # type: ignore # Pydantic v2

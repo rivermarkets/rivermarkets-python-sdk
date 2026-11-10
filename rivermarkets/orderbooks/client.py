@@ -17,6 +17,80 @@ class OrderbooksClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
+    def get_generic_asset_orderbook(
+        self,
+        generic_asset_id: str,
+        *,
+        levels: typing.Optional[int] = None,
+        exchanges: typing.Optional[typing.Sequence[str]] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OrderbookResponse:
+        """
+        Get merged orderbook for a generic asset (basket).
+
+        Fetches orderbooks for all member instruments and merges them by summing
+        quantity at each price level. Touch mechanism ensures subscriptions are active.
+
+        Parameters
+        ----------
+        generic_asset_id : str
+
+        levels : typing.Optional[int]
+            Number of price levels to return
+
+        exchanges : typing.Optional[typing.Sequence[str]]
+            Restrict the merge to these exchanges (e.g. KALSHI, POLYMARKET). Omit for all member venues.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderbookResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.orderbooks.get_generic_asset_orderbook(
+            generic_asset_id="generic_asset_id",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"v1/orderbooks/generic-asset/{jsonable_encoder(generic_asset_id)}",
+            method="GET",
+            params={
+                "levels": levels,
+                "exchanges": exchanges,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderbookResponse,
+                    parse_obj_as(
+                        type_=OrderbookResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     def get_orderbook(
         self,
         river_id: int,
@@ -87,6 +161,88 @@ class OrderbooksClient:
 class AsyncOrderbooksClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    async def get_generic_asset_orderbook(
+        self,
+        generic_asset_id: str,
+        *,
+        levels: typing.Optional[int] = None,
+        exchanges: typing.Optional[typing.Sequence[str]] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> OrderbookResponse:
+        """
+        Get merged orderbook for a generic asset (basket).
+
+        Fetches orderbooks for all member instruments and merges them by summing
+        quantity at each price level. Touch mechanism ensures subscriptions are active.
+
+        Parameters
+        ----------
+        generic_asset_id : str
+
+        levels : typing.Optional[int]
+            Number of price levels to return
+
+        exchanges : typing.Optional[typing.Sequence[str]]
+            Restrict the merge to these exchanges (e.g. KALSHI, POLYMARKET). Omit for all member venues.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        OrderbookResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.orderbooks.get_generic_asset_orderbook(
+                generic_asset_id="generic_asset_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"v1/orderbooks/generic-asset/{jsonable_encoder(generic_asset_id)}",
+            method="GET",
+            params={
+                "levels": levels,
+                "exchanges": exchanges,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    OrderbookResponse,
+                    parse_obj_as(
+                        type_=OrderbookResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def get_orderbook(
         self,

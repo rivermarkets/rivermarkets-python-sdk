@@ -20,12 +20,14 @@ OUT = HERE / "openapi.json"
 ALLOWED: set[tuple[str, str]] = {
     # balance
     ("/v1/balance/exchange", "get"),
+    ("/v1/balance/exchange/shard-transfer", "post"),
     # complex-orders
     ("/v1/complex-orders", "get"),
     ("/v1/complex-orders", "post"),
     ("/v1/complex-orders/cancel-all", "post"),
     ("/v1/complex-orders/{complex_order_id}", "get"),
     ("/v1/complex-orders/{complex_order_id}", "delete"),
+    ("/v1/complex-orders/{complex_order_id}", "patch"),
     # fair-values
     ("/v1/fair-values", "get"),
     ("/v1/fair-values", "post"),
@@ -37,7 +39,10 @@ ALLOWED: set[tuple[str, str]] = {
     # generic-assets
     ("/v1/generic-assets", "get"),
     ("/v1/generic-assets/lookup", "post"),
+    ("/v1/generic-assets/by-id", "post"),
     ("/v1/generic-assets/{generic_asset_id}", "get"),
+    # maintenance
+    ("/v1/maintenance/status", "get"),
     # markets
     ("/v1/markets/lookup", "get"),
     ("/v1/markets/match", "get"),
@@ -46,11 +51,13 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/markets/resolve-combos", "post"),
     # orderbooks
     ("/v1/orderbooks/{river_id}", "get"),
+    ("/v1/orderbooks/generic-asset/{generic_asset_id}", "get"),
     # orders
     ("/v1/orders", "post"),
     ("/v1/orders", "get"),
     ("/v1/orders/batch", "post"),
     ("/v1/orders/cancel-all", "post"),
+    ("/v1/orders/cancel-batch", "post"),
     ("/v1/orders/{order_id}", "get"),
     ("/v1/orders/{order_id}", "delete"),
     ("/v1/orders/{order_id}", "patch"),
@@ -59,6 +66,10 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/positions", "get"),
     # prices
     ("/v1/prices/{river_id}", "get"),
+    ("/v1/prices/{river_id}/volume", "get"),
+    ("/v1/prices/volume", "get"),
+    # rate-limit
+    ("/v1/rate-limit", "get"),
     # parlays
     ("/v1/parlays/build", "post"),
     # rfqs

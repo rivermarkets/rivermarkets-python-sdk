@@ -3,9 +3,13 @@
 from .types import (
     GetPricesV1PricesRiverIdGetRequestInterval,
     GetPricesV1PricesRiverIdGetRequestType,
+    GetVolumeBatchV1PricesVolumeGetRequestWindow,
+    GetVolumeV1PricesRiverIdVolumeGetRequestWindow,
 )
 
 __all__ = [
     "GetPricesV1PricesRiverIdGetRequestInterval",
     "GetPricesV1PricesRiverIdGetRequestType",
+    "GetVolumeBatchV1PricesVolumeGetRequestWindow",
+    "GetVolumeV1PricesRiverIdVolumeGetRequestWindow",
 ]

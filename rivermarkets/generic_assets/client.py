@@ -218,6 +218,71 @@ class GenericAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    def get_generic_assets_by_id(
+        self,
+        *,
+        generic_asset_ids: typing.Sequence[str],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, GenericAssetResponse]:
+        """
+        Fetch generic assets by id (approved assets only), keyed by generic_asset_id, without members.
+
+        Ids with no approved generic asset are omitted from the response.
+
+        Parameters
+        ----------
+        generic_asset_ids : typing.Sequence[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, GenericAssetResponse]
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.generic_assets.get_generic_assets_by_id(
+            generic_asset_ids=["generic_asset_ids"],
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/generic-assets/by-id",
+            method="POST",
+            json={
+                "generic_asset_ids": generic_asset_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.Dict[str, GenericAssetResponse],
+                    parse_obj_as(
+                        type_=typing.Dict[str, GenericAssetResponse],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     def get_generic_asset(
         self,
         generic_asset_id: str,
@@ -464,6 +529,79 @@ class AsyncGenericAssetsClient:
             method="POST",
             json={
                 "river_ids": river_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.Dict[str, GenericAssetResponse],
+                    parse_obj_as(
+                        type_=typing.Dict[str, GenericAssetResponse],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def get_generic_assets_by_id(
+        self,
+        *,
+        generic_asset_ids: typing.Sequence[str],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.Dict[str, GenericAssetResponse]:
+        """
+        Fetch generic assets by id (approved assets only), keyed by generic_asset_id, without members.
+
+        Ids with no approved generic asset are omitted from the response.
+
+        Parameters
+        ----------
+        generic_asset_ids : typing.Sequence[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, GenericAssetResponse]
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.generic_assets.get_generic_assets_by_id(
+                generic_asset_ids=["generic_asset_ids"],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/generic-assets/by-id",
+            method="POST",
+            json={
+                "generic_asset_ids": generic_asset_ids,
             },
             request_options=request_options,
             omit=OMIT,

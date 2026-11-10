@@ -347,6 +347,58 @@
           }
         }
       },
+      "patch": {
+        "tags": [
+          "complex-orders"
+        ],
+        "summary": "Edit Complex Order",
+        "description": "Edit the total quantity of an ACTIVE peg order.\n\n`total_qty` is the new total, not the remaining. The new total is recorded\nimmediately and the peg consumer resizes the resting child in place (queue\nposition is kept on venues that support in-place decreases). A total at or\nbelow the quantity already filled closes the peg as EXECUTED. Returns 202;\nthe outcome is recorded on the returned amendment.",
+        "operationId": "edit_complex_order_v1_complex_orders__complex_order_id__patch",
+        "parameters": [
+          {
+            "name": "complex_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Complex Order Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplexOrderEditRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplexOrderEditResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "complex-orders"
@@ -1026,6 +1078,52 @@
         }
       }
     },
+    "/v1/generic-assets/by-id": {
+      "post": {
+        "tags": [
+          "generic-assets"
+        ],
+        "summary": "Get Generic Assets By Id",
+        "description": "Fetch generic assets by id (approved assets only), keyed by generic_asset_id, without members.\n\nIds with no approved generic asset are omitted from the response.",
+        "operationId": "get_generic_assets_by_id_v1_generic_assets_by_id_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericAssetByIdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/GenericAssetResponse"
+                  },
+                  "type": "object",
+                  "title": "Response Get Generic Assets By Id V1 Generic Assets By Id Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/generic-assets/{generic_asset_id}": {
       "get": {
         "tags": [
@@ -1070,6 +1168,28 @@
         }
       }
     },
+    "/v1/maintenance/status": {
+      "get": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Get Maintenance Status",
+        "description": "Current platform maintenance state.\n\nPublic, no authentication. While `unscheduled.active` or `scheduled.active`\nis true, every other route answers `503` with `Retry-After`; this route stays\nreachable throughout. Timestamps are ISO 8601 UTC strings.",
+        "operationId": "get_status_v1_maintenance_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/balance/exchange": {
       "get": {
         "tags": [
@@ -1099,6 +1219,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ExchangeBalanceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/balance/exchange/shard-transfer": {
+      "post": {
+        "tags": [
+          "balance"
+        ],
+        "summary": "Transfer Between Shards",
+        "description": "Move funds between Kalshi exchange shards within the subaccount's own account.",
+        "operationId": "transfer_between_shards_v1_balance_exchange_shard_transfer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShardTransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShardTransferResponse"
                 }
               }
             }
@@ -1717,6 +1879,85 @@
         }
       }
     },
+    "/v1/orderbooks/generic-asset/{generic_asset_id}": {
+      "get": {
+        "tags": [
+          "orderbooks"
+        ],
+        "summary": "Get Generic Asset Orderbook",
+        "description": "Get merged orderbook for a generic asset (basket).\n\nFetches orderbooks for all member instruments and merges them by summing\nquantity at each price level. Touch mechanism ensures subscriptions are active.",
+        "operationId": "get_generic_asset_orderbook_v1_orderbooks_generic_asset__generic_asset_id__get",
+        "parameters": [
+          {
+            "name": "generic_asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Generic Asset Id"
+            }
+          },
+          {
+            "name": "levels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10,
+              "minimum": 1,
+              "description": "Number of price levels to return",
+              "default": 10,
+              "title": "Levels"
+            },
+            "description": "Number of price levels to return"
+          },
+          {
+            "name": "exchanges",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict the merge to these exchanges (e.g. KALSHI, POLYMARKET). Omit for all member venues.",
+              "title": "Exchanges"
+            },
+            "description": "Restrict the merge to these exchanges (e.g. KALSHI, POLYMARKET). Omit for all member venues."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderbookResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/orderbooks/{river_id}": {
       "get": {
         "tags": [
@@ -2135,7 +2376,7 @@
           "orders"
         ],
         "summary": "Create Order Batch",
-        "description": "Place up to 10 orders in one request.\n\nAll orders must share one `subaccount_id`. Items are validated\nindependently: an invalid item is rejected in its per-index result while\nvalid items proceed, so the response is `202 Accepted` even when some (or\nall) items fail validation. Generic asset orders are not supported in\nbatches. Accepted orders are queued for execution exactly like\n`POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`\nor the orders websocket.",
+        "description": "Place up to 10 orders in one request.\n\nAll orders must share one `subaccount_id`. Items are validated\nindependently: an invalid item is rejected in its per-index result while\nvalid items proceed, so the response is `202 Accepted` even when some (or\nall) items fail validation. Accepted orders are queued for execution exactly\nlike `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`\nor the orders websocket. Generic asset orders follow the same rules as on\n`POST /v1/orders` (`LIMIT` only, integer quantity) and are executed one by one\nby the generic limit order consumer rather than as a unit.",
         "operationId": "create_order_batch_v1_orders_batch_post",
         "requestBody": {
           "content": {
@@ -2353,6 +2594,48 @@
         }
       }
     },
+    "/v1/orders/cancel-batch": {
+      "post": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Cancel Order Batch",
+        "description": "Cancel up to 50 orders by id in one request.\n\nEach id is checked as `DELETE /v1/orders/{order_id}` would check it: an id\nthat is unknown, not permitted, still processing, or not cancellable lands in\n`failed_cancelled_reasons` while the rest proceed, so the response is\n`202 Accepted` even when some (or all) items fail. Ids of one kind and one\nsubaccount go to that kind's consumer as a single batch message; an iceberg or\npeg child cancels its parent, and an RFQ quote takes the single-cancel path.\nLike the single cancel, this then polls `view_orders` until every dispatched\norder is terminal: one that filled or was rejected meanwhile moves to\n`failed_cancelled_reasons`. An order still live when the poll gives up stays\nin `cancelled_river_order_ids`, meaning the cancel was dispatched.",
+        "operationId": "cancel_order_batch_v1_orders_cancel_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderBatchCancel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/orders/cancel-all": {
       "post": {
         "tags": [
@@ -2520,6 +2803,130 @@
         }
       }
     },
+    "/v1/prices/{river_id}/volume": {
+      "get": {
+        "tags": [
+          "prices"
+        ],
+        "summary": "Get Volume",
+        "description": "Traded volume over a recent window, summed from our captured trade prints\n(all exchanges write to `trade_prints`). 1 contract traded = $1 of volume.\nSummed from the raw hypertable rather than the OHLC continuous aggregates\nso the most recent minutes are always included.",
+        "operationId": "get_volume_v1_prices__river_id__volume_get",
+        "parameters": [
+          {
+            "name": "river_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "River market ID",
+              "title": "River Id"
+            },
+            "description": "River market ID"
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "15m",
+                "1h",
+                "24h"
+              ],
+              "type": "string",
+              "description": "Lookback window",
+              "default": "1h",
+              "title": "Window"
+            },
+            "description": "Lookback window"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolumeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices/volume": {
+      "get": {
+        "tags": [
+          "prices"
+        ],
+        "summary": "Get Volume Batch",
+        "description": "Batch variant of the windowed-volume endpoint for grid views (multibook):\none grouped scan of `trade_prints` instead of a request per market.\nMarkets with no prints in the window come back with volume 0.",
+        "operationId": "get_volume_batch_v1_prices_volume_get",
+        "parameters": [
+          {
+            "name": "river_ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of river IDs",
+              "title": "River Ids"
+            },
+            "description": "Comma-separated list of river IDs"
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "15m",
+                "1h",
+                "24h"
+              ],
+              "type": "string",
+              "description": "Lookback window",
+              "default": "1h",
+              "title": "Window"
+            },
+            "description": "Lookback window"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchVolumeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/prices/{river_id}": {
       "get": {
         "tags": [
@@ -2606,6 +3013,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rate-limit": {
+      "get": {
+        "tags": [
+          "rate-limit"
+        ],
+        "summary": "Get Rate Limit",
+        "operationId": "get_rate_limit_v1_rate_limit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitResponse"
                 }
               }
             }
@@ -3794,6 +4222,56 @@
         "title": "AccountType",
         "description": "Type of trading subaccount."
       },
+      "BatchVolumeEntry": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "volume": {
+            "type": "number",
+            "title": "Volume"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "volume"
+        ],
+        "title": "BatchVolumeEntry"
+      },
+      "BatchVolumeResponse": {
+        "properties": {
+          "window": {
+            "type": "string",
+            "enum": [
+              "15m",
+              "1h",
+              "24h"
+            ],
+            "title": "Window"
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/BatchVolumeEntry"
+            },
+            "type": "array",
+            "title": "Volumes"
+          },
+          "as_of": {
+            "type": "integer",
+            "title": "As Of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window",
+          "volumes",
+          "as_of"
+        ],
+        "title": "BatchVolumeResponse",
+        "description": "Windowed traded volume for a batch of markets (multibook grids)."
+      },
       "BuildLeg": {
         "properties": {
           "river_id": {
@@ -4154,6 +4632,50 @@
         ],
         "title": "ComplexOrderCreateResponse",
         "description": "Schema for a complex order response (unified across all complex order types)."
+      },
+      "ComplexOrderEditRequest": {
+        "properties": {
+          "total_qty": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Total Qty",
+            "description": "New total quantity (not remaining)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_qty"
+        ],
+        "title": "ComplexOrderEditRequest",
+        "description": "Edit an active peg order. `total_qty` is the new TOTAL quantity, not the remaining.\nA total at or below the quantity already filled closes the peg as filled."
+      },
+      "ComplexOrderEditResponse": {
+        "properties": {
+          "complex_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Complex Order Id",
+            "description": "Unique complex order identifier"
+          },
+          "total_qty": {
+            "type": "number",
+            "title": "Total Qty",
+            "description": "Total quantity now recorded on the order"
+          },
+          "amendment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Amendment Id",
+            "description": "Audit row tracking the edit outcome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "complex_order_id",
+          "total_qty",
+          "amendment_id"
+        ],
+        "title": "ComplexOrderEditResponse"
       },
       "ComplexOrderListResponse": {
         "properties": {
@@ -5071,6 +5593,26 @@
         "title": "FillResponse",
         "description": "Schema for fill response."
       },
+      "GenericAssetByIdRequest": {
+        "properties": {
+          "generic_asset_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Generic Asset Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generic_asset_ids"
+        ],
+        "title": "GenericAssetByIdRequest",
+        "description": "Request schema for fetching generic assets by id."
+      },
       "GenericAssetDetailResponse": {
         "properties": {
           "asset_type": {
@@ -5929,6 +6471,40 @@
         "title": "InstrumentStatus",
         "description": "Instrument status derived in instruments table from exchange-specific fields.\n\nKalshi: maps from kalshi_markets.status\n    - 'active' -> ACTIVE\n    - everything else (closed, determined, finalized, settled, amended, inactive, initialized) -> CLOSED\n\nPolymarket: maps from polymarket_markets.closed and polymarket_markets.active booleans\n    - closed=true -> CLOSED\n    - active=true (and not closed) -> ACTIVE\n    - else (active=false, closed=false) -> INACTIVE"
       },
+      "MaintenanceStatus": {
+        "properties": {
+          "unscheduled": {
+            "$ref": "#/components/schemas/UnscheduledState",
+            "description": "Unplanned downtime toggled by operators."
+          },
+          "scheduled": {
+            "$ref": "#/components/schemas/ScheduledState",
+            "description": "A planned maintenance window currently in progress."
+          },
+          "upcoming": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UpcomingState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The next planned window, if one is announced."
+          },
+          "notice": {
+            "$ref": "#/components/schemas/NoticeState",
+            "description": "An informational banner that does not block trading."
+          }
+        },
+        "type": "object",
+        "required": [
+          "unscheduled",
+          "scheduled",
+          "notice"
+        ],
+        "title": "MaintenanceStatus"
+      },
       "MakerQuoteListResponse": {
         "properties": {
           "quotes": {
@@ -6497,6 +7073,62 @@
         "title": "MarketSearchResult",
         "description": "Schema for a single market search result."
       },
+      "NoticeState": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "title": "NoticeState"
+      },
+      "OrderBatchCancel": {
+        "properties": {
+          "river_order_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "River Order Ids",
+            "description": "River order ids to cancel. At most 50 per request."
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_order_ids"
+        ],
+        "title": "OrderBatchCancel",
+        "description": "Schema for cancelling a batch of orders by id in one request."
+      },
       "OrderBatchCreate": {
         "properties": {
           "orders": {
@@ -6761,6 +7393,19 @@
             ],
             "title": "Split",
             "description": "Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split."
+          },
+          "client_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,36}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Order Id",
+            "description": "Optional client-chosen order id, forwarded to the exchange where supported. LIMIT orders on a river_id only. Must be unique per subaccount (409 on reuse); 1-36 characters from [A-Za-z0-9_-]. Editing the order replaces it with a River-generated id."
           }
         },
         "type": "object",
@@ -8440,6 +9085,97 @@
         "title": "QuoteResponse",
         "description": "A maker's quote on your RFQ, in YES space on both exchanges: yes_bid_dollars is the\nmaker's bid to buy YES (you sell at it), no_bid_dollars the maker's bid to buy NO (you buy\nYES at 1 - no_bid_dollars)."
       },
+      "RateLimitResponse": {
+        "properties": {
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id",
+            "description": "Send this as X-River-Org-Id on every signed request"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "retail | enterprise"
+          },
+          "seats": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seats",
+            "description": "Active members of the org; not set for retail accounts"
+          },
+          "premium": {
+            "type": "boolean",
+            "title": "Premium"
+          },
+          "limit_per_minute": {
+            "type": "integer",
+            "title": "Limit Per Minute",
+            "description": "Approximate requests per minute allowed for the org's API keys"
+          },
+          "standard_limit_per_minute": {
+            "type": "integer",
+            "title": "Standard Limit Per Minute",
+            "description": "What the limit would be without premium"
+          },
+          "premium_limit_per_minute": {
+            "type": "integer",
+            "title": "Premium Limit Per Minute",
+            "description": "What the limit would be with premium"
+          },
+          "premium_price_monthly_usd": {
+            "type": "number",
+            "title": "Premium Price Monthly Usd"
+          },
+          "premium_since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Since"
+          },
+          "premium_ends_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Ends At",
+            "description": "Set once a cancellation is on file"
+          },
+          "can_manage": {
+            "type": "boolean",
+            "title": "Can Manage",
+            "description": "The caller is an org admin in a browser session"
+          }
+        },
+        "type": "object",
+        "required": [
+          "org_id",
+          "kind",
+          "premium",
+          "limit_per_minute",
+          "standard_limit_per_minute",
+          "premium_limit_per_minute",
+          "premium_price_monthly_usd",
+          "can_manage"
+        ],
+        "title": "RateLimitResponse",
+        "description": "The caller's org API rate limit. API-key requests are counted per org\n(across keys and IPs) against limit_per_minute; browser sessions are not\nsubject to it."
+      },
       "ResolveCombosRequest": {
         "properties": {
           "river_ids": {
@@ -8689,6 +9425,98 @@
         ],
         "title": "RfqResponse",
         "description": "An RFQ in one shape for both exchanges. Sizes are contracts (qty) or dollars\n(target_cost_dollars); legs are River market ids with the side each must resolve to, a\nsingle market being one YES leg. creator_user_id is only set on your own RFQs."
+      },
+      "ScheduledState": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "title": "ScheduledState"
+      },
+      "ShardTransferRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id",
+            "description": "Non-custodial subaccount whose funds move between shards"
+          },
+          "source_exchange_shard": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Source Exchange Shard",
+            "description": "Shard to move funds from"
+          },
+          "destination_exchange_shard": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Destination Exchange Shard",
+            "description": "Shard to move funds to"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Amount",
+            "description": "Transfer amount in USD"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id",
+          "source_exchange_shard",
+          "destination_exchange_shard",
+          "amount"
+        ],
+        "title": "ShardTransferRequest"
+      },
+      "ShardTransferResponse": {
+        "properties": {
+          "transfer_id": {
+            "type": "string",
+            "title": "Transfer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transfer_id"
+        ],
+        "title": "ShardTransferResponse"
       },
       "SmartTakerOrderParams": {
         "properties": {
@@ -9177,6 +10005,64 @@
         "title": "TriggerOrder",
         "description": "The order that will be sent to the exchange when the conditional order's condition is met.\n\nFor TP/SL: the parent order fills \u2192 the conditional activates \u2192 this trigger order is placed.\nFor STOP/REVERSE_STOP: the stop_order_price is reached \u2192 this trigger order is placed."
       },
+      "UnscheduledState": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "title": "UnscheduledState"
+      },
+      "UpcomingState": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "starts_at": {
+            "type": "string",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "UpcomingState"
+      },
       "UserFillListResponse": {
         "properties": {
           "subaccount_to_fills": {
@@ -9276,6 +10162,40 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VolumeResponse": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "window": {
+            "type": "string",
+            "enum": [
+              "15m",
+              "1h",
+              "24h"
+            ],
+            "title": "Window"
+          },
+          "volume": {
+            "type": "number",
+            "title": "Volume"
+          },
+          "as_of": {
+            "type": "integer",
+            "title": "As Of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "window",
+          "volume",
+          "as_of"
+        ],
+        "title": "VolumeResponse",
+        "description": "Traded volume over a recent window, summed from captured trade prints."
       },
       "WatchlistCreate": {
         "properties": {

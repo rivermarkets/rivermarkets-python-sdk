@@ -16,6 +16,7 @@ from .fair_values.client import FairValuesClient
 from .fees.client import FeesClient
 from .fills.client import FillsClient
 from .generic_assets.client import GenericAssetsClient
+from .maintenance.client import MaintenanceClient
 from .balance.client import BalanceClient
 from .markets.client import MarketsClient
 from .orderbooks.client import OrderbooksClient
@@ -23,6 +24,7 @@ from .orders.client import OrdersClient
 from .positions.client import PositionsClient
 from .parlays.client import ParlaysClient
 from .prices.client import PricesClient
+from .rate_limit.client import RateLimitClient
 from .rfqs.client import RfqsClient
 from .subaccounts.client import SubaccountsClient
 from .tradeprints.client import TradeprintsClient
@@ -33,6 +35,7 @@ from .fair_values.client import AsyncFairValuesClient
 from .fees.client import AsyncFeesClient
 from .fills.client import AsyncFillsClient
 from .generic_assets.client import AsyncGenericAssetsClient
+from .maintenance.client import AsyncMaintenanceClient
 from .balance.client import AsyncBalanceClient
 from .markets.client import AsyncMarketsClient
 from .orderbooks.client import AsyncOrderbooksClient
@@ -40,6 +43,7 @@ from .orders.client import AsyncOrdersClient
 from .positions.client import AsyncPositionsClient
 from .parlays.client import AsyncParlaysClient
 from .prices.client import AsyncPricesClient
+from .rate_limit.client import AsyncRateLimitClient
 from .rfqs.client import AsyncRfqsClient
 from .subaccounts.client import AsyncSubaccountsClient
 from .tradeprints.client import AsyncTradeprintsClient
@@ -124,6 +128,7 @@ class RiverMarkets:
         self.fees = FeesClient(client_wrapper=self._client_wrapper)
         self.fills = FillsClient(client_wrapper=self._client_wrapper)
         self.generic_assets = GenericAssetsClient(client_wrapper=self._client_wrapper)
+        self.maintenance = MaintenanceClient(client_wrapper=self._client_wrapper)
         self.balance = BalanceClient(client_wrapper=self._client_wrapper)
         self.markets = MarketsClient(client_wrapper=self._client_wrapper)
         self.orderbooks = OrderbooksClient(client_wrapper=self._client_wrapper)
@@ -131,6 +136,7 @@ class RiverMarkets:
         self.positions = PositionsClient(client_wrapper=self._client_wrapper)
         self.parlays = ParlaysClient(client_wrapper=self._client_wrapper)
         self.prices = PricesClient(client_wrapper=self._client_wrapper)
+        self.rate_limit = RateLimitClient(client_wrapper=self._client_wrapper)
         self.rfqs = RfqsClient(client_wrapper=self._client_wrapper)
         self.subaccounts = SubaccountsClient(client_wrapper=self._client_wrapper)
         self.tradeprints = TradeprintsClient(client_wrapper=self._client_wrapper)
@@ -230,6 +236,7 @@ class AsyncRiverMarkets:
         self.fees = AsyncFeesClient(client_wrapper=self._client_wrapper)
         self.fills = AsyncFillsClient(client_wrapper=self._client_wrapper)
         self.generic_assets = AsyncGenericAssetsClient(client_wrapper=self._client_wrapper)
+        self.maintenance = AsyncMaintenanceClient(client_wrapper=self._client_wrapper)
         self.balance = AsyncBalanceClient(client_wrapper=self._client_wrapper)
         self.markets = AsyncMarketsClient(client_wrapper=self._client_wrapper)
         self.orderbooks = AsyncOrderbooksClient(client_wrapper=self._client_wrapper)
@@ -237,6 +244,7 @@ class AsyncRiverMarkets:
         self.positions = AsyncPositionsClient(client_wrapper=self._client_wrapper)
         self.parlays = AsyncParlaysClient(client_wrapper=self._client_wrapper)
         self.prices = AsyncPricesClient(client_wrapper=self._client_wrapper)
+        self.rate_limit = AsyncRateLimitClient(client_wrapper=self._client_wrapper)
         self.rfqs = AsyncRfqsClient(client_wrapper=self._client_wrapper)
         self.subaccounts = AsyncSubaccountsClient(client_wrapper=self._client_wrapper)
         self.tradeprints = AsyncTradeprintsClient(client_wrapper=self._client_wrapper)

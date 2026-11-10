@@ -210,6 +210,7 @@ class OrdersClient:
         ] = OMIT,
         exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
         split: typing.Optional[typing.Dict[str, typing.Optional[float]]] = OMIT,
+        client_order_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderCreateResponse:
         """
@@ -276,6 +277,9 @@ class OrdersClient:
         split : typing.Optional[typing.Dict[str, typing.Optional[float]]]
             Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split.
 
+        client_order_id : typing.Optional[str]
+            Optional client-chosen order id, forwarded to the exchange where supported. LIMIT orders on a river_id only. Must be unique per subaccount (409 on reuse); 1-36 characters from [A-Za-z0-9_-]. Editing the order replaces it with a River-generated id.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -319,6 +323,7 @@ class OrdersClient:
                 ),
                 "exchanges": exchanges,
                 "split": split,
+                "client_order_id": client_order_id,
             },
             request_options=request_options,
             omit=OMIT,
@@ -359,10 +364,11 @@ class OrdersClient:
         All orders must share one `subaccount_id`. Items are validated
         independently: an invalid item is rejected in its per-index result while
         valid items proceed, so the response is `202 Accepted` even when some (or
-        all) items fail validation. Generic asset orders are not supported in
-        batches. Accepted orders are queued for execution exactly like
-        `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`
-        or the orders websocket.
+        all) items fail validation. Accepted orders are queued for execution exactly
+        like `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`
+        or the orders websocket. Generic asset orders follow the same rules as on
+        `POST /v1/orders` (`LIMIT` only, integer quantity) and are executed one by one
+        by the generic limit order consumer rather than as a unit.
 
         Parameters
         ----------
@@ -686,6 +692,81 @@ class OrdersClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
+    def cancel_order_batch(
+        self,
+        *,
+        river_order_ids: typing.Sequence[str],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> CancelOrderResponse:
+        """
+        Cancel up to 50 orders by id in one request.
+
+        Each id is checked as `DELETE /v1/orders/{order_id}` would check it: an id
+        that is unknown, not permitted, still processing, or not cancellable lands in
+        `failed_cancelled_reasons` while the rest proceed, so the response is
+        `202 Accepted` even when some (or all) items fail. Ids of one kind and one
+        subaccount go to that kind's consumer as a single batch message; an iceberg or
+        peg child cancels its parent, and an RFQ quote takes the single-cancel path.
+        Like the single cancel, this then polls `view_orders` until every dispatched
+        order is terminal: one that filled or was rejected meanwhile moves to
+        `failed_cancelled_reasons`. An order still live when the poll gives up stays
+        in `cancelled_river_order_ids`, meaning the cancel was dispatched.
+
+        Parameters
+        ----------
+        river_order_ids : typing.Sequence[str]
+            River order ids to cancel. At most 50 per request.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        CancelOrderResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.orders.cancel_order_batch(
+            river_order_ids=["river_order_ids"],
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/orders/cancel-batch",
+            method="POST",
+            json={
+                "river_order_ids": river_order_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    CancelOrderResponse,
+                    parse_obj_as(
+                        type_=CancelOrderResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
     def cancel_all_orders(
         self,
         *,
@@ -956,6 +1037,7 @@ class AsyncOrdersClient:
         ] = OMIT,
         exchanges: typing.Optional[typing.Sequence[str]] = OMIT,
         split: typing.Optional[typing.Dict[str, typing.Optional[float]]] = OMIT,
+        client_order_id: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderCreateResponse:
         """
@@ -1022,6 +1104,9 @@ class AsyncOrdersClient:
         split : typing.Optional[typing.Dict[str, typing.Optional[float]]]
             Generic asset orders only: your own split of the quantity across exchanges in percent, e.g. {'KALSHI': 60, 'POLYMARKET': 40}. Each share rests without redistribution on the exchange's member market takers hit most, rounded down to its qty tick and dropped if under its minimum order size. Whatever the shares do not take, including quantity lost to rounding, the smart split places and redistributes across `exchanges`. Editing the order re-applies the same percentages. Omit for the smart split.
 
+        client_order_id : typing.Optional[str]
+            Optional client-chosen order id, forwarded to the exchange where supported. LIMIT orders on a river_id only. Must be unique per subaccount (409 on reuse); 1-36 characters from [A-Za-z0-9_-]. Editing the order replaces it with a River-generated id.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -1073,6 +1158,7 @@ class AsyncOrdersClient:
                 ),
                 "exchanges": exchanges,
                 "split": split,
+                "client_order_id": client_order_id,
             },
             request_options=request_options,
             omit=OMIT,
@@ -1113,10 +1199,11 @@ class AsyncOrdersClient:
         All orders must share one `subaccount_id`. Items are validated
         independently: an invalid item is rejected in its per-index result while
         valid items proceed, so the response is `202 Accepted` even when some (or
-        all) items fail validation. Generic asset orders are not supported in
-        batches. Accepted orders are queued for execution exactly like
-        `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`
-        or the orders websocket.
+        all) items fail validation. Accepted orders are queued for execution exactly
+        like `POST /v1/orders`; track fills and rejections via `GET /v1/orders/{order_id}`
+        or the orders websocket. Generic asset orders follow the same rules as on
+        `POST /v1/orders` (`LIMIT` only, integer quantity) and are executed one by one
+        by the generic limit order consumer rather than as a unit.
 
         Parameters
         ----------
@@ -1462,6 +1549,89 @@ class AsyncOrdersClient:
                     OrderQueuePositionResponse,
                     parse_obj_as(
                         type_=OrderQueuePositionResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def cancel_order_batch(
+        self,
+        *,
+        river_order_ids: typing.Sequence[str],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> CancelOrderResponse:
+        """
+        Cancel up to 50 orders by id in one request.
+
+        Each id is checked as `DELETE /v1/orders/{order_id}` would check it: an id
+        that is unknown, not permitted, still processing, or not cancellable lands in
+        `failed_cancelled_reasons` while the rest proceed, so the response is
+        `202 Accepted` even when some (or all) items fail. Ids of one kind and one
+        subaccount go to that kind's consumer as a single batch message; an iceberg or
+        peg child cancels its parent, and an RFQ quote takes the single-cancel path.
+        Like the single cancel, this then polls `view_orders` until every dispatched
+        order is terminal: one that filled or was rejected meanwhile moves to
+        `failed_cancelled_reasons`. An order still live when the poll gives up stays
+        in `cancelled_river_order_ids`, meaning the cancel was dispatched.
+
+        Parameters
+        ----------
+        river_order_ids : typing.Sequence[str]
+            River order ids to cancel. At most 50 per request.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        CancelOrderResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.orders.cancel_order_batch(
+                river_order_ids=["river_order_ids"],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/orders/cancel-batch",
+            method="POST",
+            json={
+                "river_order_ids": river_order_ids,
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    CancelOrderResponse,
+                    parse_obj_as(
+                        type_=CancelOrderResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
