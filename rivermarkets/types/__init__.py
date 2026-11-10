@@ -89,8 +89,6 @@ from .shard_transfer_response import ShardTransferResponse
 from .smart_taker_order_params import SmartTakerOrderParams
 from .smart_taker_order_response import SmartTakerOrderResponse
 from .sort_mode import SortMode
-from .subaccount_grant_put_response import SubaccountGrantPutResponse
-from .subaccount_grant_response import SubaccountGrantResponse
 from .subaccount_response import SubaccountResponse
 from .subcategory_count import SubcategoryCount
 from .tradeprint_event import TradeprintEvent
@@ -206,8 +204,6 @@ __all__ = [
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SortMode",
-    "SubaccountGrantPutResponse",
-    "SubaccountGrantResponse",
     "SubaccountResponse",
     "SubcategoryCount",
     "TradeprintEvent",
