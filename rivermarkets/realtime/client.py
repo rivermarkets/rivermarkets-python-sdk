@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import collections
 import json
 import logging
 import typing
@@ -98,6 +99,7 @@ class Subscription(AbstractAsyncContextManager):
             dict(filters) if filters is not None else None
         )
         self._ws: typing.Optional[typing.Any] = None
+        self._pending: typing.Deque[typing.Any] = collections.deque()
         self._closed = False
 
     async def __aenter__(self) -> "Subscription":
@@ -143,6 +145,8 @@ class Subscription(AbstractAsyncContextManager):
 
     async def __anext__(self) -> Message:
         while not self._closed:
+            if self._pending:
+                return parse_message(self._pending.popleft())
             if self._ws is None:
                 try:
                     await self._open()
@@ -157,7 +161,12 @@ class Subscription(AbstractAsyncContextManager):
                 self._ws = None
                 await asyncio.sleep(self._client.reconnect_delay_s)
                 continue
-            return parse_message(json.loads(raw))
+            frames = json.loads(raw)
+            # The rfqs stream sends its frames in arrays; every other message is one frame.
+            if isinstance(frames, list):
+                self._pending.extend(frames)
+                continue
+            return parse_message(frames)
         raise StopAsyncIteration
 
     async def subscribe(
