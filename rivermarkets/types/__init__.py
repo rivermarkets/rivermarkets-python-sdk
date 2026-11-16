@@ -27,6 +27,7 @@ from .exchange_shard_balance import ExchangeShardBalance
 from .fair_value_item import FairValueItem
 from .fair_value_list_response import FairValueListResponse
 from .fair_value_response import FairValueResponse
+from .fee_estimate_response import FeeEstimateResponse
 from .fee_model import FeeModel
 from .fee_rounding import FeeRounding
 from .fee_rule_response import FeeRuleResponse
@@ -51,6 +52,8 @@ from .market_lookup_response import MarketLookupResponse
 from .market_match_batch_response import MarketMatchBatchResponse
 from .market_search_response import MarketSearchResponse
 from .market_search_result import MarketSearchResult
+from .market_settlement import MarketSettlement
+from .market_settlements_response import MarketSettlementsResponse
 from .notice_state import NoticeState
 from .order_batch_create_response import OrderBatchCreateResponse
 from .order_batch_item_error import OrderBatchItemError
@@ -71,6 +74,8 @@ from .orderbook_status import OrderbookStatus
 from .peg_leg_response import PegLegResponse
 from .peg_order_params import PegOrderParams
 from .peg_order_response import PegOrderResponse
+from .polymarket_settle_request import PolymarketSettleRequest
+from .polymarket_settle_response import PolymarketSettleResponse
 from .position_response import PositionResponse
 from .price_candlestick import PriceCandlestick
 from .price_level_response import PriceLevelResponse
@@ -142,6 +147,7 @@ __all__ = [
     "FairValueItem",
     "FairValueListResponse",
     "FairValueResponse",
+    "FeeEstimateResponse",
     "FeeModel",
     "FeeRounding",
     "FeeRuleResponse",
@@ -166,6 +172,8 @@ __all__ = [
     "MarketMatchBatchResponse",
     "MarketSearchResponse",
     "MarketSearchResult",
+    "MarketSettlement",
+    "MarketSettlementsResponse",
     "NoticeState",
     "OrderBatchCreateResponse",
     "OrderBatchItemError",
@@ -186,6 +194,8 @@ __all__ = [
     "PegLegResponse",
     "PegOrderParams",
     "PegOrderResponse",
+    "PolymarketSettleRequest",
+    "PolymarketSettleResponse",
     "PositionResponse",
     "PriceCandlestick",
     "PriceLevelResponse",

@@ -20,7 +20,7 @@ class QuoteResponse(UniversalBaseModel):
     exchange_rfq_id: str
     exchange: typing.Optional[str] = pydantic.Field(default=None)
     """
-    kalshi or polymarket_us
+    kalshi, polymarket_us or crypto_com
     """
 
     market_ticker: str
@@ -57,6 +57,11 @@ class QuoteResponse(UniversalBaseModel):
     cancelled_ts: typing.Optional[str] = None
     created_ts: typing.Optional[str] = None
     updated_ts: typing.Optional[str] = None
+    expires_ts: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Crypto.com: when the maker's quote lapses
+    """
+
     rest_remainder: typing.Optional[bool] = None
     post_only: typing.Optional[bool] = None
     cancellation_reason: typing.Optional[str] = None

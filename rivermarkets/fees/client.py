@@ -3,12 +3,13 @@
 import typing
 from ..core.client_wrapper import SyncClientWrapper
 from ..core.request_options import RequestOptions
-from ..types.fee_schedule_lookup_response import FeeScheduleLookupResponse
+from ..types.fee_estimate_response import FeeEstimateResponse
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
+from ..types.fee_schedule_lookup_response import FeeScheduleLookupResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 OMIT = typing.cast(typing.Any, ...)
@@ -17,6 +18,53 @@ OMIT = typing.cast(typing.Any, ...)
 class FeesClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    def estimate_fee(
+        self,
+        *,
+        river_id: int,
+        qty: float,
+        price: float,
+        is_maker: typing.Optional[bool] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FeeEstimateResponse:
+        """
+        Estimate the fee for a given order on a market.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/fees/estimate",
+            method="GET",
+            params={
+                "river_id": river_id,
+                "qty": qty,
+                "price": price,
+                "is_maker": is_maker,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    FeeEstimateResponse,
+                    parse_obj_as(
+                        type_=FeeEstimateResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def lookup_fee_schedules(
         self,
@@ -67,6 +115,53 @@ class FeesClient:
 class AsyncFeesClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    async def estimate_fee(
+        self,
+        *,
+        river_id: int,
+        qty: float,
+        price: float,
+        is_maker: typing.Optional[bool] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FeeEstimateResponse:
+        """
+        Estimate the fee for a given order on a market.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/fees/estimate",
+            method="GET",
+            params={
+                "river_id": river_id,
+                "qty": qty,
+                "price": price,
+                "is_maker": is_maker,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    FeeEstimateResponse,
+                    parse_obj_as(
+                        type_=FeeEstimateResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def lookup_fee_schedules(
         self,

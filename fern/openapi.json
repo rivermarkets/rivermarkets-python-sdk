@@ -442,6 +442,90 @@
         }
       }
     },
+    "/v1/exchange/polymarket/redeem-all": {
+      "post": {
+        "tags": [
+          "exchange-ops"
+        ],
+        "summary": "Polymarket Redeem All",
+        "description": "Redeem every resolved Polymarket position on the subaccount's wallet, gasless via the relayer.",
+        "operationId": "polymarket_redeem_all_v1_exchange_polymarket_redeem_all_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolymarketSettleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolymarketSettleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/exchange/polymarket/merge-all": {
+      "post": {
+        "tags": [
+          "exchange-ops"
+        ],
+        "summary": "Polymarket Merge All",
+        "description": "Merge every complementary Polymarket pair on the subaccount's wallet back to collateral.",
+        "operationId": "polymarket_merge_all_v1_exchange_polymarket_merge_all_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolymarketSettleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolymarketSettleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/fair-values": {
       "get": {
         "tags": [
@@ -588,6 +672,88 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/fees/estimate": {
+      "get": {
+        "tags": [
+          "fees"
+        ],
+        "summary": "Estimate Fee",
+        "description": "Estimate the fee for a given order on a market.",
+        "operationId": "estimate_fee_v1_fees_estimate_get",
+        "parameters": [
+          {
+            "name": "river_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "River ID",
+              "title": "River Id"
+            },
+            "description": "River ID"
+          },
+          {
+            "name": "qty",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Order quantity",
+              "title": "Qty"
+            },
+            "description": "Order quantity"
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "exclusiveMaximum": 1,
+              "exclusiveMinimum": 0,
+              "description": "Price (0-1 exclusive)",
+              "title": "Price"
+            },
+            "description": "Price (0-1 exclusive)"
+          },
+          {
+            "name": "is_maker",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether the order is a maker order",
+              "default": false,
+              "title": "Is Maker"
+            },
+            "description": "Whether the order is a maker order"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeEstimateResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1767,6 +1933,51 @@
         }
       }
     },
+    "/v1/markets/settlements": {
+      "get": {
+        "tags": [
+          "markets"
+        ],
+        "summary": "Get Settlements",
+        "description": "Batch lookup settlement (ts, YES price) for resolved markets.",
+        "operationId": "get_settlements_v1_markets_settlements_get",
+        "parameters": [
+          {
+            "name": "river_ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of river IDs",
+              "title": "River Ids"
+            },
+            "description": "Comma-separated list of river IDs"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSettlementsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/markets/match": {
       "get": {
         "tags": [
@@ -2600,7 +2811,7 @@
           "orders"
         ],
         "summary": "Cancel Order Batch",
-        "description": "Cancel up to 50 orders by id in one request.\n\nEach id is checked as `DELETE /v1/orders/{order_id}` would check it: an id\nthat is unknown, not permitted, still processing, or not cancellable lands in\n`failed_cancelled_reasons` while the rest proceed, so the response is\n`202 Accepted` even when some (or all) items fail. Ids of one kind and one\nsubaccount go to that kind's consumer as a single batch message; an iceberg or\npeg child cancels its parent, and an RFQ quote takes the single-cancel path.\nLike the single cancel, this then polls `view_orders` until every dispatched\norder is terminal: one that filled or was rejected meanwhile moves to\n`failed_cancelled_reasons`. An order still live when the poll gives up stays\nin `cancelled_river_order_ids`, meaning the cancel was dispatched.",
+        "description": "Cancel up to 50 orders by id in one request.\n\nEach id is checked as `DELETE /v1/orders/{order_id}` would check it: an id\nthat is unknown, not permitted, still processing, or not cancellable lands in\n`failed_cancelled_reasons` while the rest proceed, so the response is\n`202 Accepted` even when some (or all) items fail. Ids of one kind and one\nsubaccount go to that kind's consumer as a single batch message; an iceberg or\npeg child cancels its parent, and an RFQ quote takes the single-cancel path.\nLike the single cancel, this then polls `view_orders` until every dispatched\norder is terminal: one that filled or was rejected meanwhile, or is still\nlive when the poll gives up, moves to `failed_cancelled_reasons`.",
         "operationId": "cancel_order_batch_v1_orders_cancel_batch_post",
         "requestBody": {
           "content": {
@@ -2767,7 +2978,7 @@
           "parlays"
         ],
         "summary": "Build Parlay",
-        "description": "Turn 2 or more legs, each a River market id with the side it must resolve to, into a\ntradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates\n(or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a\ncollection that admits every leg and materializes the parlay there. Either way the combo\npays out only if every leg resolves to its side.\n\nStrategy:\n  1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`\n     to enumerate every collection containing that leg's event.\n  2. Intersect the collection sets across all legs \u2014 these are the collections\n     that can host the parlay.\n  3. Drop collections that don't admit the requested leg count\n     (`size_min <= len(legs) <= size_max`), and any closed collections.\n  4. Pick the narrowest surviving collection (smallest `associated_events`\n     count) \u2014 narrower collections usually have denser quoter coverage.\n  5. Materialize the combo market in that collection and return the new\n     `market_ticker` plus the chosen `collection_ticker`.\n\n422 if no collection covers all legs \u2014 response includes the per-leg\ncollection lists so the caller can show the user where the legs DO live.",
+        "description": "Turn 2 or more legs, each a River market id with the side it must resolve to, into a\ntradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates\n(or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi\nmaterializes the parlay in its cross-category collection. Crypto.com names the combo when\nasked for quotes on its legs, so a first build of a leg set sends a quote request under your\ncredentials and ignores its quotes. Either way the combo pays out only if every leg\nresolves to its side.\n\n422 when the exchange refuses a leg (a market it does not allow in a combo, or one that\nhas already been decided); on Kalshi the response names the rejected markets.",
         "operationId": "build_parlay_v1_parlays_build_post",
         "requestBody": {
           "content": {
@@ -3144,7 +3355,7 @@
           "rfqs"
         ],
         "summary": "List Quotes For Rfq",
-        "description": "The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.\nOn Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key\n10 requests per 10 seconds across all RFQ endpoints.",
+        "description": "The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.\nOn Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key\n10 requests per 10 seconds across all RFQ endpoints. On Crypto.com a quote can be one-sided,\neach side has its own size, and expires_ts says when the maker's quote lapses.",
         "operationId": "list_quotes_for_rfq_v1_rfqs__river_rfq_id__quotes_get",
         "parameters": [
           {
@@ -3379,7 +3590,7 @@
           "rfqs"
         ],
         "summary": "Cancel Rfq",
-        "description": "Withdraw your RFQ before accepting a quote. Open quotes on it die with it.",
+        "description": "Withdraw your RFQ before accepting a quote. Open quotes on it die with it. Crypto.com has\nno cancel for a requester: River stops serving the RFQ's quotes and refuses accepts on it,\nand the exchange ends it 30 seconds after it was posted.",
         "operationId": "cancel_rfq_v1_rfqs__river_rfq_id__delete",
         "parameters": [
           {
@@ -3428,7 +3639,7 @@
           "rfqs"
         ],
         "summary": "Create Rfq",
-        "description": "Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.\nMakers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in\ncontracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars.\nCombos come from POST /v1/parlays/build.",
+        "description": "Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.\nMakers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in\ncontracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars. Crypto.com\nRFQs are for combos only, carry no size (each quote brings its own, qty is the minimum a\nquote must carry), live 30 seconds and take one accept: post again to trade again or to exit.\nCombos come from POST /v1/parlays/build.",
         "operationId": "create_rfq_v1_rfqs_post",
         "requestBody": {
           "content": {
@@ -3470,7 +3681,7 @@
           "rfqs"
         ],
         "summary": "Accept Quote",
-        "description": "Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you\ntrack like any other (resting while the maker confirms, then executed or cancelled). Pass\nthe price and size you saw so a replaced quote answers 409 instead of trading at a price\nyou never saw. The maker has a short window to confirm; if it lapses the order is cancelled.",
+        "description": "Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you\ntrack like any other (resting while the maker confirms, then executed or cancelled). On\nPolymarket US, pass the price and size you saw so a replaced quote answers 409 instead of\ntrading at a price you never saw; on Kalshi a re-quote gets a new quote id, so the id\nitself pins the price. The maker has a short window to confirm; if it lapses the order is cancelled.\nOn Crypto.com, pass the quote's price and the size you want, up to the quote's size: the\nexchange holds the deal one second for price improvement, so the fill can be better than the\nquote, and each RFQ takes one accept.",
         "operationId": "accept_quote_v1_rfqs__river_rfq_id__quotes__exchange_quote_id__accept_post",
         "parameters": [
           {
@@ -4187,7 +4398,7 @@
             "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Qty",
-            "description": "Pinned size in contracts shown at click time"
+            "description": "Pinned size in contracts shown at click time. Crypto.com: the size to trade, up to the quote's size."
           }
         },
         "type": "object",
@@ -4303,7 +4514,7 @@
           "exchange": {
             "type": "string",
             "title": "Exchange",
-            "description": "KALSHI or POLYMARKET_US"
+            "description": "KALSHI, POLYMARKET_US or CRYPTO_COM"
           },
           "legs": {
             "items": {
@@ -5121,7 +5332,7 @@
               }
             ],
             "title": "Qty",
-            "description": "Size in contracts"
+            "description": "Size in contracts. Crypto.com: the minimum size a quote must carry; the RFQ itself has no size and each quote brings its own."
           },
           "target_cost_dollars": {
             "anyOf": [
@@ -5138,7 +5349,7 @@
               }
             ],
             "title": "Target Cost Dollars",
-            "description": "Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty."
+            "description": "Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty. Not supported on Crypto.com."
           },
           "obscure_creator_id": {
             "type": "boolean",
@@ -5363,6 +5574,19 @@
         ],
         "title": "FairValuesUpsert",
         "description": "Request schema for setting fair values on one subaccount (insert-or-overwrite)."
+      },
+      "FeeEstimateResponse": {
+        "properties": {
+          "fee": {
+            "type": "number",
+            "title": "Fee"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fee"
+        ],
+        "title": "FeeEstimateResponse"
       },
       "FeeModel": {
         "type": "string",
@@ -7073,6 +7297,53 @@
         "title": "MarketSearchResult",
         "description": "Schema for a single market search result."
       },
+      "MarketSettlement": {
+        "properties": {
+          "river_id": {
+            "type": "integer",
+            "title": "River Id"
+          },
+          "settlement_ts": {
+            "type": "string",
+            "title": "Settlement Ts"
+          },
+          "settlement_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "river_id",
+          "settlement_ts"
+        ],
+        "title": "MarketSettlement",
+        "description": "Settlement row for a resolved market (YES-side price)."
+      },
+      "MarketSettlementsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSettlement"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "MarketSettlementsResponse",
+        "description": "Batch settlement lookup response."
+      },
       "NoticeState": {
         "properties": {
           "active": {
@@ -8557,6 +8828,38 @@
         "title": "PegOrderResponse",
         "description": "Peg-specific runtime detail returned alongside a ComplexOrderResponse.\n\nSourced from `view_peg_orders` so it includes derived fields\n(executed_qty, remaining_qty)."
       },
+      "PolymarketSettleRequest": {
+        "properties": {
+          "subaccount_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subaccount Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subaccount_id"
+        ],
+        "title": "PolymarketSettleRequest",
+        "description": "Request body for redeeming or merging all Polymarket positions on the subaccount's wallet."
+      },
+      "PolymarketSettleResponse": {
+        "properties": {
+          "tx_hashes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tx Hashes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tx_hashes"
+        ],
+        "title": "PolymarketSettleResponse",
+        "description": "Transaction hashes of the confirmed on-chain redeem/merge batches."
+      },
       "PositionResponse": {
         "properties": {
           "river_id": {
@@ -8837,7 +9140,7 @@
               }
             ],
             "title": "Exchange",
-            "description": "kalshi or polymarket_us"
+            "description": "kalshi, polymarket_us or crypto_com"
           },
           "market_ticker": {
             "type": "string",
@@ -8983,6 +9286,18 @@
               }
             ],
             "title": "Updated Ts"
+          },
+          "expires_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires Ts",
+            "description": "Crypto.com: when the maker's quote lapses"
           },
           "rest_remainder": {
             "anyOf": [
@@ -9283,7 +9598,7 @@
               }
             ],
             "title": "Exchange",
-            "description": "kalshi or polymarket_us"
+            "description": "kalshi, polymarket_us or crypto_com"
           },
           "river_id": {
             "anyOf": [
@@ -9300,7 +9615,7 @@
           "status": {
             "type": "string",
             "title": "Status",
-            "description": "open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses"
+            "description": "open, closed, cancelled or expired on Polymarket US; open or expired on Crypto.com; Kalshi's own statuses"
           },
           "qty": {
             "anyOf": [

@@ -12,6 +12,7 @@ from .fee_calculator import AsyncFeeCalculator, SyncFeeCalculator
 from .realtime import RealtimeClient
 from .core.client_wrapper import SyncClientWrapper
 from .complex_orders.client import ComplexOrdersClient
+from .exchange_ops.client import ExchangeOpsClient
 from .fair_values.client import FairValuesClient
 from .fees.client import FeesClient
 from .fills.client import FillsClient
@@ -31,6 +32,7 @@ from .tradeprints.client import TradeprintsClient
 from .watchlists.client import WatchlistsClient
 from .core.client_wrapper import AsyncClientWrapper
 from .complex_orders.client import AsyncComplexOrdersClient
+from .exchange_ops.client import AsyncExchangeOpsClient
 from .fair_values.client import AsyncFairValuesClient
 from .fees.client import AsyncFeesClient
 from .fills.client import AsyncFillsClient
@@ -124,6 +126,7 @@ class RiverMarkets:
             timeout=_defaulted_timeout,
         )
         self.complex_orders = ComplexOrdersClient(client_wrapper=self._client_wrapper)
+        self.exchange_ops = ExchangeOpsClient(client_wrapper=self._client_wrapper)
         self.fair_values = FairValuesClient(client_wrapper=self._client_wrapper)
         self.fees = FeesClient(client_wrapper=self._client_wrapper)
         self.fills = FillsClient(client_wrapper=self._client_wrapper)
@@ -232,6 +235,7 @@ class AsyncRiverMarkets:
             base_url=ws_base_url,
         )
         self.complex_orders = AsyncComplexOrdersClient(client_wrapper=self._client_wrapper)
+        self.exchange_ops = AsyncExchangeOpsClient(client_wrapper=self._client_wrapper)
         self.fair_values = AsyncFairValuesClient(client_wrapper=self._client_wrapper)
         self.fees = AsyncFeesClient(client_wrapper=self._client_wrapper)
         self.fills = AsyncFillsClient(client_wrapper=self._client_wrapper)
