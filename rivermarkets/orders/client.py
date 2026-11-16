@@ -708,9 +708,8 @@ class OrdersClient:
         subaccount go to that kind's consumer as a single batch message; an iceberg or
         peg child cancels its parent, and an RFQ quote takes the single-cancel path.
         Like the single cancel, this then polls `view_orders` until every dispatched
-        order is terminal: one that filled or was rejected meanwhile moves to
-        `failed_cancelled_reasons`. An order still live when the poll gives up stays
-        in `cancelled_river_order_ids`, meaning the cancel was dispatched.
+        order is terminal: one that filled or was rejected meanwhile, or is still
+        live when the poll gives up, moves to `failed_cancelled_reasons`.
 
         Parameters
         ----------
@@ -1583,9 +1582,8 @@ class AsyncOrdersClient:
         subaccount go to that kind's consumer as a single batch message; an iceberg or
         peg child cancels its parent, and an RFQ quote takes the single-cancel path.
         Like the single cancel, this then polls `view_orders` until every dispatched
-        order is terminal: one that filled or was rejected meanwhile moves to
-        `failed_cancelled_reasons`. An order still live when the poll gives up stays
-        in `cancelled_river_order_ids`, meaning the cancel was dispatched.
+        order is terminal: one that filled or was rejected meanwhile, or is still
+        live when the poll gives up, moves to `failed_cancelled_reasons`.
 
         Parameters
         ----------

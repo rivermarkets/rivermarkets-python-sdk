@@ -25,7 +25,7 @@ class RfqResponse(UniversalBaseModel):
 
     exchange: typing.Optional[str] = pydantic.Field(default=None)
     """
-    kalshi or polymarket_us
+    kalshi, polymarket_us or crypto_com
     """
 
     river_id: typing.Optional[int] = pydantic.Field(default=None)
@@ -35,7 +35,7 @@ class RfqResponse(UniversalBaseModel):
 
     status: str = pydantic.Field()
     """
-    open, closed, cancelled or expired on Polymarket US; Kalshi's own statuses
+    open, closed, cancelled or expired on Polymarket US; open or expired on Crypto.com; Kalshi's own statuses
     """
 
     qty: typing.Optional[float] = pydantic.Field(default=None)

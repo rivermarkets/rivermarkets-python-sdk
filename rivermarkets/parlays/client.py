@@ -32,24 +32,14 @@ class ParlaysClient:
         """
         Turn 2 or more legs, each a River market id with the side it must resolve to, into a
         tradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates
-        (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a
-        collection that admits every leg and materializes the parlay there. Either way the combo
-        pays out only if every leg resolves to its side.
+        (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi
+        materializes the parlay in its cross-category collection. Crypto.com names the combo when
+        asked for quotes on its legs, so a first build of a leg set sends a quote request under your
+        credentials and ignores its quotes. Either way the combo pays out only if every leg
+        resolves to its side.
 
-        Strategy:
-          1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`
-             to enumerate every collection containing that leg's event.
-          2. Intersect the collection sets across all legs — these are the collections
-             that can host the parlay.
-          3. Drop collections that don't admit the requested leg count
-             (`size_min <= len(legs) <= size_max`), and any closed collections.
-          4. Pick the narrowest surviving collection (smallest `associated_events`
-             count) — narrower collections usually have denser quoter coverage.
-          5. Materialize the combo market in that collection and return the new
-             `market_ticker` plus the chosen `collection_ticker`.
-
-        422 if no collection covers all legs — response includes the per-leg
-        collection lists so the caller can show the user where the legs DO live.
+        422 when the exchange refuses a leg (a market it does not allow in a combo, or one that
+        has already been decided); on Kalshi the response names the rejected markets.
 
         Parameters
         ----------
@@ -57,7 +47,7 @@ class ParlaysClient:
             Subaccount to build under
 
         exchange : str
-            KALSHI or POLYMARKET_US
+            KALSHI, POLYMARKET_US or CRYPTO_COM
 
         legs : typing.Sequence[BuildLeg]
             Legs to combine, all on the chosen exchange
@@ -141,24 +131,14 @@ class AsyncParlaysClient:
         """
         Turn 2 or more legs, each a River market id with the side it must resolve to, into a
         tradable combo market and return its river_id for POST /v1/rfqs. Polymarket US creates
-        (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi finds a
-        collection that admits every leg and materializes the parlay there. Either way the combo
-        pays out only if every leg resolves to its side.
+        (or fetches) the combo instrument under your credentials, up to 15 legs. Kalshi
+        materializes the parlay in its cross-category collection. Crypto.com names the combo when
+        asked for quotes on its legs, so a first build of a leg set sends a quote request under your
+        credentials and ignores its quotes. Either way the combo pays out only if every leg
+        resolves to its side.
 
-        Strategy:
-          1. For each leg, query `GET /multivariate_event_collections?associated_event_ticker=<event>`
-             to enumerate every collection containing that leg's event.
-          2. Intersect the collection sets across all legs — these are the collections
-             that can host the parlay.
-          3. Drop collections that don't admit the requested leg count
-             (`size_min <= len(legs) <= size_max`), and any closed collections.
-          4. Pick the narrowest surviving collection (smallest `associated_events`
-             count) — narrower collections usually have denser quoter coverage.
-          5. Materialize the combo market in that collection and return the new
-             `market_ticker` plus the chosen `collection_ticker`.
-
-        422 if no collection covers all legs — response includes the per-leg
-        collection lists so the caller can show the user where the legs DO live.
+        422 when the exchange refuses a leg (a market it does not allow in a combo, or one that
+        has already been decided); on Kalshi the response names the rejected markets.
 
         Parameters
         ----------
@@ -166,7 +146,7 @@ class AsyncParlaysClient:
             Subaccount to build under
 
         exchange : str
-            KALSHI or POLYMARKET_US
+            KALSHI, POLYMARKET_US or CRYPTO_COM
 
         legs : typing.Sequence[BuildLeg]
             Legs to combine, all on the chosen exchange

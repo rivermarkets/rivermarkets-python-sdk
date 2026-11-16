@@ -105,7 +105,8 @@ class RfqsClient:
         """
         The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.
         On Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key
-        10 requests per 10 seconds across all RFQ endpoints.
+        10 requests per 10 seconds across all RFQ endpoints. On Crypto.com a quote can be one-sided,
+        each side has its own size, and expires_ts says when the maker's quote lapses.
 
         Parameters
         ----------
@@ -452,7 +453,9 @@ class RfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Withdraw your RFQ before accepting a quote. Open quotes on it die with it.
+        Withdraw your RFQ before accepting a quote. Open quotes on it die with it. Crypto.com has
+        no cancel for a requester: River stops serving the RFQ's quotes and refuses accepts on it,
+        and the exchange ends it 30 seconds after it was posted.
 
         Parameters
         ----------
@@ -517,7 +520,9 @@ class RfqsClient:
         """
         Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.
         Makers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in
-        contracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars.
+        contracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars. Crypto.com
+        RFQs are for combos only, carry no size (each quote brings its own, qty is the minimum a
+        quote must carry), live 30 seconds and take one accept: post again to trade again or to exit.
         Combos come from POST /v1/parlays/build.
 
         Parameters
@@ -529,10 +534,10 @@ class RfqsClient:
             The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market.
 
         qty : typing.Optional[float]
-            Size in contracts
+            Size in contracts. Crypto.com: the minimum size a quote must carry; the RFQ itself has no size and each quote brings its own.
 
         target_cost_dollars : typing.Optional[CreateRfqRequestTargetCostDollars]
-            Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty.
+            Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty. Not supported on Crypto.com.
 
         obscure_creator_id : typing.Optional[bool]
             Kalshi only: hide your creator ID from makers until a quote executes.
@@ -609,9 +614,13 @@ class RfqsClient:
     ) -> AcceptQuoteResponse:
         """
         Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you
-        track like any other (resting while the maker confirms, then executed or cancelled). Pass
-        the price and size you saw so a replaced quote answers 409 instead of trading at a price
-        you never saw. The maker has a short window to confirm; if it lapses the order is cancelled.
+        track like any other (resting while the maker confirms, then executed or cancelled). On
+        Polymarket US, pass the price and size you saw so a replaced quote answers 409 instead of
+        trading at a price you never saw; on Kalshi a re-quote gets a new quote id, so the id
+        itself pins the price. The maker has a short window to confirm; if it lapses the order is cancelled.
+        On Crypto.com, pass the quote's price and the size you want, up to the quote's size: the
+        exchange holds the deal one second for price improvement, so the fill can be better than the
+        quote, and each RFQ takes one accept.
 
         Parameters
         ----------
@@ -629,7 +638,7 @@ class RfqsClient:
             Pinned yes-space price shown at click time
 
         qty : float
-            Pinned size in contracts shown at click time
+            Pinned size in contracts shown at click time. Crypto.com: the size to trade, up to the quote's size.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -778,7 +787,8 @@ class AsyncRfqsClient:
         """
         The quotes makers have posted on your RFQ, in YES space. Poll this while the RFQ is open.
         On Polymarket US the answer is served from a 2 second cache: the exchange allows a retail key
-        10 requests per 10 seconds across all RFQ endpoints.
+        10 requests per 10 seconds across all RFQ endpoints. On Crypto.com a quote can be one-sided,
+        each side has its own size, and expires_ts says when the maker's quote lapses.
 
         Parameters
         ----------
@@ -1165,7 +1175,9 @@ class AsyncRfqsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> None:
         """
-        Withdraw your RFQ before accepting a quote. Open quotes on it die with it.
+        Withdraw your RFQ before accepting a quote. Open quotes on it die with it. Crypto.com has
+        no cancel for a requester: River stops serving the RFQ's quotes and refuses accepts on it,
+        and the exchange ends it 30 seconds after it was posted.
 
         Parameters
         ----------
@@ -1238,7 +1250,9 @@ class AsyncRfqsClient:
         """
         Post an RFQ on a River market and get its River id, the handle for the other RFQ calls.
         Makers answer with quotes; nothing trades until you accept one. Kalshi RFQs are sized in
-        contracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars.
+        contracts, in dollars, or both; Polymarket US RFQs in contracts or in dollars. Crypto.com
+        RFQs are for combos only, carry no size (each quote brings its own, qty is the minimum a
+        quote must carry), live 30 seconds and take one accept: post again to trade again or to exit.
         Combos come from POST /v1/parlays/build.
 
         Parameters
@@ -1250,10 +1264,10 @@ class AsyncRfqsClient:
             The market to request quotes on: a single market, or a combo from POST /v1/parlays/build. The exchange follows from the market.
 
         qty : typing.Optional[float]
-            Size in contracts
+            Size in contracts. Crypto.com: the minimum size a quote must carry; the RFQ itself has no size and each quote brings its own.
 
         target_cost_dollars : typing.Optional[CreateRfqRequestTargetCostDollars]
-            Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty.
+            Total target cost in USD. Kalshi: the size on its own, or alongside qty. Polymarket US: the size itself, instead of qty. Not supported on Crypto.com.
 
         obscure_creator_id : typing.Optional[bool]
             Kalshi only: hide your creator ID from makers until a quote executes.
@@ -1338,9 +1352,13 @@ class AsyncRfqsClient:
     ) -> AcceptQuoteResponse:
         """
         Hit one side of a quote on your RFQ. This trades: the accept becomes a River order you
-        track like any other (resting while the maker confirms, then executed or cancelled). Pass
-        the price and size you saw so a replaced quote answers 409 instead of trading at a price
-        you never saw. The maker has a short window to confirm; if it lapses the order is cancelled.
+        track like any other (resting while the maker confirms, then executed or cancelled). On
+        Polymarket US, pass the price and size you saw so a replaced quote answers 409 instead of
+        trading at a price you never saw; on Kalshi a re-quote gets a new quote id, so the id
+        itself pins the price. The maker has a short window to confirm; if it lapses the order is cancelled.
+        On Crypto.com, pass the quote's price and the size you want, up to the quote's size: the
+        exchange holds the deal one second for price improvement, so the fill can be better than the
+        quote, and each RFQ takes one accept.
 
         Parameters
         ----------
@@ -1358,7 +1376,7 @@ class AsyncRfqsClient:
             Pinned yes-space price shown at click time
 
         qty : float
-            Pinned size in contracts shown at click time
+            Pinned size in contracts shown at click time. Crypto.com: the size to trade, up to the quote's size.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

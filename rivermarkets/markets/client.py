@@ -15,6 +15,7 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..types.market_lookup_response import MarketLookupResponse
 from ..types.resolve_combos_response import ResolveCombosResponse
+from ..types.market_settlements_response import MarketSettlementsResponse
 from ..types.market_search_result import MarketSearchResult
 from ..types.market_match_batch_response import MarketMatchBatchResponse
 from ..core.client_wrapper import AsyncClientWrapper
@@ -311,6 +312,66 @@ class MarketsClient:
                     ResolveCombosResponse,
                     parse_obj_as(
                         type_=ResolveCombosResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def get_settlements(
+        self, *, river_ids: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> MarketSettlementsResponse:
+        """
+        Batch lookup settlement (ts, YES price) for resolved markets.
+
+        Parameters
+        ----------
+        river_ids : str
+            Comma-separated list of river IDs
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        MarketSettlementsResponse
+            Successful Response
+
+        Examples
+        --------
+        from rivermarkets import RiverMarkets
+
+        client = RiverMarkets()
+        client.markets.get_settlements(
+            river_ids="river_ids",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "v1/markets/settlements",
+            method="GET",
+            params={
+                "river_ids": river_ids,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    MarketSettlementsResponse,
+                    parse_obj_as(
+                        type_=MarketSettlementsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -781,6 +842,74 @@ class AsyncMarketsClient:
                     ResolveCombosResponse,
                     parse_obj_as(
                         type_=ResolveCombosResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def get_settlements(
+        self, *, river_ids: str, request_options: typing.Optional[RequestOptions] = None
+    ) -> MarketSettlementsResponse:
+        """
+        Batch lookup settlement (ts, YES price) for resolved markets.
+
+        Parameters
+        ----------
+        river_ids : str
+            Comma-separated list of river IDs
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        MarketSettlementsResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from rivermarkets import AsyncRiverMarkets
+
+        client = AsyncRiverMarkets()
+
+
+        async def main() -> None:
+            await client.markets.get_settlements(
+                river_ids="river_ids",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "v1/markets/settlements",
+            method="GET",
+            params={
+                "river_ids": river_ids,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    MarketSettlementsResponse,
+                    parse_obj_as(
+                        type_=MarketSettlementsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
