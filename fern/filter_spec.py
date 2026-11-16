@@ -34,7 +34,11 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/fair-values/{subaccount_id}/{river_id}", "delete"),
     # fills
     ("/v1/fills", "get"),
+    # exchange
+    ("/v1/exchange/polymarket/redeem-all", "post"),
+    ("/v1/exchange/polymarket/merge-all", "post"),
     # fees
+    ("/v1/fees/estimate", "get"),
     ("/v1/fees/schedules/lookup", "post"),
     # generic-assets
     ("/v1/generic-assets", "get"),
@@ -49,6 +53,7 @@ ALLOWED: set[tuple[str, str]] = {
     ("/v1/markets/match/batch", "post"),
     ("/v1/markets/search", "get"),
     ("/v1/markets/resolve-combos", "post"),
+    ("/v1/markets/settlements", "get"),
     # orderbooks
     ("/v1/orderbooks/{river_id}", "get"),
     ("/v1/orderbooks/generic-asset/{generic_asset_id}", "get"),
