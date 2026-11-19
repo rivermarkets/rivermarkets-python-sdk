@@ -30,6 +30,7 @@ class GenericAssetsClient:
         q: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
+        series: typing.Optional[str] = None,
         status: typing.Optional[str] = None,
         event_id: typing.Optional[str] = None,
         start_after: typing.Optional[dt.datetime] = None,
@@ -49,6 +50,9 @@ class GenericAssetsClient:
         winner-first then by line, and hydrates members (or only river_ids). There is no unpaginated
         form: the whole catalog through the view runs for minutes.
 
+        The response is the same for every user, so a page without a search is cached for a minute.
+        A window that is not on whole minutes (a rolling "live now") never repeats and is not cached.
+
         Parameters
         ----------
         q : typing.Optional[str]
@@ -59,6 +63,9 @@ class GenericAssetsClient:
 
         subcategory : typing.Optional[str]
             Filter by subcategory
+
+        series : typing.Optional[str]
+            Filter by series (league), e.g. NBA
 
         status : typing.Optional[str]
             'approved' (default), 'expired', 'pending', 'rejected' or 'all'
@@ -112,6 +119,7 @@ class GenericAssetsClient:
                 "q": q,
                 "category": category,
                 "subcategory": subcategory,
+                "series": series,
                 "status": status,
                 "event_id": event_id,
                 "start_after": serialize_datetime(start_after)
@@ -353,6 +361,7 @@ class AsyncGenericAssetsClient:
         q: typing.Optional[str] = None,
         category: typing.Optional[typing.Sequence[str]] = None,
         subcategory: typing.Optional[str] = None,
+        series: typing.Optional[str] = None,
         status: typing.Optional[str] = None,
         event_id: typing.Optional[str] = None,
         start_after: typing.Optional[dt.datetime] = None,
@@ -372,6 +381,9 @@ class AsyncGenericAssetsClient:
         winner-first then by line, and hydrates members (or only river_ids). There is no unpaginated
         form: the whole catalog through the view runs for minutes.
 
+        The response is the same for every user, so a page without a search is cached for a minute.
+        A window that is not on whole minutes (a rolling "live now") never repeats and is not cached.
+
         Parameters
         ----------
         q : typing.Optional[str]
@@ -382,6 +394,9 @@ class AsyncGenericAssetsClient:
 
         subcategory : typing.Optional[str]
             Filter by subcategory
+
+        series : typing.Optional[str]
+            Filter by series (league), e.g. NBA
 
         status : typing.Optional[str]
             'approved' (default), 'expired', 'pending', 'rejected' or 'all'
@@ -443,6 +458,7 @@ class AsyncGenericAssetsClient:
                 "q": q,
                 "category": category,
                 "subcategory": subcategory,
+                "series": series,
                 "status": status,
                 "event_id": event_id,
                 "start_after": serialize_datetime(start_after)

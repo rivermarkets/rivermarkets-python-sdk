@@ -2,16 +2,21 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import typing
+from .series_count import SeriesCount
 import pydantic
 
 
-class SubcategoryCount(UniversalBaseModel):
+class GenericSubcategoryCount(UniversalBaseModel):
     """
-    One subcategory row with a market count.
+    Event count of one subcategory, split by series (league).
     """
 
     subcategory: str
     count: int
+    series: typing.Optional[typing.List[SeriesCount]] = pydantic.Field(default=None)
+    """
+    Event counts per series; events without a series are left out
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         extra="allow", frozen=True

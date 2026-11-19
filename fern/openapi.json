@@ -956,7 +956,7 @@
           "generic-assets"
         ],
         "summary": "List Generic Assets",
-        "description": "List approved generic assets, one page of events.\n\nGroups assets by generic event, orders events by ``sort_by``, orders assets within an event\nwinner-first then by line, and hydrates members (or only river_ids). There is no unpaginated\nform: the whole catalog through the view runs for minutes.",
+        "description": "List approved generic assets, one page of events.\n\nGroups assets by generic event, orders events by ``sort_by``, orders assets within an event\nwinner-first then by line, and hydrates members (or only river_ids). There is no unpaginated\nform: the whole catalog through the view runs for minutes.\n\nThe response is the same for every user, so a page without a search is cached for a minute.\nA window that is not on whole minutes (a rolling \"live now\") never repeats and is not cached.",
         "operationId": "list_generic_assets_v1_generic_assets_get",
         "parameters": [
           {
@@ -1016,6 +1016,24 @@
               "title": "Subcategory"
             },
             "description": "Filter by subcategory"
+          },
+          {
+            "name": "series",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by series (league), e.g. NBA",
+              "title": "Series"
+            },
+            "description": "Filter by series (league), e.g. NBA"
           },
           {
             "name": "status",
@@ -6053,11 +6071,11 @@
           },
           "subcategories": {
             "items": {
-              "$ref": "#/components/schemas/SubcategoryCount"
+              "$ref": "#/components/schemas/GenericSubcategoryCount"
             },
             "type": "array",
             "title": "Subcategories",
-            "description": "Event counts per subcategory within the requested categories, ignoring the subcategory and start window filters"
+            "description": "Event counts per subcategory within the requested categories, ignoring the subcategory, series and start window filters"
           },
           "categories": {
             "items": {
@@ -6444,6 +6462,33 @@
         ],
         "title": "GenericEventResponse",
         "description": "The generic event (normalization.events) an auto-matched asset settles on."
+      },
+      "GenericSubcategoryCount": {
+        "properties": {
+          "subcategory": {
+            "type": "string",
+            "title": "Subcategory"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesCount"
+            },
+            "type": "array",
+            "title": "Series",
+            "description": "Event counts per series; events without a series are left out"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subcategory",
+          "count"
+        ],
+        "title": "GenericSubcategoryCount",
+        "description": "Event count of one subcategory, split by series (league)."
       },
       "HTTPValidationError": {
         "properties": {
@@ -9776,6 +9821,24 @@
         ],
         "title": "ScheduledState"
       },
+      "SeriesCount": {
+        "properties": {
+          "series": {
+            "type": "string",
+            "title": "Series"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series",
+          "count"
+        ],
+        "title": "SeriesCount"
+      },
       "ShardTransferRequest": {
         "properties": {
           "subaccount_id": {
@@ -10120,25 +10183,6 @@
         "type": "object",
         "title": "SubaccountUpdate",
         "description": "Schema for updating a subaccount."
-      },
-      "SubcategoryCount": {
-        "properties": {
-          "subcategory": {
-            "type": "string",
-            "title": "Subcategory"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          }
-        },
-        "type": "object",
-        "required": [
-          "subcategory",
-          "count"
-        ],
-        "title": "SubcategoryCount",
-        "description": "One subcategory row with a market count."
       },
       "TradeprintEvent": {
         "properties": {
