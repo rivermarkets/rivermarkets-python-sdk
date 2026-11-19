@@ -4,7 +4,7 @@ from ..core.pydantic_utilities import UniversalBaseModel
 import typing
 from .generic_asset_response import GenericAssetResponse
 import pydantic
-from .subcategory_count import SubcategoryCount
+from .generic_subcategory_count import GenericSubcategoryCount
 
 
 class GenericAssetListResponse(UniversalBaseModel):
@@ -14,11 +14,11 @@ class GenericAssetListResponse(UniversalBaseModel):
     Total event groups matching the filters
     """
 
-    subcategories: typing.Optional[typing.List[SubcategoryCount]] = pydantic.Field(
-        default=None
+    subcategories: typing.Optional[typing.List[GenericSubcategoryCount]] = (
+        pydantic.Field(default=None)
     )
     """
-    Event counts per subcategory within the requested categories, ignoring the subcategory and start window filters
+    Event counts per subcategory within the requested categories, ignoring the subcategory, series and start window filters
     """
 
     categories: typing.Optional[typing.List[str]] = pydantic.Field(default=None)

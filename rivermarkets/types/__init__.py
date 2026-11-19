@@ -40,6 +40,7 @@ from .generic_asset_response import GenericAssetResponse
 from .generic_entity import GenericEntity
 from .generic_event_participant import GenericEventParticipant
 from .generic_event_response import GenericEventResponse
+from .generic_subcategory_count import GenericSubcategoryCount
 from .http_validation_error import HttpValidationError
 from .iceberg_order_params import IcebergOrderParams
 from .iceberg_order_response import IcebergOrderResponse
@@ -90,12 +91,12 @@ from .resolve_combos_result import ResolveCombosResult
 from .rfq_leg import RfqLeg
 from .rfq_response import RfqResponse
 from .scheduled_state import ScheduledState
+from .series_count import SeriesCount
 from .shard_transfer_response import ShardTransferResponse
 from .smart_taker_order_params import SmartTakerOrderParams
 from .smart_taker_order_response import SmartTakerOrderResponse
 from .sort_mode import SortMode
 from .subaccount_response import SubaccountResponse
-from .subcategory_count import SubcategoryCount
 from .tradeprint_event import TradeprintEvent
 from .tradeprints_bulk_response import TradeprintsBulkResponse
 from .tradeprints_response import TradeprintsResponse
@@ -160,6 +161,7 @@ __all__ = [
     "GenericEntity",
     "GenericEventParticipant",
     "GenericEventResponse",
+    "GenericSubcategoryCount",
     "HttpValidationError",
     "IcebergOrderParams",
     "IcebergOrderResponse",
@@ -210,12 +212,12 @@ __all__ = [
     "RfqLeg",
     "RfqResponse",
     "ScheduledState",
+    "SeriesCount",
     "ShardTransferResponse",
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SortMode",
     "SubaccountResponse",
-    "SubcategoryCount",
     "TradeprintEvent",
     "TradeprintsBulkResponse",
     "TradeprintsResponse",
