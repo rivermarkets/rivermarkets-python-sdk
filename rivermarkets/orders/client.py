@@ -46,6 +46,7 @@ class OrdersClient:
         parent_generic_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
         order_type: typing.Optional[str] = None,
+        exchange: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
         created_before: typing.Optional[dt.datetime] = None,
         search: typing.Optional[str] = None,
@@ -107,6 +108,9 @@ class OrdersClient:
         order_type : typing.Optional[str]
             Filter by order type: LIMIT, MARKET, RFQ_TAKER or RFQ_MAKER.
 
+        exchange : typing.Optional[str]
+            Filter by exchange: KALSHI, POLYMARKET, POLYMARKET_US, CRYPTO_COM or NOVIG. A generic order matches when one of its per-exchange children is on that exchange.
+
         created_after : typing.Optional[dt.datetime]
             Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
 
@@ -154,6 +158,7 @@ class OrdersClient:
                 "parent_generic_order_id": parent_generic_order_id,
                 "buy_flag": buy_flag,
                 "order_type": order_type,
+                "exchange": exchange,
                 "created_after": serialize_datetime(created_after)
                 if created_after is not None
                 else None,
@@ -864,6 +869,7 @@ class AsyncOrdersClient:
         parent_generic_order_id: typing.Optional[str] = None,
         buy_flag: typing.Optional[bool] = None,
         order_type: typing.Optional[str] = None,
+        exchange: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
         created_before: typing.Optional[dt.datetime] = None,
         search: typing.Optional[str] = None,
@@ -925,6 +931,9 @@ class AsyncOrdersClient:
         order_type : typing.Optional[str]
             Filter by order type: LIMIT, MARKET, RFQ_TAKER or RFQ_MAKER.
 
+        exchange : typing.Optional[str]
+            Filter by exchange: KALSHI, POLYMARKET, POLYMARKET_US, CRYPTO_COM or NOVIG. A generic order matches when one of its per-exchange children is on that exchange.
+
         created_after : typing.Optional[dt.datetime]
             Only orders created at or after this time (inclusive, ISO 8601; naive values are treated as UTC).
 
@@ -980,6 +989,7 @@ class AsyncOrdersClient:
                 "parent_generic_order_id": parent_generic_order_id,
                 "buy_flag": buy_flag,
                 "order_type": order_type,
+                "exchange": exchange,
                 "created_after": serialize_datetime(created_after)
                 if created_after is not None
                 else None,
