@@ -95,6 +95,8 @@ from .types import (
     SmartTakerOrderParams,
     SmartTakerOrderResponse,
     SortMode,
+    SubaccountGrantPutResponse,
+    SubaccountGrantResponse,
     SubaccountResponse,
     TradeprintEvent,
     TradeprintsBulkResponse,
@@ -152,6 +154,7 @@ from .prices import (
     GetVolumeV1PricesRiverIdVolumeGetRequestWindow,
 )
 from .rfqs import CreateRfqRequestTargetCostDollars
+from .subaccounts import SubaccountGrantPutRequestRole
 
 __all__ = [
     "AcceptQuoteResponse",
@@ -260,6 +263,9 @@ __all__ = [
     "SmartTakerOrderParams",
     "SmartTakerOrderResponse",
     "SortMode",
+    "SubaccountGrantPutRequestRole",
+    "SubaccountGrantPutResponse",
+    "SubaccountGrantResponse",
     "SubaccountResponse",
     "TradeprintEvent",
     "TradeprintsBulkResponse",
