@@ -5489,12 +5489,19 @@
           "river_order_id": {
             "type": "string",
             "format": "uuid",
-            "title": "River Order Id"
+            "title": "River Order Id",
+            "description": "Order id that owns the quote; the handle for confirm and cancel"
+          },
+          "river_id": {
+            "type": "integer",
+            "title": "River Id",
+            "description": "Instrument (combo market) quoted"
           }
         },
         "type": "object",
         "required": [
-          "river_order_id"
+          "river_order_id",
+          "river_id"
         ],
         "title": "CreateMakerQuoteResponse"
       },
