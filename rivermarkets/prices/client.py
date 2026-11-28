@@ -185,12 +185,12 @@ class PricesClient:
         Returns either candlestick OHLC data or simple price history based on the `type` parameter.
         The endpoint automatically determines the exchange and fetches data accordingly.
 
+        Every market is served from River's own captured trade history (real OHLC with
+        volume) when it has any in the requested range. A Kalshi or Polymarket market
+        with none falls back to the exchange while a backfill of its history is queued:
+
         - **Kalshi**: Returns real OHLC candlestick data with volume
         - **Polymarket**: Returns price history (candlesticks will have synthetic OHLC where all values equal the price)
-
-        Kalshi and Polymarket markets whose trade history River has fully captured are
-        served from River's own data (real OHLC for both); the rest come from the exchange
-        while a backfill of their history is queued.
 
         All prices are normalized to 0-1 range.
 
@@ -434,12 +434,12 @@ class AsyncPricesClient:
         Returns either candlestick OHLC data or simple price history based on the `type` parameter.
         The endpoint automatically determines the exchange and fetches data accordingly.
 
+        Every market is served from River's own captured trade history (real OHLC with
+        volume) when it has any in the requested range. A Kalshi or Polymarket market
+        with none falls back to the exchange while a backfill of its history is queued:
+
         - **Kalshi**: Returns real OHLC candlestick data with volume
         - **Polymarket**: Returns price history (candlesticks will have synthetic OHLC where all values equal the price)
-
-        Kalshi and Polymarket markets whose trade history River has fully captured are
-        served from River's own data (real OHLC for both); the rest come from the exchange
-        while a backfill of their history is queued.
 
         All prices are normalized to 0-1 range.
 
