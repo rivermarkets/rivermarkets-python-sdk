@@ -3180,7 +3180,7 @@
           "prices"
         ],
         "summary": "Get Prices",
-        "description": "Get price data for a market.\nReturns either candlestick OHLC data or simple price history based on the `type` parameter.\nThe endpoint automatically determines the exchange and fetches data accordingly.\n\n- **Kalshi**: Returns real OHLC candlestick data with volume\n- **Polymarket**: Returns price history (candlesticks will have synthetic OHLC where all values equal the price)\n\nKalshi and Polymarket markets whose trade history River has fully captured are\nserved from River's own data (real OHLC for both); the rest come from the exchange\nwhile a backfill of their history is queued.\n\nAll prices are normalized to 0-1 range.",
+        "description": "Get price data for a market.\nReturns either candlestick OHLC data or simple price history based on the `type` parameter.\nThe endpoint automatically determines the exchange and fetches data accordingly.\n\nEvery market is served from River's own captured trade history (real OHLC with\nvolume) when it has any in the requested range. A Kalshi or Polymarket market\nwith none falls back to the exchange while a backfill of its history is queued:\n\n- **Kalshi**: Returns real OHLC candlestick data with volume\n- **Polymarket**: Returns price history (candlesticks will have synthetic OHLC where all values equal the price)\n\nAll prices are normalized to 0-1 range.",
         "operationId": "get_prices_v1_prices__river_id__get",
         "parameters": [
           {
@@ -4021,7 +4021,7 @@
           "subaccounts"
         ],
         "summary": "Put Subaccount Grant",
-        "description": "Assign or change a member's role on a subaccount. The role name is expanded to\npermission strings server-side; audit rows come from the DB trigger.",
+        "description": "Assign or change a member's role on a subaccount. The role name is expanded to\npermission strings server-side; audit rows come from the DB trigger. Extra\npermissions ride beside the role: an admin always holds billing:read, a trader or\nviewer holds what `extra_permissions` lists, and when it is omitted keeps what\nthey had unless they are being demoted from admin.",
         "operationId": "put_subaccount_grant_v1_subaccounts__subaccount_id__grants__user_id__put",
         "parameters": [
           {
@@ -10278,6 +10278,22 @@
               "viewer"
             ],
             "title": "Role"
+          },
+          "extra_permissions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "const": "billing:read"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Permissions",
+            "description": "Permissions granted on top of the role; the full list replaces the member's current extras. `billing:read` lets a trader or viewer see this subaccount's usage and trading fees (admins always can). Omit to keep the member's current extras."
           }
         },
         "type": "object",

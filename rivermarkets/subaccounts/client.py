@@ -12,6 +12,9 @@ from ..types.http_validation_error import HttpValidationError
 from ..core.jsonable_encoder import jsonable_encoder
 from ..types.subaccount_grant_response import SubaccountGrantResponse
 from .types.subaccount_grant_put_request_role import SubaccountGrantPutRequestRole
+from .types.subaccount_grant_put_request_extra_permissions_item import (
+    SubaccountGrantPutRequestExtraPermissionsItem,
+)
 from ..types.subaccount_grant_put_response import SubaccountGrantPutResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
@@ -398,11 +401,17 @@ class SubaccountsClient:
         user_id: str,
         *,
         role: SubaccountGrantPutRequestRole,
+        extra_permissions: typing.Optional[
+            typing.Sequence[SubaccountGrantPutRequestExtraPermissionsItem]
+        ] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountGrantPutResponse:
         """
         Assign or change a member's role on a subaccount. The role name is expanded to
-        permission strings server-side; audit rows come from the DB trigger.
+        permission strings server-side; audit rows come from the DB trigger. Extra
+        permissions ride beside the role: an admin always holds billing:read, a trader or
+        viewer holds what `extra_permissions` lists, and when it is omitted keeps what
+        they had unless they are being demoted from admin.
 
         Parameters
         ----------
@@ -411,6 +420,9 @@ class SubaccountsClient:
         user_id : str
 
         role : SubaccountGrantPutRequestRole
+
+        extra_permissions : typing.Optional[typing.Sequence[SubaccountGrantPutRequestExtraPermissionsItem]]
+            Permissions granted on top of the role; the full list replaces the member's current extras. `billing:read` lets a trader or viewer see this subaccount's usage and trading fees (admins always can). Omit to keep the member's current extras.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -436,6 +448,7 @@ class SubaccountsClient:
             method="PUT",
             json={
                 "role": role,
+                "extra_permissions": extra_permissions,
             },
             request_options=request_options,
             omit=OMIT,
@@ -948,11 +961,17 @@ class AsyncSubaccountsClient:
         user_id: str,
         *,
         role: SubaccountGrantPutRequestRole,
+        extra_permissions: typing.Optional[
+            typing.Sequence[SubaccountGrantPutRequestExtraPermissionsItem]
+        ] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SubaccountGrantPutResponse:
         """
         Assign or change a member's role on a subaccount. The role name is expanded to
-        permission strings server-side; audit rows come from the DB trigger.
+        permission strings server-side; audit rows come from the DB trigger. Extra
+        permissions ride beside the role: an admin always holds billing:read, a trader or
+        viewer holds what `extra_permissions` lists, and when it is omitted keeps what
+        they had unless they are being demoted from admin.
 
         Parameters
         ----------
@@ -961,6 +980,9 @@ class AsyncSubaccountsClient:
         user_id : str
 
         role : SubaccountGrantPutRequestRole
+
+        extra_permissions : typing.Optional[typing.Sequence[SubaccountGrantPutRequestExtraPermissionsItem]]
+            Permissions granted on top of the role; the full list replaces the member's current extras. `billing:read` lets a trader or viewer see this subaccount's usage and trading fees (admins always can). Omit to keep the member's current extras.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -994,6 +1016,7 @@ class AsyncSubaccountsClient:
             method="PUT",
             json={
                 "role": role,
+                "extra_permissions": extra_permissions,
             },
             request_options=request_options,
             omit=OMIT,
